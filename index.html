@@ -525,10 +525,10 @@ h1 em { display:block; font-style:italic; font-weight:300; font-size:.42em; lett
             <div id="sync-today-num" style="font-family:'Cormorant Garamond',serif;font-size:2.2rem;font-weight:300;color:var(--gold);line-height:1;">0</div>
             <div style="font-family:'Space Mono',monospace;font-size:.5rem;color:rgba(201,185,154,.4);letter-spacing:.08em;margin-top:4px;">TODAY</div>
           </div>
-          <div style="flex:1;padding:14px 16px;background:rgba(255,255,255,.02);border:1px solid rgba(201,185,154,.1);text-align:center;">
+          <button onclick="show1010Graph()" style="flex:1;padding:14px 16px;background:rgba(255,255,255,.02);border:1px solid rgba(201,185,154,.1);text-align:center;cursor:pointer;transition:border-color .2s;" onmouseover="this.style.borderColor='rgba(201,185,154,.3)'" onmouseout="this.style.borderColor='rgba(201,185,154,.1)'">
             <div id="sync-total-num" style="font-family:'Cormorant Garamond',serif;font-size:2.2rem;font-weight:300;color:var(--parchment);line-height:1;">0</div>
             <div style="font-family:'Space Mono',monospace;font-size:.5rem;color:rgba(201,185,154,.4);letter-spacing:.08em;margin-top:4px;">ALL TIME</div>
-          </div>
+          </button>
         </div>
         <!-- Recent log -->
         <div id="sync-recent-log" style="flex:1;padding:12px 14px;background:rgba(255,255,255,.015);border:1px solid rgba(201,185,154,.08);font-family:'Space Mono',monospace;font-size:.55rem;color:rgba(201,185,154,.45);line-height:2;min-height:52px;">
@@ -8329,6 +8329,106 @@ function renderSyncSpotter() {
     }
   }
   renderCustomTrackers();
+}
+
+function show1010Graph() {
+  const taps = getSyncTaps();
+  const today = new Date();
+  const todayStr = localDateStr();
+
+  // Build daily counts for last 60 days
+  const days = [];
+  for (let i = 59; i >= 0; i--) {
+    const d = new Date(today);
+    d.setDate(today.getDate() - i);
+    days.push(localDateStr(d));
+  }
+  const counts = days.map(ds => taps.filter(ts => localDateStr(new Date(ts)) === ds).length);
+  const maxCount = Math.max(...counts, 1);
+
+  const W = 300, H = 110, padL = 28, padR = 8, padT = 12, padB = 24;
+  const cW = W - padL - padR, cH = H - padT - padB;
+  const xStep = cW / (days.length - 1);
+
+  const points = counts.map((c, i) => ({
+    x: padL + i * xStep,
+    y: padT + cH - (c / maxCount) * cH,
+    c, ds: days[i]
+  }));
+  const polyline = points.map(p => `${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ');
+
+  const yLabels = maxCount === 1
+    ? [{ v: 0, y: padT + cH }, { v: 1, y: padT }]
+    : [{ v: 0, y: padT + cH }, { v: Math.ceil(maxCount / 2), y: padT + cH / 2 }, { v: maxCount, y: padT }];
+
+  const xLabels = [];
+  days.forEach((ds, i) => {
+    if (i === 0 || ds.slice(5, 7) !== days[i - 1].slice(5, 7)) {
+      const d = new Date(ds + 'T12:00:00');
+      xLabels.push({ x: padL + i * xStep, label: d.toLocaleDateString('en-US', { month: 'short' }) });
+    }
+  });
+
+  const dots = points.filter(p => p.c > 0).map(p =>
+    `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="3" fill="var(--gold)" opacity=".9"/>`
+  ).join('');
+
+  const svgYLabels = yLabels.map(l =>
+    `<text x="${padL - 4}" y="${l.y + 4}" text-anchor="end" font-family="Space Mono,monospace" font-size="8" fill="rgba(201,185,154,.35)">${l.v}</text>`
+  ).join('');
+  const svgXLabels = xLabels.map(l =>
+    `<text x="${l.x.toFixed(1)}" y="${H - 4}" text-anchor="middle" font-family="Space Mono,monospace" font-size="8" fill="rgba(201,185,154,.35)">${l.label}</text>`
+  ).join('');
+
+  const recentAll = [...taps].reverse().slice(0, 10);
+  const recentHtml = recentAll.length
+    ? recentAll.map(ts => {
+        const d = new Date(ts);
+        const ds = localDateStr(d) === todayStr ? 'Today' : d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        const ti = d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+        return `<div style="border-bottom:1px solid rgba(201,185,154,.06);padding:3px 0;">${ds} · ${ti}</div>`;
+      }).join('')
+    : '<span style="opacity:.4;">No sightings yet.</span>';
+
+  document.getElementById('view-inner').innerHTML = `
+    <div class="m-date">✦ 1010</div>
+    <div class="m-title" style="font-size:1.2rem;margin-bottom:20px;">Sightings Over Time</div>
+    <div style="margin-bottom:18px;">
+      <div style="font-family:'Space Mono',monospace;font-size:.5rem;color:rgba(201,185,154,.4);letter-spacing:.1em;margin-bottom:10px;text-transform:uppercase;">Last 60 Days</div>
+      <svg viewBox="0 0 ${W} ${H}" width="100%" style="display:block;overflow:visible;">
+        ${yLabels.map(l => `<line x1="${padL}" y1="${l.y}" x2="${W - padR}" y2="${l.y}" stroke="rgba(201,185,154,.07)" stroke-width="1"/>`).join('')}
+        <defs>
+          <linearGradient id="tg-fill-1010" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="rgba(201,168,76,1)" stop-opacity="0.22"/>
+            <stop offset="100%" stop-color="rgba(201,168,76,1)" stop-opacity="0.01"/>
+          </linearGradient>
+        </defs>
+        <polygon points="${padL},${padT + cH} ${polyline} ${padL + cW},${padT + cH}" fill="url(#tg-fill-1010)"/>
+        <polyline points="${polyline}" fill="none" stroke="var(--gold)" stroke-width="1.5" stroke-linejoin="round" opacity=".8"/>
+        ${dots}
+        ${svgYLabels}
+        ${svgXLabels}
+      </svg>
+    </div>
+    <div style="display:flex;gap:12px;margin-bottom:20px;">
+      <div style="flex:1;padding:12px;background:rgba(201,168,76,.06);border:1px solid rgba(201,168,76,.18);text-align:center;">
+        <div style="font-family:'Cormorant Garamond',serif;font-size:2rem;color:var(--gold);">${taps.length}</div>
+        <div style="font-family:'Space Mono',monospace;font-size:.46rem;color:rgba(201,185,154,.4);letter-spacing:.08em;margin-top:3px;">ALL TIME</div>
+      </div>
+      <div style="flex:1;padding:12px;background:rgba(255,255,255,.02);border:1px solid rgba(201,185,154,.1);text-align:center;">
+        <div style="font-family:'Cormorant Garamond',serif;font-size:2rem;color:var(--parchment);">${counts.filter(c => c > 0).length}</div>
+        <div style="font-family:'Space Mono',monospace;font-size:.46rem;color:rgba(201,185,154,.4);letter-spacing:.08em;margin-top:3px;">DAYS SPOTTED</div>
+      </div>
+      <div style="flex:1;padding:12px;background:rgba(255,255,255,.02);border:1px solid rgba(201,185,154,.1);text-align:center;">
+        <div style="font-family:'Cormorant Garamond',serif;font-size:2rem;color:var(--parchment);">${maxCount}</div>
+        <div style="font-family:'Space Mono',monospace;font-size:.46rem;color:rgba(201,185,154,.4);letter-spacing:.08em;margin-top:3px;">PEAK DAY</div>
+      </div>
+    </div>
+    <div style="font-family:'Space Mono',monospace;font-size:.5rem;color:rgba(201,185,154,.4);letter-spacing:.1em;text-transform:uppercase;margin-bottom:8px;">Recent Sightings</div>
+    <div style="font-family:'Space Mono',monospace;font-size:.54rem;color:rgba(201,185,154,.55);line-height:1.9;">${recentHtml}</div>
+    <button class="view-close" onclick="document.getElementById('view-ov').classList.remove('open')" style="margin-top:24px;">✕ Close</button>
+  `;
+  document.getElementById('view-ov').classList.add('open');
 }
 
 // ── CUSTOM TRACKERS ───────────────────────────────────────────────────
