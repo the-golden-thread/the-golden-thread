@@ -1491,35 +1491,8 @@ function exportUserData() {
     for (let i = 0; i < localStorage.length; i++) {
       const k = localStorage.key(i);
       if (!k) continue;
-      // Capture everything except the API key (security) and SW caches
-      if (k === 'gt_anthropic_key') continue;
-      if (k === GT_USER_DREAMS_KEY) { data[k] = localStorage.getItem(k); continue; }
-      if (k.startsWith('dream_') ||
-          k === 'spirit_entries' ||
-          k === 'spirit_next_id' ||
-          k === 'gt_notable_songs' ||
-          k === 'gt_elixirs' ||
-          k === 'gt_hblends' ||
-          k === 'comm_entries' ||
-          k === 'sync_taps' ||
-          k === 'custom_trackers' ||
-          k === 'gt_user_insights' ||
-          k === 'gt_chart_sections' ||
-          k === 'gt_natal_chart' ||
-          k === 'gt_inner_seasons' ||
-          k === 'gt_custom_beings' ||
-          k === 'gt_people_order' ||
-          k === 'gt_strengths_cache' ||
-          k === 'gt_shadow_moon_prompt' ||
-          k === 'gt_herb_focus' ||
-          k === 'gt_moon_intentions' ||
-          k === 'gt_visitations' ||
-          k === 'gt_prophecies' ||
-          k === 'gt_manifestations' ||
-          k === 'gt_threads' ||
-          k === GT_USER_DREAMS_KEY) {
-        data[k] = localStorage.getItem(k);
-      }
+      if (k === 'gt_anthropic_key') continue; // never export API key
+      data[k] = localStorage.getItem(k);
     }
   } catch(e) {}
 
@@ -1545,33 +1518,8 @@ function importUserData(json) {
     Object.entries(data).forEach(([k, v]) => {
       if (k.startsWith('_')) return; // skip metadata keys
       if (k === 'gt_anthropic_key') return; // never import API key
-      if (k.startsWith('dream_') ||
-          k === 'spirit_entries' ||
-          k === 'spirit_next_id' ||
-          k === 'gt_notable_songs' ||
-          k === 'gt_elixirs' ||
-          k === 'gt_hblends' ||
-          k === 'comm_entries' ||
-          k === 'sync_taps' ||
-          k === 'custom_trackers' ||
-          k === 'gt_user_insights' ||
-          k === 'gt_chart_sections' ||
-          k === 'gt_natal_chart' ||
-          k === 'gt_inner_seasons' ||
-          k === 'gt_custom_beings' ||
-          k === 'gt_people_order' ||
-          k === 'gt_strengths_cache' ||
-          k === 'gt_shadow_moon_prompt' ||
-          k === 'gt_herb_focus' ||
-          k === 'gt_moon_intentions' ||
-          k === 'gt_visitations' ||
-          k === 'gt_prophecies' ||
-          k === 'gt_manifestations' ||
-          k === 'gt_threads' ||
-          k === GT_USER_DREAMS_KEY) {
-        localStorage.setItem(k, v);
-        count++;
-      }
+      localStorage.setItem(k, v);
+      count++;
     });
     gtAlert(`Imported ${count} data keys successfully. Reloading now…`);
     setTimeout(() => location.reload(), 800);
