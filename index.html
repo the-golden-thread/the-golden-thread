@@ -12076,16 +12076,16 @@ function renderMoonWindowBanner() {
   var nmMinus1 = new Date(nmDt.getTime() - 86400000).toISOString().slice(0,10);
   var nmPlus1 = new Date(nmDt.getTime() + 86400000).toISOString().slice(0,10);
   var moonName = getNewMoonName(nm);
-  var moonLabel = moonName ? moonName.emoji + ' ' + moonName.name : '';
+  var moonLabel = moonName ? moonName.emoji + ' ' + moonName.name + ' \u2014 ' : '';
   var msg = '';
   var col = '';
-  if (today === full) { msg = '\uD83C\uDF15 Full Moon today \u2014 peak illumination. Set your reflection and release your intention.'; col = 'rgba(201,168,76,.3)'; }
-  else if (today === fullMinus1) { msg = '\uD83C\uDF14 Full Moon tomorrow \u2014 the veil thins tonight. Journal, dream, prepare.'; col = 'rgba(201,168,76,.2)'; }
-  else if (today === fullPlus1) { msg = '\uD83C\uDF16 Full Moon was last night \u2014 still in the glow. What was illuminated?'; col = 'rgba(201,168,76,.15)'; }
-  else if (today === nm) { msg = (moonLabel ? moonLabel + ' \u2014 ' : '\uD83C\uDF11 ') + 'New Moon today \u2014 the dark between. Plant your intention for this cycle.'; col = 'rgba(107,79,138,.3)'; }
-  else if (today === nmMinus2) { msg = (moonLabel ? moonLabel + ' \u2014 ' : '\uD83C\uDF18 ') + 'New Moon in 2 days \u2014 the cycle closes. Begin releasing, clearing, preparing.'; col = 'rgba(107,79,138,.12)'; }
-  else if (today === nmMinus1) { msg = (moonLabel ? moonLabel + ' \u2014 ' : '\uD83C\uDF18 ') + 'New Moon tomorrow \u2014 the cycle closes tonight. What are you releasing?'; col = 'rgba(107,79,138,.2)'; }
-  else if (today === nmPlus1) { msg = (moonLabel ? moonLabel + ' \u2014 ' : '\uD83C\uDF11 ') + 'New Moon was last night \u2014 the seed is planted. What did you set?'; col = 'rgba(107,79,138,.15)'; }
+  if (today === full) { msg = moonLabel + '\uD83C\uDF15 Full Moon today \u2014 peak illumination. Set your reflection and release your intention.'; col = 'rgba(201,168,76,.3)'; }
+  else if (today === fullMinus1) { msg = moonLabel + '\uD83C\uDF14 Full Moon tomorrow \u2014 the veil thins tonight. Journal, dream, prepare.'; col = 'rgba(201,168,76,.2)'; }
+  else if (today === fullPlus1) { msg = moonLabel + '\uD83C\uDF16 Full Moon was last night \u2014 still in the glow. What was illuminated?'; col = 'rgba(201,168,76,.15)'; }
+  else if (today === nm) { msg = moonLabel + '\uD83C\uDF11 New Moon today \u2014 the dark between. Plant your intention for this cycle.'; col = 'rgba(107,79,138,.3)'; }
+  else if (today === nmMinus2) { msg = moonLabel + '\uD83C\uDF18 New Moon in 2 days \u2014 the cycle closes. Begin releasing, clearing, preparing.'; col = 'rgba(107,79,138,.12)'; }
+  else if (today === nmMinus1) { msg = moonLabel + '\uD83C\uDF18 New Moon tomorrow \u2014 the cycle closes tonight. What are you releasing?'; col = 'rgba(107,79,138,.2)'; }
+  else if (today === nmPlus1) { msg = moonLabel + '\uD83C\uDF11 New Moon was last night \u2014 the seed is planted. What did you set?'; col = 'rgba(107,79,138,.15)'; }
   if (msg) {
     el.style.display = 'block';
     el.innerHTML = '<div style="padding:10px 16px;background:'+col+';border:1px solid rgba(201,185,154,.15);border-radius:2px;font-family:\'Cormorant Garamond\',serif;font-size:.95rem;font-weight:300;color:rgba(240,235,224,.85);line-height:1.6;">'+msg+'</div>';
