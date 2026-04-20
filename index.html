@@ -6302,7 +6302,76 @@ function buildFullArchiveContext(opts) {
   var patternDigest = INSIGHTS.map(function(i){return i.title;}).join(', ');
   var chartSummary = 'Libra Sun 17°, Aries Moon 6°, Capricorn Rising 25°, Scorpio stellium (Mercury/Venus/Pluto), North Node 23° Sag, Chiron 20° Leo. Human Design: Pure Generator 4/6, Sacral Authority. Primary clairs: claircognizance + clairsentience. Reiki I & II attuned.';
 
-  return {dreamDigest:dreamDigest, spiritDigest:spiritDigest, commDigest:commDigest, visitDigest:visitDigest, moonDigest:moonDigest, prophecyDigest:prophecyDigest, manifestDigest:manifestDigest, threadDigest:threadDigest, peopleDigest:peopleDigest, patternDigest:patternDigest, chartSummary:chartSummary, dreamCount:dreams.length};
+  // ANCESTORS (profiles + interaction logs)
+  var ancestors = (typeof getAncestors==='function') ? getAncestors() : [];
+  var ancestorDigest = ancestors.length ? ancestors.map(function(a){
+    var log = (typeof getAncestorLog==='function') ? getAncestorLog(a.id) : [];
+    var recentLog = log.slice().sort(function(x,y){return y.date.localeCompare(x.date);}).slice(0,3).map(function(e){
+      return '  ['+e.date+'] '+(e.type||'interaction')+': '+(e.body||'').slice(0,120)+(e.signs?' (signs: '+e.signs+')':'');
+    }).join('\n');
+    return a.name+' ('+(a.relationship||'ancestor')+(a.born||a.died?' '+[(a.born||''),(a.died||'')].filter(Boolean).join('–'):'')+')'+
+      (a.medicine?'\n  Medicine: '+a.medicine.slice(0,150):'')+
+      (a.symbols?'\n  Symbols: '+a.symbols:'')+
+      (recentLog?'\n  Recent interactions:\n'+recentLog:'');
+  }).join('\n\n') : '';
+
+  // DREAM INCUBATIONS
+  var incubations = (typeof getIncubations==='function') ? getIncubations() : [];
+  var incubationDigest = incubations.length ? incubations.slice().sort(function(a,b){return b.date.localeCompare(a.date);}).map(function(i){
+    var linkedTitles = (i.dreamIds||[]).map(function(id){var d=dreams.find(function(x){return String(x.id)===String(id);});return d?'"'+d.title+'"':null;}).filter(Boolean);
+    return '['+i.date+'] "'+i.intention+'" ('+i.type+', '+i.status+(linkedTitles.length?' → linked: '+linkedTitles.join(', '):'')+')';
+  }).join('\n') : '';
+
+  // SIGNAL CONFIRMATIONS
+  var sigConfs = (typeof getSignalConfirmations==='function') ? getSignalConfirmations() : [];
+  var sigConfsDigest = sigConfs.length ? sigConfs.slice().sort(function(a,b){return b.date.localeCompare(a.date);}).slice(0,30).map(function(s){
+    var entry = (typeof COMM_ENTRIES!=='undefined'&&COMM_ENTRIES) ? COMM_ENTRIES.find(function(e){return e.id===s.signalId;}) : null;
+    var label = entry ? '"'+entry.signal+'"' : 'signal';
+    return '['+s.date+'] '+label+' confirmed: '+(s.what||'').slice(0,150)+(s.context?' ('+s.context+')':'');
+  }).join('\n') : '';
+
+  // ELIXIRS
+  var elixirDigest = (typeof ELIXIRS!=='undefined'&&ELIXIRS.length) ? ELIXIRS.map(function(e){
+    return '"'+e.name+'" ('+e.type+'): '+(e.intention||'').slice(0,120);
+  }).join('\n') : '';
+
+  // SONGS (musical guidance channel)
+  var songDigest = (typeof SONGS!=='undefined'&&SONGS.length) ? SONGS.filter(function(s){
+    return s.messages && s.messages.length;
+  }).map(function(s){
+    var msgs = s.messages.slice(-3).map(function(m){return '['+m.date+'] '+m.text.slice(0,120);}).join(' | ');
+    return '"'+s.title+'"'+(s.artist?' — '+s.artist:'')+': '+msgs;
+  }).join('\n') : '';
+
+  // SACRED & PERSONAL DATES
+  var sacredDates = [];
+  try { sacredDates = JSON.parse(localStorage.getItem('gt_sacred_dates')||'[]'); } catch(e){}
+  var sacredDateDigest = sacredDates.length ? sacredDates.map(function(d){
+    return d.date+' — "'+d.title+'" ('+(d.type||'personal')+')'+(d.notes?' — '+d.notes.slice(0,80):'');
+  }).join('\n') : '';
+
+  // HERBS & BLENDS
+  var herbNotes = {};
+  try { herbNotes = JSON.parse(localStorage.getItem('gt_herb_notes')||'{}'); } catch(e){}
+  var hblends = [];
+  try { hblends = JSON.parse(localStorage.getItem('gt_hblends')||'[]'); } catch(e){}
+  var userHerbs = [];
+  try { userHerbs = JSON.parse(localStorage.getItem('gt_user_herbs')||'[]'); } catch(e){}
+  var herbParts = [];
+  var hnEntries = Object.entries(herbNotes).filter(function(kv){return kv[1]&&kv[1].trim();});
+  if (hnEntries.length) herbParts.push('Herb notes: '+hnEntries.map(function(kv){return kv[0]+': '+kv[1].slice(0,80);}).join('; '));
+  if (hblends.length) herbParts.push('Blends: '+hblends.map(function(b){return '"'+(b.name||'blend')+'"—'+(b.herbs||[]).join(',')+( b.intention?' ('+b.intention.slice(0,60)+')':'');}).join('; '));
+  if (userHerbs.length) herbParts.push('Custom herbs: '+userHerbs.map(function(h){return h.name||h;}).join(', '));
+  var herbDigest = herbParts.join('\n');
+
+  // CUSTOM BEINGS
+  var customBeings = [];
+  try { customBeings = JSON.parse(localStorage.getItem('gt_custom_beings')||'[]'); } catch(e){}
+  var beingsDigest = customBeings.length ? customBeings.map(function(b){
+    return b.name+(b.type?' ('+b.type+')':'')+(b.description?' — '+b.description.slice(0,120):'');
+  }).join('\n') : '';
+
+  return {dreamDigest:dreamDigest, spiritDigest:spiritDigest, commDigest:commDigest, visitDigest:visitDigest, moonDigest:moonDigest, prophecyDigest:prophecyDigest, manifestDigest:manifestDigest, threadDigest:threadDigest, peopleDigest:peopleDigest, patternDigest:patternDigest, chartSummary:chartSummary, dreamCount:dreams.length, ancestorDigest:ancestorDigest, incubationDigest:incubationDigest, sigConfsDigest:sigConfsDigest, elixirDigest:elixirDigest, songDigest:songDigest, sacredDateDigest:sacredDateDigest, herbDigest:herbDigest, beingsDigest:beingsDigest};
 }
 
 async function askArchive() {
@@ -6317,7 +6386,7 @@ async function askArchive() {
   if (result) { result.style.display = 'block'; result.innerHTML = '<div style="font-family:Space Mono;font-size:.6rem;color:rgba(201,185,154,.35);">Weaving the threads…</div>'; }
 
   // Build full archive context
-  const ctx = buildFullArchiveContext({ maxDreams: 128, maxSpirit: 40, bodyLen: 300 });
+  const ctx = buildFullArchiveContext({ maxDreams: 128, maxSpirit: 80, bodyLen: 500 });
 
   const prompt = `You are a pattern analyst and spiritual counselor working with Tiff's complete archive — dreams, waking practice, spiritual signals, presences, prophecies, manifestations, and more. Answer her specific question by searching through everything provided.
 
@@ -6352,9 +6421,33 @@ ${ctx.manifestDigest || 'None logged yet.'}
 DREAM THREADS:
 ${ctx.threadDigest || 'None created yet.'}
 
+ANCESTOR PROFILES & INTERACTIONS:
+${ctx.ancestorDigest || 'No ancestors logged yet.'}
+
+DREAM INCUBATIONS (intentions set + linked dreams):
+${ctx.incubationDigest || 'No incubations logged yet.'}
+
+SIGNAL CONFIRMATIONS (comm dictionary signals confirmed in waking life):
+${ctx.sigConfsDigest || 'No confirmations logged yet.'}
+
+ELIXIRS & BLENDS:
+${ctx.elixirDigest || 'No elixirs logged yet.'}
+
+MUSICAL GUIDANCE (songs received as spiritual signals):
+${ctx.songDigest || 'No song guidance logged yet.'}
+
+SACRED & PERSONAL DATES:
+${ctx.sacredDateDigest || 'No personal dates logged yet.'}
+
+HERB WORK & BLENDS:
+${ctx.herbDigest || 'No herb notes logged yet.'}
+
+SPIRIT BEINGS & ENTITIES:
+${ctx.beingsDigest || 'No custom beings logged yet.'}
+
 NAMED PATTERNS: ${ctx.patternDigest}
 
-Answer the question thoroughly and specifically. Reference actual dream titles, dates, people, and entries. If you find a pattern, describe it with evidence. Write as flowing prose — conversational but precise. 3-6 paragraphs. Address her as Tiff.`;
+Answer the question thoroughly and specifically, drawing on the FULL archive — dreams, journals, shadow work, rituals, readings, ancestors, elixirs, signals, songs, herbs, and all other entries. Reference actual titles, dates, people, and specific details. If you find a pattern, name it with evidence. Write as flowing prose — conversational but precise. 3-6 paragraphs. Address her as Tiff.`;
 
   try {
     const data = await claudeAPI(apiKey, {model:'claude-sonnet-4-6', max_tokens:1500, messages:[{role:'user', content:prompt}]});
