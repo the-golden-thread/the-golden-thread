@@ -389,9 +389,10 @@ h1 em { display:block; font-style:italic; font-weight:300; font-size:.42em; lett
 </svg></div>
   <h1>The Golden Thread<em>As Above, So Below</em></h1>
   <div class="stats-bar">
-    <div class="stat"><span id="s-total">128</span>Dreams</div>
-    <div class="stat"><span id="s-journal">0</span>Journal Entries</div>
-    <div class="stat"><span id="s-workings">0</span>Workings</div>
+    <div class="stat"><span id="s-dreams">0</span>Dreams</div>
+    <div class="stat"><span id="s-practice">0</span>Practice</div>
+    <div class="stat"><span id="s-grimoire">0</span>Grimoire</div>
+    <div class="stat"><span id="s-insight">0</span>Insight</div>
   </div>
 </header>
 
@@ -7180,9 +7181,26 @@ function renderDreams(){
     card.onclick=()=>openDream(d);
     grid.appendChild(card);
   });
-  document.getElementById('s-total').textContent=dreams.length;
-  document.getElementById('s-journal').textContent=SPIRIT_ENTRIES.filter(e=>e.type==='journal').length;
-  document.getElementById('s-workings').textContent=SPIRIT_ENTRIES.filter(e=>e.type==='workings'||e.type==='shadow').length;
+  // Four-pillar stats
+  const _practiceCount = SPIRIT_ENTRIES.filter(function(e){return e&&e.type;}).length;
+  var _ancestors = (typeof getAncestors==='function') ? getAncestors() : [];
+  var _places = [];
+  try { _places = JSON.parse(localStorage.getItem('gt_places')||'[]'); } catch(e){}
+  var _userHerbs = [];
+  try { _userHerbs = JSON.parse(localStorage.getItem('gt_user_herbs')||'[]'); } catch(e){}
+  var _hblends = [];
+  try { _hblends = JSON.parse(localStorage.getItem('gt_hblends')||'[]'); } catch(e){}
+  const _grimoireCount = (COMM_ENTRIES ? COMM_ENTRIES.length : 0)
+    + _ancestors.length
+    + ELIXIRS.length
+    + SONGS.length
+    + _places.length
+    + _userHerbs.length
+    + _hblends.length;
+  document.getElementById('s-dreams').textContent = dreams.length;
+  document.getElementById('s-practice').textContent = _practiceCount;
+  document.getElementById('s-grimoire').textContent = _grimoireCount;
+  document.getElementById('s-insight').textContent = INSIGHTS.length;
 }
 
 let _currentDream = null;
@@ -9119,24 +9137,31 @@ async function initSanctum() {
   // Populate stats grid
   const statsGrid = document.getElementById('sanctum-stats-grid');
   if (statsGrid) {
-    const dreamCount = dreams.length;
-    const spiritCount = SPIRIT_ENTRIES.filter(e=>e.type==='journal').length;
-    const workingsCount = SPIRIT_ENTRIES.filter(e=>e.type==='workings'||e.type==='shadow').length;
-    const patternCount = INSIGHTS.length;
-    const songCount = SONGS.length;
-    const elixirCount = ELIXIRS.length;
-    const flaggedCount = dreams.filter(d => loadDreamFlags(d.id).length > 0).length;
-    const count1010 = dreams.filter(d => d.date && isBirthday(d.date)).length;
+    // Breakdown by sub-type for the detail grid
+    var _gAnc = (typeof getAncestors==='function') ? getAncestors() : [];
+    var _gPlaces = []; try { _gPlaces = JSON.parse(localStorage.getItem('gt_places')||'[]'); } catch(e){}
+    var _gHerbs = []; try { _gHerbs = JSON.parse(localStorage.getItem('gt_user_herbs')||'[]'); } catch(e){}
+    var _gBlends = []; try { _gBlends = JSON.parse(localStorage.getItem('gt_hblends')||'[]'); } catch(e){}
     statsGrid.innerHTML = [
-      {n: dreamCount, l: 'Dreams Archived'},
-      {n: spiritCount, l: 'Journal Entries'},
-      {n: workingsCount, l: 'Workings & Shadow'},
-      {n: patternCount, l: 'Patterns Found'},
-      {n: songCount, l: 'Notable Songs'},
-      {n: elixirCount, l: 'Elixirs'},
-      {n: flaggedCount, l: 'Flagged Dreams'},
-    ].map(s=>`<div style="text-align:center;">
-      <div style="font-size:1.8rem;font-weight:300;font-family:'Cormorant Garamond',serif;color:var(--parchment);margin-bottom:2px;">${s.n}</div>
+      // Dreams breakdown
+      {n: dreams.length,                                                            l: 'Dreams Archived',    dim: false},
+      {n: dreams.filter(d=>loadDreamFlags(d.id).includes('prophecy')).length,      l: 'Prophetic',          dim: true},
+      {n: dreams.filter(d=>loadDreamFlags(d.id).includes('lucid')).length,         l: 'Lucid',              dim: true},
+      {n: dreams.filter(d=>d.date&&isBirthday(d.date)).length,                     l: '10/10 Dreams',       dim: true},
+      // Practice breakdown
+      {n: SPIRIT_ENTRIES.filter(e=>e&&e.type).length,                              l: 'Practice Entries',   dim: false},
+      {n: SPIRIT_ENTRIES.filter(e=>e&&e.type==='journal').length,                  l: 'Journal',            dim: true},
+      {n: SPIRIT_ENTRIES.filter(e=>e&&(e.type==='workings'||e.type==='shadow')).length, l: 'Workings & Shadow', dim: true},
+      {n: SPIRIT_ENTRIES.filter(e=>e&&(e.type==='readings'||e.type==='gateway')).length, l: 'Readings & Gateway', dim: true},
+      // Grimoire breakdown
+      {n: (COMM_ENTRIES?COMM_ENTRIES.length:0)+_gAnc.length+ELIXIRS.length+SONGS.length+_gPlaces.length+_gHerbs.length+_gBlends.length, l: 'Grimoire Entries', dim: false},
+      {n: COMM_ENTRIES ? COMM_ENTRIES.length : 0,                                  l: 'Comm Dictionary',    dim: true},
+      {n: ELIXIRS.length,                                                           l: 'Elixirs',            dim: true},
+      {n: SONGS.length,                                                             l: 'Notable Songs',      dim: true},
+      // Insight
+      {n: INSIGHTS.length,                                                          l: 'Patterns Found',     dim: false},
+    ].map(s=>`<div style="text-align:center;${s.dim?'opacity:0.55;':''}">
+      <div style="font-size:${s.dim?'1.3':'1.8'}rem;font-weight:300;font-family:'Cormorant Garamond',serif;color:var(--parchment);margin-bottom:2px;">${s.n}</div>
       <div style="font-family:'Space Mono',monospace;font-size:.52rem;color:rgba(201,185,154,.4);letter-spacing:.08em;text-transform:uppercase;">${s.l}</div>
     </div>`).join('');
   }
