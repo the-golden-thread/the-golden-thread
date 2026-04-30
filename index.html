@@ -11441,10 +11441,29 @@ function getLastNewMoon() {
   return lastNew.toISOString().slice(0, 10);
 }
 
+// Actual full moon dates UTC (accurate lookup table 2025-2029)
+const _FULL_MOONS = [
+  '2025-01-13','2025-02-12','2025-03-14','2025-04-13','2025-05-12','2025-06-11',
+  '2025-07-10','2025-08-09','2025-09-07','2025-10-07','2025-11-05','2025-12-04',
+  '2026-01-03','2026-02-01','2026-03-03','2026-04-02','2026-05-01','2026-05-31',
+  '2026-06-29','2026-07-29','2026-08-28','2026-09-26','2026-10-26','2026-11-24',
+  '2026-12-23','2027-01-22','2027-02-20','2027-03-22','2027-04-21','2027-05-20',
+  '2027-06-19','2027-07-18','2027-08-17','2027-09-15','2027-10-15','2027-11-13',
+  '2027-12-13','2028-01-12','2028-02-11','2028-03-12','2028-04-11','2028-05-10',
+  '2028-06-08','2028-07-08','2028-08-06','2028-09-04','2028-10-04','2028-11-02',
+  '2028-12-02'
+];
+
 function getNextFullMoon(newMoonDateStr) {
-  const nm = new Date(newMoonDateStr + 'T12:00:00Z'); // UTC to avoid local-tz shift
-  const full = new Date(nm.getTime() + 14.765 * 86400000);
-  return full.toISOString().slice(0, 10);
+  // Find the nearest full moon on or after the new moon date
+  var nmTime = new Date(newMoonDateStr + 'T00:00:00Z').getTime();
+  for (var i = 0; i < _FULL_MOONS.length; i++) {
+    var fTime = new Date(_FULL_MOONS[i] + 'T00:00:00Z').getTime();
+    if (fTime >= nmTime) return _FULL_MOONS[i];
+  }
+  // Fallback to arithmetic for dates beyond table
+  var nm = new Date(newMoonDateStr + 'T12:00:00Z');
+  return new Date(nm.getTime() + 14.77 * 86400000).toISOString().slice(0, 10);
 }
 
 function getCycleLabel(newMoonDateStr) {
