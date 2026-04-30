@@ -211,6 +211,7 @@ h1 em { display:block; font-style:italic; font-weight:300; font-size:.42em; lett
 .flag-chip.flag-lucid.flag-active { background:#6b8b9b; border-color:#6b8b9b; }
 .flag-chip.flag-guide.flag-active { background:#9b6bab; border-color:#9b6bab; }
 .flag-chip.flag-notable.flag-active { background:#6b8b5a; border-color:#6b8b5a; }
+.flag-chip.flag-sync1010.flag-active { background:#c9a84c; border-color:#c9a84c; color:#1a1610; }
 .card-flags { display:flex; gap:4px; position:absolute; top:10px; right:14px; }
 .card-flag { font-size:.7rem; line-height:1; }
 /* ── EDITABLE INTERPRETATION ── */
@@ -704,6 +705,7 @@ h1 em { display:block; font-style:italic; font-weight:300; font-size:.42em; lett
       <button onclick="setActiveFlagFilter('lucid')" id="flag-btn-lucid" style="font-family:'Space Mono',monospace;font-size:.55rem;letter-spacing:.06em;padding:5px 11px;border:1px solid rgba(201,185,154,.2);background:transparent;color:rgba(201,185,154,.6);cursor:pointer;">👁 Lucid</button>
       <button onclick="setActiveFlagFilter('guide')" id="flag-btn-guide" style="font-family:'Space Mono',monospace;font-size:.55rem;letter-spacing:.06em;padding:5px 11px;border:1px solid rgba(201,185,154,.2);background:transparent;color:rgba(201,185,154,.6);cursor:pointer;">✨ Guide</button>
       <button onclick="setActiveFlagFilter('notable')" id="flag-btn-notable" style="font-family:'Space Mono',monospace;font-size:.55rem;letter-spacing:.06em;padding:5px 11px;border:1px solid rgba(201,185,154,.2);background:transparent;color:rgba(201,185,154,.6);cursor:pointer;">💡 Notable</button>
+      <button onclick="setActiveFlagFilter('sync1010')" id="flag-btn-sync1010" style="font-family:'Space Mono',monospace;font-size:.55rem;letter-spacing:.06em;padding:5px 11px;border:1px solid rgba(201,168,76,.25);background:transparent;color:rgba(201,168,76,.7);cursor:pointer;">✦ 1010</button>
     </div>
     <div class="viv-filter">
       <label>Min vividness</label>
@@ -1449,6 +1451,7 @@ const FLAGS = [
   {id:'lucid',     label:'👁 Lucid',      emoji:'👁', col:'#6b8b9b'},
   {id:'guide',     label:'✨ Guide',      emoji:'✨', col:'#9b6bab'},
   {id:'notable',   label:'💡 Notable',   emoji:'💡', col:'#6b8b5a'},
+  {id:'sync1010',  label:'✦ 1010',       emoji:'✦',  col:'#c9a84c'},
 ];
 
 // ── PERSISTENCE (localStorage for local file use) ──
@@ -7434,6 +7437,37 @@ function openEditDream(dreamId) {
   });
   catF.appendChild(catLbl);
   catF.appendChild(catWrap);
+  // Custom category input
+  var customCatRow = document.createElement('div');
+  customCatRow.style.cssText = 'display:flex;gap:6px;margin-top:8px;';
+  var customCatInput = document.createElement('input');
+  customCatInput.type = 'text';
+  customCatInput.id = 'ed-custom-cat-input';
+  customCatInput.placeholder = 'Add custom category…';
+  customCatInput.style.cssText = "flex:1;background:rgba(255,255,255,.04);border:1px solid rgba(201,185,154,.2);color:var(--parchment);font-family:'Space Mono',monospace;font-size:.55rem;padding:5px 10px;outline:none;letter-spacing:.04em;";
+  var customCatBtn = document.createElement('button');
+  customCatBtn.type = 'button';
+  customCatBtn.textContent = '+ Add';
+  customCatBtn.style.cssText = "font-family:'Space Mono',monospace;font-size:.5rem;letter-spacing:.06em;padding:5px 12px;border:1px solid rgba(201,185,154,.25);background:rgba(255,255,255,.03);color:rgba(201,185,154,.7);cursor:pointer;white-space:nowrap;";
+  customCatBtn.onclick = function() {
+    var val = customCatInput.value.trim().toLowerCase().replace(/\s+/g,'-').replace(/[^a-z0-9-]/g,'');
+    if (!val) return;
+    if (document.querySelector('#ed-cats input[value="'+val+'"]')) { customCatInput.value=''; return; }
+    var l2 = document.createElement('label');
+    l2.className = 'cat-chk on';
+    l2.style.borderColor = 'rgba(201,185,154,.5)';
+    var cb2 = document.createElement('input');
+    cb2.type = 'checkbox'; cb2.value = val; cb2.checked = true;
+    cb2.addEventListener('change', function() { l2.classList.toggle('on', this.checked); });
+    l2.appendChild(cb2);
+    l2.appendChild(document.createTextNode(customCatInput.value.trim()));
+    catWrap.appendChild(l2);
+    customCatInput.value = '';
+  };
+  customCatInput.addEventListener('keydown', function(e){ if(e.key==='Enter'){e.preventDefault();customCatBtn.click();} });
+  customCatRow.appendChild(customCatInput);
+  customCatRow.appendChild(customCatBtn);
+  catF.appendChild(customCatRow);
   inner.appendChild(catF);
 
   // People
@@ -7461,6 +7495,42 @@ function openEditDream(dreamId) {
   });
   pplF.appendChild(pplLbl);
   pplF.appendChild(pplChips);
+  // Custom being/person input
+  var customPplRow = document.createElement('div');
+  customPplRow.style.cssText = 'display:flex;gap:6px;margin-top:8px;';
+  var customPplInput = document.createElement('input');
+  customPplInput.type = 'text';
+  customPplInput.id = 'ed-custom-person-input';
+  customPplInput.placeholder = 'Add unlisted being or person…';
+  customPplInput.style.cssText = "flex:1;background:rgba(255,255,255,.04);border:1px solid rgba(107,79,138,.2);color:var(--parchment);font-family:'Space Mono',monospace;font-size:.55rem;padding:5px 10px;outline:none;letter-spacing:.04em;";
+  var customPplBtn = document.createElement('button');
+  customPplBtn.type = 'button';
+  customPplBtn.textContent = '+ Add';
+  customPplBtn.style.cssText = "font-family:'Space Mono',monospace;font-size:.5rem;letter-spacing:.06em;padding:5px 12px;border:1px solid rgba(107,79,138,.3);background:rgba(107,79,138,.08);color:rgba(155,107,171,.8);cursor:pointer;white-space:nowrap;";
+  customPplBtn.onclick = function() {
+    var rawName = customPplInput.value.trim();
+    if (!rawName) return;
+    var pid = 'custom_' + rawName.toLowerCase().replace(/\s+/g,'_').replace(/[^a-z0-9_]/g,'');
+    if (document.querySelector('.pchip-check[data-pid="'+pid+'"]')) { customPplInput.value=''; return; }
+    var chip2 = document.createElement('span');
+    chip2.className = 'pchip-check selected';
+    chip2.dataset.pid = pid;
+    chip2.dataset.customName = rawName;
+    chip2.style.cssText = "font-family:'Space Mono',monospace;font-size:.52rem;letter-spacing:.05em;padding:3px 10px;cursor:pointer;transition:all .15s;user-select:none;border:1px solid rgba(155,107,171,.7);background:rgba(107,79,138,.2);color:rgba(200,160,220,.9);";
+    chip2.textContent = rawName;
+    chip2.onclick = function() {
+      var s = this.classList.toggle('selected');
+      this.style.borderColor = s ? 'rgba(155,107,171,.7)' : 'rgba(201,185,154,.18)';
+      this.style.background = s ? 'rgba(107,79,138,.2)' : 'transparent';
+      this.style.color = s ? 'rgba(200,160,220,.9)' : 'rgba(201,185,154,.5)';
+    };
+    pplChips.appendChild(chip2);
+    customPplInput.value = '';
+  };
+  customPplInput.addEventListener('keydown', function(e){ if(e.key==='Enter'){e.preventDefault();customPplBtn.click();} });
+  customPplRow.appendChild(customPplInput);
+  customPplRow.appendChild(customPplBtn);
+  pplF.appendChild(customPplRow);
   inner.appendChild(pplF);
 
   // Buttons
@@ -9147,7 +9217,7 @@ async function initSanctum() {
       {n: dreams.length,                                                            l: 'Dreams Archived',    dim: false},
       {n: dreams.filter(d=>loadDreamFlags(d.id).includes('prophecy')).length,      l: 'Prophetic',          dim: true},
       {n: dreams.filter(d=>loadDreamFlags(d.id).includes('lucid')).length,         l: 'Lucid',              dim: true},
-      {n: dreams.filter(d=>d.date&&isBirthday(d.date)).length,                     l: '10/10 Dreams',       dim: true},
+      {n: dreams.filter(d=>(d.date&&isBirthday(d.date))||loadDreamFlags(d.id).includes('sync1010')).length, l: '10/10 Dreams', dim: true},
       // Practice breakdown
       {n: SPIRIT_ENTRIES.filter(e=>e&&e.type).length,                              l: 'Practice Entries',   dim: false},
       {n: SPIRIT_ENTRIES.filter(e=>e&&e.type==='journal').length,                  l: 'Journal',            dim: true},
@@ -11372,7 +11442,7 @@ function getLastNewMoon() {
 }
 
 function getNextFullMoon(newMoonDateStr) {
-  const nm = new Date(newMoonDateStr + 'T12:00:00');
+  const nm = new Date(newMoonDateStr + 'T12:00:00Z'); // UTC to avoid local-tz shift
   const full = new Date(nm.getTime() + 14.765 * 86400000);
   return full.toISOString().slice(0, 10);
 }
@@ -12183,11 +12253,11 @@ function gtAlert(msg) {
 function renderMoonWindowBanner() {
   var el = document.getElementById('moon-window-banner');
   if (!el) return;
-  var today = new Date().toISOString().slice(0,10);
+  var today = (typeof localDateStr==='function') ? localDateStr() : new Date().toLocaleDateString('en-CA');
   var nm = getLastNewMoon();
   var full = getNextFullMoon(nm);
-  var fullDt = new Date(full + 'T12:00:00');
-  var nmDt = new Date(nm + 'T12:00:00');
+  var fullDt = new Date(full + 'T12:00:00Z');
+  var nmDt = new Date(nm + 'T12:00:00Z');
   var fullMinus1 = new Date(fullDt.getTime() - 86400000).toISOString().slice(0,10);
   var fullPlus1 = new Date(fullDt.getTime() + 86400000).toISOString().slice(0,10);
   var nmMinus2 = new Date(nmDt.getTime() - 2*86400000).toISOString().slice(0,10);
