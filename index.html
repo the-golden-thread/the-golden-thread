@@ -444,6 +444,8 @@ h1 em { display:block; font-style:italic; font-weight:300; font-size:.42em; lett
     <button class="sub-tab-btn" id="sub-btn-comms-g" onclick="switchGrimoire('comms',this)">📡 Signals</button>
     <button class="sub-tab-btn" id="sub-btn-ancestors-g" onclick="switchGrimoire('ancestors',this)">≥ Ancestors</button>
     <button class="sub-tab-btn" id="sub-btn-places-g" onclick="switchGrimoire('places',this)">&#9672; Places</button>
+    <button class="sub-tab-btn" id="sub-btn-wheel-g" onclick="switchGrimoire('wheel',this)">☽ Wheel</button>
+    <button class="sub-tab-btn" id="sub-btn-rituals-g" onclick="switchGrimoire('rituals',this)">⊕ Rituals</button>
   </div>
 </div>
 
@@ -7111,6 +7113,8 @@ function switchGrimoire(type, btn) {
   if (!dest) return;
   if (type === 'ancestors') { dest.innerHTML = ''; renderAncestors(); return; }
   if (type === 'places') { dest.innerHTML = ''; renderPlaces(); return; }
+  if (type === 'wheel') { dest.innerHTML = ''; renderWheelOfYear(); return; }
+  if (type === 'rituals') { dest.innerHTML = ''; renderRitualsTab(); return; }
   const panelMap = {charts:'charts', beings:'people', elixirs:'elixirs', songs:'songs', comms:'comms'};
   const panelId = panelMap[type] || type;
   const src = document.getElementById('tab-' + panelId);
@@ -11897,6 +11901,7 @@ async function generateVisitationReflection(id) {
 // SACRED DATES
 // ══════════════════════════════════════════════
 const SACRED_DATES_KEY = 'gt_sacred_dates';
+const RITUALS_LS = 'gt_rituals';
 
 const ASTRO_EVENTS_2026 = [
   {id:'ae1',  title:'Spring Equinox',         date:'2026-03-20', type:'astronomical', notes:'Sun enters Aries. Equal light and dark.', fixed:true},
@@ -11964,7 +11969,9 @@ function renderSacredDatesBanner() {
     const t = SACRED_DATE_TYPES[d.type] || SACRED_DATE_TYPES.custom;
     const daysAway = Math.round((new Date(d.date + 'T12:00:00') - new Date()) / 86400000);
     const when = daysAway === 0 ? 'Today' : daysAway === 1 ? 'Tomorrow' : `In ${daysAway} days`;
-    return `<div style="padding:12px 16px;background:${t.bg};border:1px solid ${t.border};border-left:3px solid ${t.dot};margin-bottom:8px;cursor:pointer;" onclick="switchTab('practice');setTimeout(()=>switchPractice('sacredDates'),100);">
+    var _sabbatMatch = getWotySabbatForDate(d.date);
+    var _clickFn = _sabbatMatch ? "openWotyModal('" + _sabbatMatch.id + "',true)" : "switchTab('practice');setTimeout(()=>switchPractice('sacredDates'),100)";
+    return `<div style="padding:12px 16px;background:${t.bg};border:1px solid ${t.border};border-left:3px solid ${t.dot};margin-bottom:8px;cursor:pointer;" onclick="${_clickFn}">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:3px;">
         <span style="font-family:'Space Mono',monospace;font-size:.52rem;color:${t.color};letter-spacing:.08em;text-transform:uppercase;">${t.label}</span>
         <span style="font-family:'Space Mono',monospace;font-size:.52rem;color:rgba(201,185,154,.5);">${when} · ${d.date}</span>
@@ -12277,6 +12284,333 @@ function gtAlert(msg) {
 // ══════════════════════════════════════════════
 // MOON WINDOW NOTIFICATIONS
 // ══════════════════════════════════════════════
+
+// ══════════════════════════════════════════════
+// WHEEL OF THE YEAR
+// ══════════════════════════════════════════════
+
+const WOTY_SABBATS = [
+  {
+    id: 'imbolc', name: 'Imbolc', type: 'Greater Sabbat',
+    mmdd: '02-01', approxDate: 'February 1–2',
+    emoji: '🕯️', element: 'Fire', direction: 'NE',
+    colors: ['white','pale gold','light green'],
+    herbs: ['Angelica','Basil','Blackberry','Chamomile','Clover','Lavender'],
+    crystals: ['Amethyst','Bloodstone','Garnet','Rose Quartz'],
+    themes: ['Purification','New beginnings','Returning light','Seeds of intention','Brigid's flame','Quickening'],
+    desc: 'Imbolc marks the first stirring of spring beneath the snow — the fire of Brigid returning warmth and light to the world. The seeds planted at Yule begin their quiet waking. This is a time of purification, of clearing winter's residue from body and home, and of kindling your own inner flame for the season ahead. The lambs are born. The light is perceptibly lengthening.',
+    practices: ['Light every candle in your home at dusk','Make a Brigid's cross from reeds or paper','Write your intentions for the coming season on paper and burn it in a flame','Take a ritual bath with salt and lavender to purify the body','Leave an offering of bread and milk on the doorstep for Brigid','Tend a flame all evening in vigil'],
+    journalPrompts: ['What needs purifying in my life right now?','What seed did I plant at the Winter Solstice — has it stirred?','Where is my inner flame dim? What would ignite it?']
+  },
+  {
+    id: 'ostara', name: 'Ostara', type: 'Lesser Sabbat',
+    mmdd: '03-20', approxDate: 'March 20–21',
+    emoji: '🐣', element: 'Air', direction: 'E',
+    colors: ['yellow','pale green','lavender','pink'],
+    herbs: ['Daffodil','Jasmine','Lemon Balm','Mint','Violet','Woodruff'],
+    crystals: ['Aquamarine','Amazonite','Clear Quartz','Moonstone'],
+    themes: ['Spring Equinox','Balance','Fertility','Emergence','New growth','Dawn'],
+    desc: 'Ostara is the Spring Equinox — the moment when day and night stand in perfect balance before light overtakes darkness for the season. It is the sabbat of emergence, of things pushing up through soil, of the energy that has been dormant since Samhain now visibly alive. The hare, the egg, the dawn — all symbols of potential made tangible.',
+    practices: ['Decorate eggs with symbols meaningful to your practice','Plant seeds in soil — even small herb seeds in a pot — as a ritual of intention','Leave offerings at sunrise','Make a balance altar with equal representations of dark and light','Go outside and observe what is newly emerging in nature','Begin a new creative or spiritual project'],
+    journalPrompts: ['What has been gestating since the dark half of the year?','What am I emerging into?','Where do I still need to find balance?']
+  },
+  {
+    id: 'beltane', name: 'Beltane', type: 'Greater Sabbat',
+    mmdd: '05-01', approxDate: 'May 1',
+    emoji: '🔥', element: 'Fire', direction: 'SE',
+    colors: ['red','green','white','gold'],
+    herbs: ['Hawthorn','Marigold','Rose','Rowan','St. John's Wort','Woodruff'],
+    crystals: ['Carnelian','Emerald','Malachite','Rose Quartz','Ruby'],
+    themes: ['Sacred union','Vitality','Passion','Abundance','Life force','The thinning veil'],
+    desc: 'Beltane is the fire festival of life force and sacred union — the moment when the land is fully in bloom and the energy of fertility, passion, and vitality is at its height. The veil between worlds thins again as it does at Samhain, but here the crossing is celebratory. Fires are lit for purification and blessing; people and livestock pass between them to be cleansed and protected for the season ahead.',
+    practices: ['Build or tend a fire and pass objects through or around its smoke for blessing','Weave flowers into a crown or garland','Leave offerings at a tree (especially hawthorn) for the Fair Folk','Wash your face in morning dew for beauty and vitality','Write a love letter to something you want to call into your life','Dance, make music, move your body — Beltane honors physical joy'],
+    journalPrompts: ['What am I most alive about right now?','What union — within myself or with another — wants to be honored?','Where is my life force flowing freely? Where is it blocked?']
+  },
+  {
+    id: 'litha', name: 'Litha', type: 'Lesser Sabbat',
+    mmdd: '06-21', approxDate: 'June 20–21',
+    emoji: '☀️', element: 'Fire', direction: 'S',
+    colors: ['gold','orange','yellow','white'],
+    herbs: ['Chamomile','Lavender','Mugwort','Rose','St. John's Wort','Vervain'],
+    crystals: ['Citrine','Sunstone','Tiger's Eye','Topaz'],
+    themes: ['Summer Solstice','Peak light','Abundance','Solar power','Shadow work','The turning point'],
+    desc: 'Litha is the Summer Solstice — the zenith of the sun's power, the longest day, the moment of peak illumination before the slow return of darkness begins. It is a paradox: the height of light contains the seed of its own diminishment. This makes it a potent time for shadow work alongside celebration, for looking directly at what the full light reveals — the parts of yourself that abundance and success expose.',
+    practices: ['Rise to watch the sunrise if possible','Create a sun wheel from flowers or herbs','Charge crystals, water, and magical tools in the sun','Burn a written list of what you want to release as the light begins to wane','Make sun water for use in ritual and cleansing','Build a bonfire or light a large candle at peak noon or sunset'],
+    journalPrompts: ['What has fully bloomed this year that I want to celebrate?','What does the full light reveal that I've been avoiding?','As the light begins to wane from here, what am I ready to release?']
+  },
+  {
+    id: 'lughnasadh', name: 'Lughnasadh', type: 'Greater Sabbat',
+    mmdd: '08-01', approxDate: 'August 1',
+    emoji: '🌾', element: 'Earth', direction: 'SW',
+    colors: ['gold','orange','brown','green'],
+    herbs: ['Cornflower','Heather','Marigold','Sunflower','Wheat','Yarrow'],
+    crystals: ['Aventurine','Citrine','Peridot','Sardonyx'],
+    themes: ['First harvest','Sacrifice','Gratitude','Skill and craft','Letting go of what's ripe','The bread of labor'],
+    desc: 'Lughnasadh is the first harvest festival — the moment when the fields are cut, the first grain is brought in, and the community gathers to give thanks for what has grown. It is named for Lugh, the Celtic god of skill and craft, and carries his energy of excellence and mastery. What have you worked toward all year that is now ready to be cut and brought in? What must be sacrificed — the grain cut at its peak — so that something greater can continue?',
+    practices: ['Bake bread from scratch as a ritual act — knead intention into the dough','Make corn dollies or grain figures','Harvest something from your garden or gather wild herbs','Share a meal with people you love','Acknowledge a skill or craft you've been developing — give it formal recognition','Make an offering of the first fruits of any project you've been growing'],
+    journalPrompts: ['What have I been working toward that is now ready to be harvested?','What sacrifice is being asked of me right now?','What skills have I developed this year that deserve acknowledgment?']
+  },
+  {
+    id: 'mabon', name: 'Mabon', type: 'Lesser Sabbat',
+    mmdd: '09-22', approxDate: 'September 22–23',
+    emoji: '🍂', element: 'Earth', direction: 'W',
+    colors: ['orange','brown','burgundy','gold','deep red'],
+    herbs: ['Apple','Blackberry','Hazel','Marigold','Mugwort','Sage'],
+    crystals: ['Amber','Lapis Lazuli','Obsidian','Sapphire'],
+    themes: ['Autumn Equinox','Second harvest','Gratitude','Balance','Preparation','Descent into the dark'],
+    desc: 'Mabon is the Autumn Equinox — the second moment of perfect balance, this time before darkness overtakes light. It is the second harvest, the time of wine and fruit, of taking stock of everything the year has produced before the descent into winter. The light is visibly withdrawing; there is a sweetness and a melancholy in the air. This is the time to give deep thanks and to begin preparing — physically, emotionally, spiritually — for the inner season ahead.',
+    practices: ['Create a gratitude altar with objects representing what you've received this year','Preserve something — make jam, dry herbs, save seeds — as a ritual of storing abundance','Make a list of everything you're grateful for from the past year','Spend time outdoors with the changing leaves','Make offerings of wine, cider, or fruit to the land','Begin a period of intentional reflection before Samhain'],
+    journalPrompts: ['What is the full harvest of this year — what actually grew?','What do I need to preserve and carry forward into the dark?','What am I releasing as the light withdraws?']
+  },
+  {
+    id: 'samhain', name: 'Samhain', type: 'Greater Sabbat',
+    mmdd: '10-31', approxDate: 'October 31',
+    emoji: '🕸️', element: 'Spirit', direction: 'N',
+    colors: ['black','orange','purple','silver','deep red'],
+    herbs: ['Apple','Dittany of Crete','Mugwort','Nightshade','Rosemary','Wormwood'],
+    crystals: ['Amethyst','Black Obsidian','Black Tourmaline','Labradorite','Onyx'],
+    themes: ['The third harvest','Ancestor veneration','The thinning veil','Death and transformation','Divination','The Witch's New Year'],
+    desc: 'Samhain is the most sacred night of the Wheel — the third and final harvest, the Witch's New Year, the night when the veil between the living and the dead is thinnest. The ancestors walk freely; the Fair Folk are out; the old year dies so the new one can be born. This is the time of deep divination, of communing with those who have passed, of facing the shadow with directness. It falls close to your birthday, Tiff, giving it particular personal resonance as a threshold crossing.',
+    practices: ['Set a place at the table for beloved ancestors and those who have passed','Create a dumb supper — a silent meal eaten in their honor','Light a candle for each person you've lost','Do your most significant divination of the year (tarot, oracle, scrying)','Visit a place with personal meaning to honor the past year','Write down what you are releasing and burn it at midnight','Speak directly to your ancestors — Bumpa, Grammy, Mariam'],
+    journalPrompts: ['Who from the other side do I most want to commune with tonight?','What am I releasing as the year dies?','What intentions am I carrying as the Witch's New Year begins?']
+  },
+  {
+    id: 'yule', name: 'Yule', type: 'Lesser Sabbat',
+    mmdd: '12-21', approxDate: 'December 21–22',
+    emoji: '❄️', element: 'Earth', direction: 'N',
+    colors: ['red','green','gold','white','silver'],
+    herbs: ['Bay','Holly','Ivy','Mistletoe','Pine','Rosemary'],
+    crystals: ['Bloodstone','Clear Quartz','Diamond','Ruby','Snowflake Obsidian'],
+    themes: ['Winter Solstice','The longest night','The return of the light','Rest','The seed in darkness','The rebirth of the sun'],
+    desc: 'Yule is the Winter Solstice — the longest night of the year, the moment when darkness reaches its fullest point and, in the same breath, begins to yield. The sun is reborn. This is not yet the warmth of spring — it is the seed of light held in the deepest dark, promising return. It is a time for rest, for going inward, for gathering around warmth and fire, and for setting the deepest intentions of the new solar year into the dark soil of the coming cycle.',
+    practices: ['Stay up through the longest night and greet the sunrise','Decorate with evergreens — they are symbols of life persisting through darkness','Light a Yule log (or a large candle) and keep it burning as long as possible','Make gifts by hand for people you love','Write your deepest intentions for the coming year on paper and bury them','Create a ritual of rest — give yourself full permission to stop and simply be'],
+    journalPrompts: ['What seed am I planting in this darkest moment?','What have I learned in the long dark of this year?','What is the light I'm calling back into my life?']
+  }
+];
+
+function getWotySabbatForDate(dateStr) {
+  // Returns a sabbat if dateStr is within 2 days of it
+  if (!dateStr) return null;
+  var d = new Date(dateStr + 'T12:00:00Z');
+  var year = d.getUTCFullYear();
+  for (var i = 0; i < WOTY_SABBATS.length; i++) {
+    var s = WOTY_SABBATS[i];
+    var sDate = new Date(year + '-' + s.mmdd + 'T12:00:00Z');
+    var diff = Math.abs(d.getTime() - sDate.getTime()) / 86400000;
+    if (diff <= 2) return s;
+  }
+  return null;
+}
+
+function getUpcomingWotySabbat(today) {
+  var d = new Date(today + 'T12:00:00Z');
+  var year = d.getUTCFullYear();
+  var best = null, bestDiff = 999;
+  for (var rep = 0; rep <= 1; rep++) {
+    WOTY_SABBATS.forEach(function(s) {
+      var sDate = new Date((year + rep) + '-' + s.mmdd + 'T12:00:00Z');
+      var diff = (sDate.getTime() - d.getTime()) / 86400000;
+      if (diff >= 0 && diff < bestDiff) { bestDiff = diff; best = {sabbat: s, date: (year+rep)+'-'+s.mmdd, daysAway: Math.round(diff)}; }
+    });
+  }
+  return best;
+}
+
+function openWotyModal(sabbatId, fromBanner) {
+  var s = WOTY_SABBATS.find(function(x){ return x.id === sabbatId; });
+  if (!s) return;
+  var existing = document.getElementById('woty-modal-overlay');
+  if (existing) existing.remove();
+
+  var today = (typeof localDateStr==='function') ? localDateStr() : new Date().toLocaleDateString('en-CA');
+  var year = new Date().getFullYear();
+  var sabbatDate = year + '-' + s.mmdd;
+  var daysAway = Math.round((new Date(sabbatDate+'T12:00:00Z').getTime() - new Date(today+'T12:00:00Z').getTime()) / 86400000);
+  var whenStr = daysAway === 0 ? 'Today' : daysAway === 1 ? 'Tomorrow' : daysAway > 0 ? 'In ' + daysAway + ' days' : Math.abs(daysAway) + ' days ago';
+
+  var ov = document.createElement('div');
+  ov.id = 'woty-modal-overlay';
+  ov.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(10,8,20,.88);z-index:2000;overflow-y:auto;display:flex;align-items:flex-start;justify-content:center;padding:20px 0 40px;';
+  ov.onclick = function(e) { if (e.target === ov) ov.remove(); };
+
+  var cacheKey = 'gt_woty_ritual_' + s.id + '_' + year;
+
+  ov.innerHTML = \`
+    <div style="max-width:640px;width:100%;margin:0 16px;background:rgba(18,14,30,.97);border:1px solid rgba(201,185,154,.12);padding:0 0 32px;">
+      <!-- Header -->
+      <div style="padding:24px 24px 20px;border-bottom:1px solid rgba(201,185,154,.08);position:relative;">
+        <button onclick="document.getElementById('woty-modal-overlay').remove()" style="position:absolute;top:16px;right:16px;background:transparent;border:none;color:rgba(201,185,154,.4);font-size:1.2rem;cursor:pointer;padding:4px 8px;">✕</button>
+        <div style="font-family:'Space Mono',monospace;font-size:.5rem;letter-spacing:.12em;text-transform:uppercase;color:rgba(201,185,154,.4);margin-bottom:6px;">\${s.type} · \${s.approxDate} · \${whenStr}</div>
+        <div style="font-size:2.2rem;margin-bottom:4px;">\${s.emoji}</div>
+        <div style="font-family:'Cormorant Garamond',serif;font-size:1.9rem;font-weight:400;color:var(--parchment);letter-spacing:.04em;">\${s.name}</div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;">
+          \${s.themes.map(function(t){ return '<span style="font-family:Space Mono,monospace;font-size:.48rem;letter-spacing:.06em;padding:2px 8px;border:1px solid rgba(201,185,154,.15);color:rgba(201,185,154,.55);">'+t+'</span>'; }).join('')}
+        </div>
+      </div>
+
+      <!-- Description -->
+      <div style="padding:20px 24px;border-bottom:1px solid rgba(201,185,154,.06);">
+        <p style="font-family:'Cormorant Garamond',serif;font-size:1rem;font-weight:300;line-height:1.8;color:rgba(240,235,224,.75);">\${s.desc}</p>
+      </div>
+
+      <!-- Correspondences -->
+      <div style="padding:16px 24px;border-bottom:1px solid rgba(201,185,154,.06);display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+        <div>
+          <div style="font-family:'Space Mono',monospace;font-size:.48rem;letter-spacing:.1em;text-transform:uppercase;color:rgba(201,185,154,.35);margin-bottom:8px;">Herbs & Plants</div>
+          <div style="font-family:'Cormorant Garamond',serif;font-size:.92rem;color:rgba(201,185,154,.65);">\${s.herbs.join(' · ')}</div>
+        </div>
+        <div>
+          <div style="font-family:'Space Mono',monospace;font-size:.48rem;letter-spacing:.1em;text-transform:uppercase;color:rgba(201,185,154,.35);margin-bottom:8px;">Crystals</div>
+          <div style="font-family:'Cormorant Garamond',serif;font-size:.92rem;color:rgba(201,185,154,.65);">\${s.crystals.join(' · ')}</div>
+        </div>
+        <div>
+          <div style="font-family:'Space Mono',monospace;font-size:.48rem;letter-spacing:.1em;text-transform:uppercase;color:rgba(201,185,154,.35);margin-bottom:8px;">Colors</div>
+          <div style="font-family:'Cormorant Garamond',serif;font-size:.92rem;color:rgba(201,185,154,.65);">\${s.colors.join(' · ')}</div>
+        </div>
+        <div>
+          <div style="font-family:'Space Mono',monospace;font-size:.48rem;letter-spacing:.1em;text-transform:uppercase;color:rgba(201,185,154,.35);margin-bottom:8px;">Element · Direction</div>
+          <div style="font-family:'Cormorant Garamond',serif;font-size:.92rem;color:rgba(201,185,154,.65);">\${s.element} · \${s.direction}</div>
+        </div>
+      </div>
+
+      <!-- Traditional Practices -->
+      <div style="padding:16px 24px;border-bottom:1px solid rgba(201,185,154,.06);">
+        <div style="font-family:'Space Mono',monospace;font-size:.48rem;letter-spacing:.1em;text-transform:uppercase;color:rgba(201,185,154,.35);margin-bottom:12px;">Traditional Practices</div>
+        \${s.practices.map(function(p){ return '<div style="display:flex;gap:10px;margin-bottom:8px;"><span style="color:rgba(201,185,154,.3);flex-shrink:0;">✦</span><span style="font-family:Cormorant Garamond,serif;font-size:.95rem;font-weight:300;color:rgba(240,235,224,.7);line-height:1.6;">'+p+'</span></div>'; }).join('')}
+      </div>
+
+      <!-- Journal Prompts -->
+      <div style="padding:16px 24px;border-bottom:1px solid rgba(201,185,154,.06);">
+        <div style="font-family:'Space Mono',monospace;font-size:.48rem;letter-spacing:.1em;text-transform:uppercase;color:rgba(201,185,154,.35);margin-bottom:12px;">Journal Prompts</div>
+        \${s.journalPrompts.map(function(p){ return '<div style="font-family:Cormorant Garamond,serif;font-style:italic;font-size:.95rem;font-weight:300;color:rgba(201,185,154,.6);margin-bottom:6px;padding-left:12px;border-left:2px solid rgba(201,185,154,.15);">'+p+'</div>'; }).join('')}
+      </div>
+
+      <!-- AI Ritual Generator -->
+      <div style="padding:20px 24px;">
+        <div style="font-family:'Space Mono',monospace;font-size:.48rem;letter-spacing:.1em;text-transform:uppercase;color:rgba(201,185,154,.35);margin-bottom:12px;">✦ Personal Ritual</div>
+        <div id="woty-ritual-result" style="display:none;background:rgba(107,79,138,.06);border-left:2px solid var(--mariam);padding:14px 16px;margin-bottom:14px;font-family:'Cormorant Garamond',serif;font-size:.95rem;font-weight:300;line-height:1.85;color:rgba(240,235,224,.78);"></div>
+        <button id="woty-ritual-btn" onclick="generateWotyRitual('\${s.id}', '\${cacheKey}')" style="font-family:'Space Mono',monospace;font-size:.52rem;letter-spacing:.07em;padding:8px 18px;border:1px solid rgba(155,107,171,.4);background:rgba(107,79,138,.1);color:rgba(200,160,220,.85);cursor:pointer;width:100%;">✦ Generate My \${s.name} Ritual</button>
+      </div>
+    </div>
+  \`;
+
+  document.body.appendChild(ov);
+
+  // Load cached ritual if exists
+  var cached = localStorage.getItem(cacheKey);
+  if (cached) {
+    var resultEl = document.getElementById('woty-ritual-result');
+    if (resultEl) {
+      resultEl.style.display = 'block';
+      resultEl.innerHTML = cached.split(/\n{2,}/).map(function(p){ return '<p style="margin-bottom:.7em;">'+p+'</p>'; }).join('');
+      var btn = document.getElementById('woty-ritual-btn');
+      if (btn) btn.textContent = '↺ Regenerate My ' + s.name + ' Ritual';
+    }
+  }
+}
+
+async function generateWotyRitual(sabbatId, cacheKey) {
+  var apiKey = getApiKey();
+  if (!apiKey) { gtAlert('Add your API key in Settings first.'); return; }
+  var s = WOTY_SABBATS.find(function(x){ return x.id === sabbatId; });
+  if (!s) return;
+  var btn = document.getElementById('woty-ritual-btn');
+  var resultEl = document.getElementById('woty-ritual-result');
+  if (btn) { btn.disabled = true; btn.textContent = '⊙ Generating…'; }
+  if (resultEl) { resultEl.style.display = 'block'; resultEl.innerHTML = '<span style="font-family:Space Mono;font-size:.58rem;color:rgba(201,185,154,.35);">Weaving your ritual…</span>'; }
+  try {
+    // Gather context
+    var cycleCtx = (typeof getCycleContext==='function') ? getCycleContext() : '';
+    var astro = (typeof getAstroForDate==='function') ? getAstroForDate(localDateStr()) : {};
+    var recentDreams = dreams.slice(-5).map(function(d){ return '"'+d.title+'" ('+d.date+')'; }).join(', ');
+    var prompt = 'You are a spiritual guide and witch creating a personalised ' + s.name + ' ritual for Tiff.\n\n'
+      + 'ABOUT TIFF: Libra Sun 17°, Aries Moon, Capricorn Rising, Scorpio stellium. Pure Generator 4/6 Human Design. '
+      + 'Claircognizant and clairsentient. Reiki II attuned. Active dreamworker. Shadow worker. Lives in Lakeville, MA. '
+      + 'Birthday Oct 10 — 1010 is her core synchronicity number.\n\n'
+      + (cycleCtx ? 'CURRENT CYCLE: ' + cycleCtx + '\n\n' : '')
+      + (astro.moon ? 'CURRENT SKY: Moon in ' + astro.moon + ', Sun in ' + (astro.sun||'') + (astro.retro?' — retrograde planets: '+astro.retro:'') + '\n\n' : '')
+      + 'RECENT DREAMS: ' + (recentDreams || 'none') + '\n\n'
+      + 'SABBAT: ' + s.name + ' (' + s.approxDate + ')\n'
+      + 'THEMES: ' + s.themes.join(', ') + '\n'
+      + 'ELEMENT: ' + s.element + '\n'
+      + 'HERBS AVAILABLE: ' + s.herbs.join(', ') + '\n'
+      + 'CRYSTALS: ' + s.crystals.join(', ') + '\n\n'
+      + 'Create a personalised ritual for Tiff for this ' + s.name + '. Draw on her natal chart, her current cycle phase and the sky, and what you know of her practice. '
+      + 'Include: a simple altar setup, a grounding or opening, the main ritual work (tailored to her and this specific sabbat), and a closing. '
+      + 'Make it achievable as a solo practitioner. Weave in her astrological placements and current cycle phase where relevant. '
+      + 'Write as flowing prose — warm, specific, and personal. 4-6 paragraphs. Address her as Tiff. No bullet points or headers.';
+
+    var data = await claudeAPI(apiKey, {model:'claude-sonnet-4-6', max_tokens:2000, messages:[{role:'user',content:prompt}]});
+    var text = (data.content && data.content.find(function(c){return c.type==='text';})) ? data.content.find(function(c){return c.type==='text';}).text : '';
+    if (!text) throw new Error('Empty response');
+    localStorage.setItem(cacheKey, text);
+    // Also save to Rituals tab
+    (function() {
+      var rList = [];
+      try { rList = JSON.parse(localStorage.getItem('gt_rituals')||'[]'); } catch(e){}
+      var existIdx = rList.findIndex(function(r){ return r.wotyId === s.id && r.wotyYear === year; });
+      var entry = { id: 'woty_'+s.id+'_'+year, name: s.name + ' Ritual', purpose: 'sabbat',
+        wotyId: s.id, wotyYear: year, date: new Date().toISOString().slice(0,10),
+        body: text, tools: s.herbs.slice(0,3).join(', ') + '; ' + s.crystals.slice(0,2).join(', '),
+        outcome: '', generated: true, tradition: 'All Traditions',
+        sources: 'Generated from Wheel of the Year — ' + s.name };
+      if (existIdx > -1) rList[existIdx] = entry; else rList.unshift(entry);
+      try { localStorage.setItem('gt_rituals', JSON.stringify(rList)); } catch(e){}
+    })();
+    if (resultEl) resultEl.innerHTML = text.split(/\n{2,}/).map(function(p){ return '<p style="margin-bottom:.7em;">'+p+'</p>'; }).join('');
+    if (btn) { btn.disabled = false; btn.textContent = '↺ Regenerate My ' + s.name + ' Ritual'; }
+  } catch(err) {
+    if (resultEl) resultEl.innerHTML = '<span style="color:rgba(220,100,100,.7);font-size:.85rem;">Error: ' + (err&&err.message?err.message:String(err)) + '</span>';
+    if (btn) { btn.disabled = false; btn.textContent = '✦ Generate My ' + s.name + ' Ritual'; }
+  }
+}
+
+function renderWheelOfYear() {
+  var dest = document.getElementById('gt-content');
+  if (!dest) return;
+  var today = (typeof localDateStr==='function') ? localDateStr() : new Date().toLocaleDateString('en-CA');
+  var year = new Date().getFullYear();
+
+  var html2 = '<div style="padding:4px 0 24px;">'
+    + '<div style="font-family:'Space Mono',monospace;font-size:.55rem;color:rgba(201,185,154,.4);letter-spacing:.12em;text-transform:uppercase;margin-bottom:20px;">☽ Wheel of the Year ' + year + '</div>';
+
+  WOTY_SABBATS.forEach(function(s) {
+    var sDateStr = year + '-' + s.mmdd;
+    var sDate = new Date(sDateStr + 'T12:00:00Z');
+    var todayDate = new Date(today + 'T12:00:00Z');
+    var daysAway = Math.round((sDate.getTime() - todayDate.getTime()) / 86400000);
+    var isPast = daysAway < -2;
+    var isNow = Math.abs(daysAway) <= 2;
+    var isSoon = daysAway > 2 && daysAway <= 21;
+
+    var borderCol = isNow ? 'rgba(201,168,76,.6)' : isSoon ? 'rgba(155,107,171,.4)' : 'rgba(201,185,154,.1)';
+    var opacity = isPast ? '0.45' : '1';
+    var badge = isNow ? '<span style="font-family:Space Mono,monospace;font-size:.44rem;letter-spacing:.07em;padding:2px 7px;background:rgba(201,168,76,.2);color:rgba(201,168,76,.9);border:1px solid rgba(201,168,76,.3);">NOW</span>'
+               : isSoon ? '<span style="font-family:Space Mono,monospace;font-size:.44rem;letter-spacing:.07em;padding:2px 7px;background:rgba(155,107,171,.15);color:rgba(155,107,171,.8);border:1px solid rgba(155,107,171,.25);">SOON · ' + daysAway + 'd</span>'
+               : isPast ? '<span style="font-family:Space Mono,monospace;font-size:.44rem;letter-spacing:.07em;color:rgba(201,185,154,.25);">PASSED</span>'
+               : '<span style="font-family:Space Mono,monospace;font-size:.44rem;letter-spacing:.07em;color:rgba(201,185,154,.35);">' + daysAway + ' days</span>';
+
+    html2 += '<div onclick="openWotyModal('' + s.id + '')" style="display:flex;align-items:flex-start;gap:16px;padding:14px 16px;border:1px solid ' + borderCol + ';margin-bottom:8px;cursor:pointer;opacity:' + opacity + ';transition:all .2s;" '
+      + 'onmouseover="this.style.background='rgba(255,255,255,.02)'" onmouseout="this.style.background='transparent'">'
+      + '<div style="font-size:1.6rem;flex-shrink:0;margin-top:2px;">' + s.emoji + '</div>'
+      + '<div style="flex:1;min-width:0;">'
+      + '<div style="display:flex;align-items:baseline;gap:10px;margin-bottom:3px;">'
+      + '<span style="font-family:'Cormorant Garamond',serif;font-size:1.15rem;color:rgba(240,235,224,.9);">' + s.name + '</span>'
+      + '<span style="font-family:'Space Mono',monospace;font-size:.46rem;color:rgba(201,185,154,.35);">' + s.approxDate + '</span>'
+      + badge
+      + '</div>'
+      + '<div style="font-family:'Space Mono',monospace;font-size:.48rem;color:rgba(201,185,154,.35);letter-spacing:.04em;">' + s.type.toUpperCase() + ' · ' + s.element.toUpperCase() + '</div>'
+      + '<div style="font-family:'Cormorant Garamond',serif;font-size:.88rem;color:rgba(201,185,154,.5);margin-top:4px;">' + s.themes.slice(0,3).join(' · ') + '</div>'
+      + '</div>'
+      + '<div style="font-family:Space Mono,monospace;font-size:.6rem;color:rgba(201,185,154,.25);flex-shrink:0;margin-top:6px;">→</div>'
+      + '</div>';
+  });
+
+  html2 += '</div>';
+  dest.innerHTML = html2;
+}
+
+
 function renderMoonWindowBanner() {
   var el = document.querySelector('#gt-content #moon-window-banner') || document.getElementById('moon-window-banner');
   if (!el) return;
@@ -12302,12 +12636,417 @@ function renderMoonWindowBanner() {
   else if (today === nmMinus1) { msg = moonLabel + '\uD83C\uDF18 New Moon tomorrow \u2014 the cycle closes tonight. What are you releasing?'; col = 'rgba(107,79,138,.2)'; }
   else if (today === nmPlus1) { msg = moonLabel + '\uD83C\uDF11 New Moon was last night \u2014 the seed is planted. What did you set?'; col = 'rgba(107,79,138,.15)'; }
   if (msg) {
+    // Find closest sabbat (for potential banner link)
+    var todaySabbat = getWotySabbatForDate(today);
+    var nextWoty = getUpcomingWotySabbat(today);
+    var clickHandler = '';
+    if (todaySabbat) clickHandler = 'onclick="openWotyModal(\'' + todaySabbat.id + '\',true)"';
+    else if (nextWoty && nextWoty.daysAway <= 3) clickHandler = 'onclick="openWotyModal(\'' + nextWoty.sabbat.id + '\',true)"';
     el.style.display = 'block';
-    el.innerHTML = '<div style="padding:10px 16px;background:'+col+';border:1px solid rgba(201,185,154,.15);border-radius:2px;font-family:\'Cormorant Garamond\',serif;font-size:.95rem;font-weight:300;color:rgba(240,235,224,.85);line-height:1.6;">'+msg+'</div>';
+    el.innerHTML = '<div style="padding:10px 16px;background:'+col+';border:1px solid rgba(201,185,154,.15);border-radius:2px;font-family:\'Cormorant Garamond\',serif;font-size:.95rem;font-weight:300;color:rgba(240,235,224,.85);line-height:1.6;cursor:'+(clickHandler?'pointer':'default')+';display:flex;align-items:center;justify-content:space-between;" '+clickHandler+'>'+msg+(clickHandler?'<span style="font-family:Space Mono,monospace;font-size:.48rem;color:rgba(201,185,154,.35);margin-left:12px;flex-shrink:0;">Tap to open →</span>':'')+'</div>';
   } else {
     el.style.display = 'none';
   }
 }
+
+
+// ══════════════════════════════════════════════
+// RITUALS TAB
+// ══════════════════════════════════════════════
+
+const RITUAL_PURPOSES = [
+  {id:'all',        label:'All'},
+  {id:'protection', label:'Protection'},
+  {id:'release',    label:'Release & Banishing'},
+  {id:'manifestation', label:'Manifestation'},
+  {id:'healing',    label:'Healing'},
+  {id:'ancestor',   label:'Ancestor Work'},
+  {id:'dream',      label:'Dream Work'},
+  {id:'shadow',     label:'Shadow Work'},
+  {id:'love',       label:'Love & Relationships'},
+  {id:'abundance',  label:'Abundance'},
+  {id:'divination', label:'Divination'},
+  {id:'cleansing',  label:'Cleansing & Purification'},
+  {id:'sabbat',     label:'Sabbat'},
+  {id:'other',      label:'Other'},
+];
+
+const RITUAL_TRADITIONS = [
+  {id:'all',        label:'All Traditions (Default)'},
+  {id:'wicca',      label:'Wicca / Traditional Wicca'},
+  {id:'kitchen',    label:'Kitchen Witchcraft'},
+  {id:'ceremonial', label:'Ceremonial / High Magic'},
+  {id:'folk',       label:'Folk Magic (Appalachian, Hoodoo, Rootwork)'},
+  {id:'celtic',     label:'Celtic / Druidic'},
+  {id:'hedge',      label:'Hedge Witchcraft'},
+  {id:'chaos',      label:'Chaos Magic'},
+  {id:'green',      label:'Green Witchcraft'},
+];
+
+function getRituals() {
+  try { return JSON.parse(localStorage.getItem(RITUALS_LS)||'[]'); } catch(e) { return []; }
+}
+function saveRituals(list) {
+  try { localStorage.setItem(RITUALS_LS, JSON.stringify(list)); } catch(e) {}
+}
+
+var _ritualPurposeFilter = 'all';
+
+function renderRitualsTab() {
+  var dest = document.getElementById('gt-content');
+  if (!dest) return;
+  var rituals = getRituals();
+  var filtered = _ritualPurposeFilter === 'all' ? rituals
+    : rituals.filter(function(r){ return r.purpose === _ritualPurposeFilter; });
+
+  var chips = RITUAL_PURPOSES.map(function(p) {
+    var count = p.id === 'all' ? rituals.length : rituals.filter(function(r){return r.purpose===p.id;}).length;
+    var active = _ritualPurposeFilter === p.id;
+    return '<button onclick="setRitualFilter(''+p.id+'')" style="font-family:'Space Mono',monospace;font-size:.48rem;letter-spacing:.06em;padding:4px 11px;border:1px solid '+(active?'rgba(155,107,171,.7)':'rgba(201,185,154,.18)')+';background:'+(active?'rgba(107,79,138,.25)':'transparent')+';color:'+(active?'rgba(200,160,220,.9)':'rgba(201,185,154,.45)')+';cursor:pointer;white-space:nowrap;">'+p.label+(count&&!active?' ('+count+')':'')+'</button>';
+  }).join('');
+
+  var cards = filtered.length ? filtered.map(function(r){ return renderRitualCard(r); }).join('')
+    : '<div style="font-family:'Space Mono',monospace;font-size:.58rem;color:rgba(201,185,154,.3);padding:24px 0;text-align:center;">No rituals yet for this purpose.</div>';
+
+  dest.innerHTML = '<div style="padding:4px 0 32px;">'
+    + '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">'
+    + '<div style="font-family:'Space Mono',monospace;font-size:.55rem;color:rgba(201,185,154,.4);letter-spacing:.12em;text-transform:uppercase;">⊕ Rituals</div>'
+    + '<div style="display:flex;gap:8px;">'
+    + '<button onclick="openAddRitualModal()" style="font-family:'Space Mono',monospace;font-size:.49rem;letter-spacing:.07em;padding:6px 13px;border:1px solid rgba(201,185,154,.2);background:transparent;color:rgba(201,185,154,.55);cursor:pointer;">+ Add My Own</button>'
+    + '<button onclick="openGenerateRitualModal()" style="font-family:'Space Mono',monospace;font-size:.49rem;letter-spacing:.07em;padding:6px 13px;border:1px solid rgba(155,107,171,.4);background:rgba(107,79,138,.1);color:rgba(200,160,220,.8);cursor:pointer;">✦ Generate</button>'
+    + '</div></div>'
+    + '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:20px;">'+chips+'</div>'
+    + '<div id="rituals-list">'+cards+'</div>'
+    + '</div>';
+}
+
+function setRitualFilter(f) {
+  _ritualPurposeFilter = f;
+  renderRitualsTab();
+}
+
+function renderRitualCard(r) {
+  var purposeObj = RITUAL_PURPOSES.find(function(p){return p.id===r.purpose;}) || {label:r.purpose};
+  var dateStr = r.date ? ' · ' + r.date : '';
+  return '<div style="border:1px solid rgba(201,185,154,.1);padding:16px;margin-bottom:10px;cursor:pointer;" onclick="openRitualModal(''+r.id+'')"'
+    + ' onmouseover="this.style.background='rgba(255,255,255,.02)'" onmouseout="this.style.background='transparent'">'
+    + '<div style="display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:5px;">'
+    + '<div style="font-family:'Cormorant Garamond',serif;font-size:1.1rem;color:rgba(240,235,224,.9);">'+r.name+'</div>'
+    + '<div style="font-family:'Space Mono',monospace;font-size:.44rem;color:rgba(201,185,154,.35);white-space:nowrap;">'+purposeObj.label+dateStr+'</div>'
+    + '</div>'
+    + (r.generated ? '<div style="font-family:'Space Mono',monospace;font-size:.43rem;color:rgba(155,107,171,.5);letter-spacing:.05em;margin-bottom:4px;">✦ Generated · '+(r.tradition||'All Traditions')+'</div>' : '')
+    + '<div style="font-family:'Cormorant Garamond',serif;font-size:.88rem;color:rgba(201,185,154,.5);line-height:1.5;">'
+    + (r.body||'').replace(/<[^>]+>/g,'').slice(0,120)+(r.body&&r.body.length>120?'…':'')
+    + '</div>'
+    + '</div>';
+}
+
+function openRitualModal(id) {
+  var rituals = getRituals();
+  var r = rituals.find(function(x){return x.id===id;});
+  if (!r) return;
+  var existing = document.getElementById('ritual-view-overlay');
+  if (existing) existing.remove();
+  var purposeObj = RITUAL_PURPOSES.find(function(p){return p.id===r.purpose;}) || {label:r.purpose};
+
+  var bodyHtml = (r.body||'').replace(/^#+\s+[^\n]*/gm,'').trim()
+    .split(/\n{2,}/).map(function(p){return '<p style="margin-bottom:.8em;">'+p.replace(/\n/g,' ')+'</p>';}).join('');
+
+  var ov = document.createElement('div');
+  ov.id = 'ritual-view-overlay';
+  ov.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(10,8,20,.88);z-index:2000;overflow-y:auto;display:flex;align-items:flex-start;justify-content:center;padding:20px 0 40px;';
+  ov.onclick = function(e){ if(e.target===ov) ov.remove(); };
+  ov.innerHTML = '<div style="max-width:640px;width:100%;margin:0 16px;background:rgba(18,14,30,.97);border:1px solid rgba(201,185,154,.12);padding:0 0 28px;">'
+    + '<div style="padding:22px 22px 18px;border-bottom:1px solid rgba(201,185,154,.08);position:relative;">'
+    + '<button onclick="document.getElementById('ritual-view-overlay').remove()" style="position:absolute;top:14px;right:14px;background:transparent;border:none;color:rgba(201,185,154,.4);font-size:1.2rem;cursor:pointer;padding:4px 8px;">✕</button>'
+    + '<div style="font-family:'Space Mono',monospace;font-size:.48rem;letter-spacing:.1em;text-transform:uppercase;color:rgba(201,185,154,.35);margin-bottom:5px;">'+purposeObj.label+(r.date?' · '+r.date:'')+(r.generated?' · ✦ Generated':'')+'</div>'
+    + '<div style="font-family:'Cormorant Garamond',serif;font-size:1.7rem;color:var(--parchment);">'+r.name+'</div>'
+    + (r.tradition && r.tradition!=='All Traditions' ? '<div style="font-family:'Space Mono',monospace;font-size:.44rem;color:rgba(155,107,171,.55);margin-top:4px;">Tradition: '+r.tradition+'</div>' : '')
+    + '</div>'
+    + (r.tools ? '<div style="padding:14px 22px;border-bottom:1px solid rgba(201,185,154,.06);"><div style="font-family:'Space Mono',monospace;font-size:.46rem;letter-spacing:.09em;text-transform:uppercase;color:rgba(201,185,154,.32);margin-bottom:6px;">Tools & Ingredients</div><div style="font-family:'Cormorant Garamond',serif;font-size:.92rem;color:rgba(201,185,154,.65);">'+r.tools+'</div></div>' : '')
+    + '<div style="padding:16px 22px;'+(r.outcome?'border-bottom:1px solid rgba(201,185,154,.06);':'')+'">'
+    + '<div style="font-family:'Space Mono',monospace;font-size:.46rem;letter-spacing:.09em;text-transform:uppercase;color:rgba(201,185,154,.32);margin-bottom:10px;">The Ritual</div>'
+    + '<div style="font-family:'Cormorant Garamond',serif;font-size:.95rem;font-weight:300;line-height:1.85;color:rgba(240,235,224,.8);">'+bodyHtml+'</div>'
+    + (r.sources ? '<div style="margin-top:14px;padding-top:12px;border-top:1px solid rgba(201,185,154,.06);font-family:'Space Mono',monospace;font-size:.44rem;color:rgba(201,185,154,.3);letter-spacing:.04em;">Sources: '+r.sources+'</div>' : '')
+    + '</div>'
+    + (r.outcome ? '<div style="padding:14px 22px;"><div style="font-family:'Space Mono',monospace;font-size:.46rem;letter-spacing:.09em;text-transform:uppercase;color:rgba(201,185,154,.32);margin-bottom:6px;">Outcome Notes</div><div style="font-family:'Cormorant Garamond',serif;font-size:.92rem;font-weight:300;line-height:1.75;color:rgba(201,185,154,.65);">'+r.outcome+'</div></div>' : '')
+    + '<div style="padding:12px 22px 0;display:flex;gap:8px;">'
+    + '<button onclick="openEditRitualModal(''+r.id+'')" style="font-family:'Space Mono',monospace;font-size:.48rem;letter-spacing:.06em;padding:6px 14px;border:1px solid rgba(201,185,154,.2);background:transparent;color:rgba(201,185,154,.55);cursor:pointer;">Edit</button>'
+    + '<button onclick="deleteRitual(''+r.id+'')" style="font-family:'Space Mono',monospace;font-size:.48rem;letter-spacing:.06em;padding:6px 14px;border:1px solid rgba(200,80,80,.2);background:transparent;color:rgba(200,80,80,.45);cursor:pointer;">Delete</button>'
+    + '</div>'
+    + '</div>';
+  document.body.appendChild(ov);
+}
+
+function deleteRitual(id) {
+  if (!confirm('Delete this ritual?')) return;
+  var list = getRituals().filter(function(r){return r.id!==id;});
+  saveRituals(list);
+  var ov = document.getElementById('ritual-view-overlay');
+  if (ov) ov.remove();
+  renderRitualsTab();
+}
+
+function openAddRitualModal(prefill) {
+  var r = prefill || {};
+  var existing = document.getElementById('ritual-add-overlay');
+  if (existing) existing.remove();
+  var purposeOpts = RITUAL_PURPOSES.filter(function(p){return p.id!=='all';})
+    .map(function(p){return '<option value="'+p.id+'"'+(r.purpose===p.id?' selected':'')+'>'+p.label+'</option>';}).join('');
+  var ov = document.createElement('div');
+  ov.id = 'ritual-add-overlay';
+  ov.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(10,8,20,.88);z-index:2100;overflow-y:auto;display:flex;align-items:flex-start;justify-content:center;padding:20px 0 40px;';
+  ov.onclick = function(e){ if(e.target===ov) ov.remove(); };
+  var inputStyle = 'width:100%;box-sizing:border-box;background:rgba(255,255,255,.04);border:1px solid rgba(201,185,154,.18);color:var(--parchment);font-family:'Cormorant Garamond',serif;font-size:.95rem;padding:8px 12px;outline:none;';
+  var labelStyle = 'font-family:'Space Mono',monospace;font-size:.48rem;letter-spacing:.09em;text-transform:uppercase;color:rgba(201,185,154,.4);display:block;margin-bottom:5px;';
+  ov.innerHTML = '<div style="max-width:600px;width:100%;margin:0 16px;background:rgba(18,14,30,.97);border:1px solid rgba(201,185,154,.12);padding:24px;">'
+    + '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">'
+    + '<div style="font-family:'Cormorant Garamond',serif;font-size:1.4rem;color:var(--parchment);">'+(r.id?'Edit Ritual':'Add Ritual')+'</div>'
+    + '<button onclick="document.getElementById('ritual-add-overlay').remove()" style="background:transparent;border:none;color:rgba(201,185,154,.4);font-size:1.2rem;cursor:pointer;">✕</button>'
+    + '</div>'
+    + '<div style="margin-bottom:14px;"><label style="'+labelStyle+'">Ritual Name</label><input id="ra-name" type="text" value="'+(r.name||'')+'" style="'+inputStyle+'"></div>'
+    + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;">'
+    + '<div><label style="'+labelStyle+'">Purpose</label><select id="ra-purpose" style="'+inputStyle+'background:rgba(18,14,30,.9);"><option value="">Choose…</option>'+purposeOpts+'</select></div>'
+    + '<div><label style="'+labelStyle+'">Date Performed</label><input id="ra-date" type="date" value="'+(r.date||new Date().toISOString().slice(0,10))+'" style="'+inputStyle+'"></div>'
+    + '</div>'
+    + '<div style="margin-bottom:14px;"><label style="'+labelStyle+'">Tools & Ingredients</label><input id="ra-tools" type="text" value="'+(r.tools||'')+'" placeholder="candles, herbs, crystals, water…" style="'+inputStyle+'"></div>'
+    + '<div style="margin-bottom:14px;"><label style="'+labelStyle+'">The Ritual (steps, words, actions)</label><textarea id="ra-body" rows="8" style="'+inputStyle+'resize:vertical;">'+(r.body||'')+'</textarea></div>'
+    + '<div style="margin-bottom:20px;"><label style="'+labelStyle+'">Outcome Notes (optional)</label><textarea id="ra-outcome" rows="3" style="'+inputStyle+'resize:vertical;">'+(r.outcome||'')+'</textarea></div>'
+    + '<div style="display:flex;gap:8px;justify-content:flex-end;">'
+    + '<button onclick="document.getElementById('ritual-add-overlay').remove()" style="font-family:'Space Mono',monospace;font-size:.48rem;letter-spacing:.06em;padding:7px 16px;border:1px solid rgba(201,185,154,.15);background:transparent;color:rgba(201,185,154,.4);cursor:pointer;">Cancel</button>'
+    + '<button onclick="saveRitualFromForm(''+( r.id||'')+'','ra')" style="font-family:'Space Mono',monospace;font-size:.48rem;letter-spacing:.06em;padding:7px 16px;border:1px solid rgba(201,185,154,.3);background:rgba(255,255,255,.04);color:rgba(201,185,154,.8);cursor:pointer;">Save Ritual</button>'
+    + '</div></div>';
+  document.body.appendChild(ov);
+}
+
+function openEditRitualModal(id) {
+  var r = getRituals().find(function(x){return x.id===id;});
+  if (!r) return;
+  var ov = document.getElementById('ritual-view-overlay');
+  if (ov) ov.remove();
+  openAddRitualModal(r);
+}
+
+function saveRitualFromForm(existingId, prefix) {
+  var name = document.getElementById(prefix+'-name').value.trim();
+  var purpose = document.getElementById(prefix+'-purpose').value;
+  var date = document.getElementById(prefix+'-date').value;
+  var tools = document.getElementById(prefix+'-tools').value.trim();
+  var body = document.getElementById(prefix+'-body').value.trim();
+  var outcome = document.getElementById(prefix+'-outcome').value.trim();
+  if (!name) { gtAlert('Please give the ritual a name.'); return; }
+  if (!purpose) { gtAlert('Please choose a purpose.'); return; }
+  var list = getRituals();
+  if (existingId) {
+    var idx = list.findIndex(function(r){return r.id===existingId;});
+    if (idx>-1) list[idx] = Object.assign(list[idx],{name,purpose,date,tools,body,outcome});
+  } else {
+    list.unshift({id:'ritual_'+Date.now(),name,purpose,date,tools,body,outcome,generated:false,sources:'',tradition:''});
+  }
+  saveRituals(list);
+  var ov = document.getElementById('ritual-add-overlay');
+  if (ov) ov.remove();
+  renderRitualsTab();
+}
+
+// ── GENERATIVE COLLABORATIVE FLOW ────────────────────────────────────────
+
+var _genRitualState = { step: 0, proposal: null, intention: '', purpose: '', tradition: 'all' };
+
+function openGenerateRitualModal() {
+  var existing = document.getElementById('ritual-gen-overlay');
+  if (existing) existing.remove();
+  _genRitualState = { step: 1, proposal: null, intention: '', purpose: '', tradition: 'all' };
+  var ov = document.createElement('div');
+  ov.id = 'ritual-gen-overlay';
+  ov.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(10,8,20,.88);z-index:2100;overflow-y:auto;display:flex;align-items:flex-start;justify-content:center;padding:20px 0 40px;';
+  ov.onclick = function(e){ if(e.target===ov) ov.remove(); };
+  renderGenStep1(ov);
+  document.body.appendChild(ov);
+}
+
+function renderGenStep1(ov) {
+  var purposeOpts = RITUAL_PURPOSES.filter(function(p){return p.id!=='all';})
+    .map(function(p){return '<option value="'+p.id+'">'+p.label+'</option>';}).join('');
+  var tradOpts = RITUAL_TRADITIONS.map(function(t){
+    return '<option value="'+t.id+'"'+(t.id==='all'?' selected':'')+'>'+t.label+'</option>';
+  }).join('');
+  var inputStyle = 'width:100%;box-sizing:border-box;background:rgba(255,255,255,.04);border:1px solid rgba(201,185,154,.18);color:var(--parchment);font-family:'Cormorant Garamond',serif;font-size:.95rem;padding:8px 12px;outline:none;';
+  var labelStyle = 'font-family:'Space Mono',monospace;font-size:.48rem;letter-spacing:.09em;text-transform:uppercase;color:rgba(201,185,154,.4);display:block;margin-bottom:5px;';
+  ov.innerHTML = '<div style="max-width:600px;width:100%;margin:0 16px;background:rgba(18,14,30,.97);border:1px solid rgba(201,185,154,.12);padding:24px;">'
+    + '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">'
+    + '<div style="font-family:'Cormorant Garamond',serif;font-size:1.4rem;color:var(--parchment);">✦ Generate a Ritual</div>'
+    + '<button onclick="document.getElementById('ritual-gen-overlay').remove()" style="background:transparent;border:none;color:rgba(201,185,154,.4);font-size:1.2rem;cursor:pointer;">✕</button>'
+    + '</div>'
+    + '<div style="font-family:'Space Mono',monospace;font-size:.46rem;color:rgba(201,185,154,.3);letter-spacing:.06em;margin-bottom:20px;">Step 1 of 3 — Set Your Intention</div>'
+    + '<div style="margin-bottom:14px;"><label style="'+labelStyle+'">What is this ritual for? What do you need?</label>'
+    + '<textarea id="rg-intention" rows="4" placeholder="Describe your intention, situation, or what you're working with. The more specific, the more personal the ritual…" style="'+inputStyle+'resize:vertical;"></textarea></div>'
+    + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;">'
+    + '<div><label style="'+labelStyle+'">Purpose Category</label><select id="rg-purpose" style="'+inputStyle+'background:rgba(18,14,30,.9);"><option value="">Choose…</option>'+purposeOpts+'</select></div>'
+    + '<div><label style="'+labelStyle+'">Tradition Focus</label><select id="rg-tradition" style="'+inputStyle+'background:rgba(18,14,30,.9);">'+tradOpts+'</select></div>'
+    + '</div>'
+    + '<div style="background:rgba(107,79,138,.06);border:1px solid rgba(107,79,138,.15);padding:12px 14px;margin-bottom:18px;font-family:'Cormorant Garamond',serif;font-size:.88rem;color:rgba(201,185,154,.5);line-height:1.6;">'
+    + 'The AI will draw on your full archive — dreams, patterns, ancestors, practice — alongside traditional witchcraft sources. It will note where each piece of the ritual comes from.'
+    + '</div>'
+    + '<div style="display:flex;gap:8px;justify-content:flex-end;">'
+    + '<button onclick="document.getElementById('ritual-gen-overlay').remove()" style="font-family:'Space Mono',monospace;font-size:.48rem;letter-spacing:.06em;padding:7px 16px;border:1px solid rgba(201,185,154,.15);background:transparent;color:rgba(201,185,154,.4);cursor:pointer;">Cancel</button>'
+    + '<button onclick="genRitualStep2()" style="font-family:'Space Mono',monospace;font-size:.48rem;letter-spacing:.06em;padding:7px 18px;border:1px solid rgba(155,107,171,.4);background:rgba(107,79,138,.1);color:rgba(200,160,220,.8);cursor:pointer;">✦ Generate Proposal →</button>'
+    + '</div></div>';
+}
+
+async function genRitualStep2() {
+  var intention = document.getElementById('rg-intention').value.trim();
+  var purpose = document.getElementById('rg-purpose').value;
+  var tradition = document.getElementById('rg-tradition').value;
+  if (!intention) { gtAlert('Please describe your intention first.'); return; }
+  if (!purpose) { gtAlert('Please choose a purpose category.'); return; }
+  _genRitualState.intention = intention;
+  _genRitualState.purpose = purpose;
+  _genRitualState.tradition = tradition;
+
+  var apiKey = getApiKey();
+  if (!apiKey) { gtAlert('Add your API key in Settings first.'); return; }
+
+  var ov = document.getElementById('ritual-gen-overlay');
+  ov.innerHTML = '<div style="max-width:600px;width:100%;margin:0 16px;background:rgba(18,14,30,.97);border:1px solid rgba(201,185,154,.12);padding:40px 24px;text-align:center;">'
+    + '<div style="font-family:'Space Mono',monospace;font-size:.6rem;color:rgba(155,107,171,.6);letter-spacing:.1em;animation:pulse 2s infinite;">✦ Weaving your ritual…</div>'
+    + '</div>';
+
+  try {
+    var ctx = buildFullArchiveContext({ maxDreams: 30, maxSpirit: 20, bodyLen: 200 });
+    var cycleCtx = (typeof getCycleContext==='function') ? getCycleContext() : '';
+    var astro = (typeof getAstroForDate==='function') ? getAstroForDate(localDateStr()) : {};
+    var tradName = RITUAL_TRADITIONS.find(function(t){return t.id===tradition;});
+    var tradInstruction = tradition==='all' ? 'Draw on all traditions relevant to this intention (Wicca, folk magic, Celtic, ceremonial, kitchen witchcraft, green witchcraft, etc.) as appropriate.'
+      : 'Focus primarily on ' + (tradName?tradName.label:tradition) + ' tradition for this ritual.';
+
+    var purposeName = RITUAL_PURPOSES.find(function(p){return p.id===purpose;});
+
+    var prompt = 'You are a master ritualist and spiritual guide with deep knowledge of diverse witchcraft traditions, folk magic, ceremonial magic, and indigenous spiritual practices. '
+      + 'You are creating a personalised ritual proposal for Tiff in a collaborative format.\n\n'
+      + 'ABOUT TIFF: Libra Sun 17°, Aries Moon, Capricorn Rising, Scorpio stellium. Pure Generator 4/6 Human Design. '
+      + 'Claircognizant and clairsentient. Reiki II attuned. Active dreamworker and shadow worker. Lives in Lakeville MA. '
+      + 'Birthday October 10 — 1010 is her core synchronicity signature. Witch and channel.\n\n'
+      + (cycleCtx ? 'CURRENT CYCLE: ' + cycleCtx + '\n\n' : '')
+      + (astro.moon ? 'CURRENT SKY: Moon in ' + astro.moon + (astro.sun?', Sun in '+astro.sun:'') + (astro.retro?' — retrogrades: '+astro.retro:'') + '\n\n' : '')
+      + 'HER ARCHIVE CONTEXT:\n'
+      + 'Recent dreams: ' + ctx.dreamDigest.slice(0,600) + '\n\n'
+      + 'Active patterns: ' + ctx.patternDigest + '\n\n'
+      + (ctx.ancestorDigest ? 'Ancestor work: ' + ctx.ancestorDigest.slice(0,300) + '\n\n' : '')
+      + (ctx.commDigest ? 'Communication signals: ' + ctx.commDigest.slice(0,200) + '\n\n' : '')
+      + 'INTENTION: ' + intention + '\n'
+      + 'PURPOSE CATEGORY: ' + (purposeName?purposeName.label:purpose) + '\n\n'
+      + tradInstruction + '\n\n'
+      + 'Create a detailed ritual proposal structured into exactly these 6 sections. For each section, after your suggestions, add a "Sources:" line in italics noting the tradition(s) or source each element comes from (e.g., "Sources: Candle colour from Wiccan correspondence tables; salt circle from British folk magic; calling quarters from Gardnerian Wicca").\n\n'
+      + 'Sections:\n'
+      + '## Timing & Setting\n'
+      + '## What You Will Need\n'
+      + '## Opening & Sacred Space\n'
+      + '## The Work\n'
+      + '## Closing\n'
+      + '## A Note for Tiff\n\n'
+      + 'Make it specific to her — reference her natal chart, current cycle phase, and archive where genuinely relevant. '
+      + 'Write the sections as flowing prose (not bullet lists for the work itself). Be grounded in real tradition. Address her as Tiff in the final note only.';
+
+    var data = await claudeAPI(apiKey, {model:'claude-sonnet-4-6', max_tokens:2500, messages:[{role:'user',content:prompt}]});
+    var text = (data.content && data.content.find(function(c){return c.type==='text';})) ? data.content.find(function(c){return c.type==='text';}).text : '';
+    if (!text) throw new Error('Empty response');
+    _genRitualState.proposal = text;
+    _genRitualState.step = 2;
+    renderGenStep3(ov, text, intention, tradition);
+  } catch(err) {
+    ov.innerHTML = '<div style="max-width:600px;width:100%;margin:0 16px;background:rgba(18,14,30,.97);border:1px solid rgba(201,185,154,.12);padding:24px;">'
+      + '<div style="color:rgba(220,80,80,.7);font-family:'Space Mono',monospace;font-size:.6rem;margin-bottom:14px;">Error: '+(err&&err.message?err.message:String(err))+'</div>'
+      + '<button onclick="document.getElementById('ritual-gen-overlay').remove()" style="font-family:'Space Mono',monospace;font-size:.5rem;padding:6px 14px;border:1px solid rgba(201,185,154,.2);background:transparent;color:rgba(201,185,154,.5);cursor:pointer;">Close</button>'
+      + '</div>';
+  }
+}
+
+function renderGenStep3(ov, text, intention, tradition) {
+  // Parse into sections
+  var sections = {};
+  var sectionOrder = ['Timing & Setting','What You Will Need','Opening & Sacred Space','The Work','Closing','A Note for Tiff'];
+  var remaining = text;
+  sectionOrder.forEach(function(title, i) {
+    var re = new RegExp('##\\s+' + title.replace(/[.*+?^${}()|[\]\\]/g,'\\$&') + '\\s*\\n', 'i');
+    var nextTitles = sectionOrder.slice(i+1).map(function(t){ return '##\\s+'+t.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'\\s*\\n'; });
+    var endRe = nextTitles.length ? new RegExp(nextTitles.join('|'),'i') : null;
+    var startMatch = remaining.search(re);
+    if (startMatch === -1) { sections[title] = ''; return; }
+    var afterStart = remaining.slice(startMatch).replace(re,'');
+    var endMatch = endRe ? afterStart.search(endRe) : -1;
+    sections[title] = (endMatch > -1 ? afterStart.slice(0,endMatch) : afterStart).trim();
+  });
+
+  var tradName = RITUAL_TRADITIONS.find(function(t){return t.id===tradition;});
+  var inputStyle = 'width:100%;box-sizing:border-box;background:rgba(255,255,255,.04);border:1px solid rgba(201,185,154,.18);color:var(--parchment);font-family:'Cormorant Garamond',serif;font-size:.92rem;padding:8px 12px;outline:none;resize:vertical;line-height:1.6;';
+  var labelStyle = 'font-family:'Space Mono',monospace;font-size:.46rem;letter-spacing:.09em;text-transform:uppercase;color:rgba(201,185,154,.38);display:block;margin-bottom:5px;';
+
+  var sectionsHtml = sectionOrder.map(function(title, i) {
+    var content = sections[title] || '';
+    // Split out Sources line if present
+    var sourceMatch = content.match(/Sources?:\s*([^\n]+)/i);
+    var sourceNote = sourceMatch ? sourceMatch[1].trim() : '';
+    var cleanContent = content.replace(/Sources?:\s*[^\n]+/gi,'').trim();
+    return '<div style="margin-bottom:16px;">'
+      + '<label style="'+labelStyle+'">'+title+'</label>'
+      + '<textarea id="rg-sec-'+i+'" rows="'+(title==='The Work'?7:4)+'" style="'+inputStyle+'">'+cleanContent+'</textarea>'
+      + (sourceNote ? '<div style="font-family:'Space Mono',monospace;font-size:.43rem;color:rgba(155,107,171,.45);margin-top:4px;padding:4px 8px;border-left:2px solid rgba(107,79,138,.3);">Sources: '+sourceNote+'</div>' : '')
+      + '<input type="hidden" id="rg-src-'+i+'" value="'+sourceNote.replace(/"/g,"'")+'"/>'
+      + '</div>';
+  }).join('');
+
+  ov.innerHTML = '<div style="max-width:640px;width:100%;margin:0 16px;background:rgba(18,14,30,.97);border:1px solid rgba(201,185,154,.12);padding:24px;">'
+    + '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">'
+    + '<div style="font-family:'Cormorant Garamond',serif;font-size:1.4rem;color:var(--parchment);">✦ Ritual Proposal</div>'
+    + '<button onclick="document.getElementById('ritual-gen-overlay').remove()" style="background:transparent;border:none;color:rgba(201,185,154,.4);font-size:1.2rem;cursor:pointer;">✕</button>'
+    + '</div>'
+    + '<div style="font-family:'Space Mono',monospace;font-size:.46rem;color:rgba(201,185,154,.3);letter-spacing:.06em;margin-bottom:4px;">Step 2 of 3 — Review & Refine</div>'
+    + '<div style="font-family:'Space Mono',monospace;font-size:.44rem;color:rgba(155,107,171,.5);margin-bottom:18px;">'+(tradName&&tradition!=='all'?tradName.label:'All Traditions')+'</div>'
+    + '<div style="max-height:55vh;overflow-y:auto;padding-right:4px;margin-bottom:16px;">' + sectionsHtml + '</div>'
+    + '<div style="background:rgba(107,79,138,.06);border:1px solid rgba(107,79,138,.15);padding:10px 14px;margin-bottom:16px;font-family:'Cormorant Garamond',serif;font-size:.87rem;color:rgba(201,185,154,.5);">Edit any section above before saving. The source notes show the traditions each element draws from.</div>'
+    + '<div style="margin-bottom:16px;"><label style="'+labelStyle+'">Ritual Name</label><input id="rg-finalname" type="text" value="'+intention.slice(0,60)+' Ritual" style="width:100%;box-sizing:border-box;'+inputStyle.replace('resize:vertical;','')+'" /></div>'
+    + '<div style="display:flex;gap:8px;justify-content:flex-end;">'
+    + '<button onclick="openGenerateRitualModal()" style="font-family:'Space Mono',monospace;font-size:.48rem;letter-spacing:.06em;padding:7px 14px;border:1px solid rgba(201,185,154,.15);background:transparent;color:rgba(201,185,154,.4);cursor:pointer;">← Start Over</button>'
+    + '<button onclick="finaliseGeneratedRitual()" style="font-family:'Space Mono',monospace;font-size:.48rem;letter-spacing:.06em;padding:7px 18px;border:1px solid rgba(155,107,171,.4);background:rgba(107,79,138,.1);color:rgba(200,160,220,.8);cursor:pointer;">✦ Save Ritual →</button>'
+    + '</div></div>';
+}
+
+function finaliseGeneratedRitual() {
+  var sectionOrder = ['Timing & Setting','What You Will Need','Opening & Sacred Space','The Work','Closing','A Note for Tiff'];
+  var fullBody = sectionOrder.map(function(title, i) {
+    var content = (document.getElementById('rg-sec-'+i)||{}).value||'';
+    return content.trim() ? title + '\n\n' + content.trim() : '';
+  }).filter(Boolean).join('\n\n');
+
+  var allSources = sectionOrder.map(function(title, i) {
+    var src = (document.getElementById('rg-src-'+i)||{}).value||'';
+    return src ? title + ': ' + src : '';
+  }).filter(Boolean).join(' | ');
+
+  var tools = ((document.getElementById('rg-sec-1')||{}).value||'').split('\n')[0].slice(0,200);
+  var name = (document.getElementById('rg-finalname')||{}).value||(_genRitualState.intention.slice(0,50)+' Ritual');
+  var tradName = RITUAL_TRADITIONS.find(function(t){return t.id===_genRitualState.tradition;});
+
+  var list = getRituals();
+  list.unshift({
+    id: 'ritual_'+Date.now(),
+    name: name,
+    purpose: _genRitualState.purpose,
+    date: new Date().toISOString().slice(0,10),
+    body: fullBody,
+    tools: tools,
+    outcome: '',
+    generated: true,
+    tradition: tradName ? tradName.label : 'All Traditions',
+    sources: allSources,
+  });
+  saveRituals(list);
+  var ov = document.getElementById('ritual-gen-overlay');
+  if (ov) ov.remove();
+  renderRitualsTab();
+}
+
 
 // ══════════════════════════════════════════════
 // SIGNAL CONFIRMATION LOG
