@@ -12543,6 +12543,7 @@ async function generateWotyRitual(sabbatId, cacheKey) {
     var data = await claudeAPI(apiKey, {model:'claude-sonnet-4-6', max_tokens:2000, messages:[{role:'user',content:prompt}]});
     var text = (data.content && data.content.find(function(c){return c.type==='text';})) ? data.content.find(function(c){return c.type==='text';}).text : '';
     if (!text) throw new Error('Empty response');
+    var year = new Date().getFullYear();
     localStorage.setItem(cacheKey, text);
     // Also save to Rituals tab
     (function() {
