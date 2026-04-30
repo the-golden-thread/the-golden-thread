@@ -12440,56 +12440,56 @@ function openWotyModal(sabbatId, fromBanner) {
       <!-- Header -->
       <div style="padding:24px 24px 20px;border-bottom:1px solid rgba(201,185,154,.08);position:relative;">
         <button onclick="document.getElementById('woty-modal-overlay').remove()" style="position:absolute;top:16px;right:16px;background:transparent;border:none;color:rgba(201,185,154,.4);font-size:1.2rem;cursor:pointer;padding:4px 8px;">✕</button>
-        <div style="font-family:'Space Mono',monospace;font-size:.5rem;letter-spacing:.12em;text-transform:uppercase;color:rgba(201,185,154,.4);margin-bottom:6px;">\${s.type} · \${s.approxDate} · \${whenStr}</div>
-        <div style="font-size:2.2rem;margin-bottom:4px;">\${s.emoji}</div>
-        <div style="font-family:'Cormorant Garamond',serif;font-size:1.9rem;font-weight:400;color:var(--parchment);letter-spacing:.04em;">\${s.name}</div>
+        <div style="font-family:'Space Mono',monospace;font-size:.5rem;letter-spacing:.12em;text-transform:uppercase;color:rgba(201,185,154,.4);margin-bottom:6px;">${s.type} · ${s.approxDate} · ${whenStr}</div>
+        <div style="font-size:2.2rem;margin-bottom:4px;">${s.emoji}</div>
+        <div style="font-family:'Cormorant Garamond',serif;font-size:1.9rem;font-weight:400;color:var(--parchment);letter-spacing:.04em;">${s.name}</div>
         <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;">
-          \${s.themes.map(function(t){ return '<span style="font-family:Space Mono,monospace;font-size:.48rem;letter-spacing:.06em;padding:2px 8px;border:1px solid rgba(201,185,154,.15);color:rgba(201,185,154,.55);">'+t+'</span>'; }).join('')}
+          ${s.themes.map(function(t){ return '<span style="font-family:Space Mono,monospace;font-size:.48rem;letter-spacing:.06em;padding:2px 8px;border:1px solid rgba(201,185,154,.15);color:rgba(201,185,154,.55);">'+t+'</span>'; }).join('')}
         </div>
       </div>
 
       <!-- Description -->
       <div style="padding:20px 24px;border-bottom:1px solid rgba(201,185,154,.06);">
-        <p style="font-family:'Cormorant Garamond',serif;font-size:1rem;font-weight:300;line-height:1.8;color:rgba(240,235,224,.75);">\${s.desc}</p>
+        <p style="font-family:'Cormorant Garamond',serif;font-size:1rem;font-weight:300;line-height:1.8;color:rgba(240,235,224,.75);">${s.desc}</p>
       </div>
 
       <!-- Correspondences -->
       <div style="padding:16px 24px;border-bottom:1px solid rgba(201,185,154,.06);display:grid;grid-template-columns:1fr 1fr;gap:16px;">
         <div>
           <div style="font-family:'Space Mono',monospace;font-size:.48rem;letter-spacing:.1em;text-transform:uppercase;color:rgba(201,185,154,.35);margin-bottom:8px;">Herbs & Plants</div>
-          <div style="font-family:'Cormorant Garamond',serif;font-size:.92rem;color:rgba(201,185,154,.65);">\${s.herbs.join(' · ')}</div>
+          <div style="font-family:'Cormorant Garamond',serif;font-size:.92rem;color:rgba(201,185,154,.65);">${s.herbs.join(' · ')}</div>
         </div>
         <div>
           <div style="font-family:'Space Mono',monospace;font-size:.48rem;letter-spacing:.1em;text-transform:uppercase;color:rgba(201,185,154,.35);margin-bottom:8px;">Crystals</div>
-          <div style="font-family:'Cormorant Garamond',serif;font-size:.92rem;color:rgba(201,185,154,.65);">\${s.crystals.join(' · ')}</div>
+          <div style="font-family:'Cormorant Garamond',serif;font-size:.92rem;color:rgba(201,185,154,.65);">${s.crystals.join(' · ')}</div>
         </div>
         <div>
           <div style="font-family:'Space Mono',monospace;font-size:.48rem;letter-spacing:.1em;text-transform:uppercase;color:rgba(201,185,154,.35);margin-bottom:8px;">Colors</div>
-          <div style="font-family:'Cormorant Garamond',serif;font-size:.92rem;color:rgba(201,185,154,.65);">\${s.colors.join(' · ')}</div>
+          <div style="font-family:'Cormorant Garamond',serif;font-size:.92rem;color:rgba(201,185,154,.65);">${s.colors.join(' · ')}</div>
         </div>
         <div>
           <div style="font-family:'Space Mono',monospace;font-size:.48rem;letter-spacing:.1em;text-transform:uppercase;color:rgba(201,185,154,.35);margin-bottom:8px;">Element · Direction</div>
-          <div style="font-family:'Cormorant Garamond',serif;font-size:.92rem;color:rgba(201,185,154,.65);">\${s.element} · \${s.direction}</div>
+          <div style="font-family:'Cormorant Garamond',serif;font-size:.92rem;color:rgba(201,185,154,.65);">${s.element} · ${s.direction}</div>
         </div>
       </div>
 
       <!-- Traditional Practices -->
       <div style="padding:16px 24px;border-bottom:1px solid rgba(201,185,154,.06);">
         <div style="font-family:'Space Mono',monospace;font-size:.48rem;letter-spacing:.1em;text-transform:uppercase;color:rgba(201,185,154,.35);margin-bottom:12px;">Traditional Practices</div>
-        \${s.practices.map(function(p){ return '<div style="display:flex;gap:10px;margin-bottom:8px;"><span style="color:rgba(201,185,154,.3);flex-shrink:0;">✦</span><span style="font-family:Cormorant Garamond,serif;font-size:.95rem;font-weight:300;color:rgba(240,235,224,.7);line-height:1.6;">'+p+'</span></div>'; }).join('')}
+        ${s.practices.map(function(p){ return '<div style="display:flex;gap:10px;margin-bottom:8px;"><span style="color:rgba(201,185,154,.3);flex-shrink:0;">✦</span><span style="font-family:Cormorant Garamond,serif;font-size:.95rem;font-weight:300;color:rgba(240,235,224,.7);line-height:1.6;">'+p+'</span></div>'; }).join('')}
       </div>
 
       <!-- Journal Prompts -->
       <div style="padding:16px 24px;border-bottom:1px solid rgba(201,185,154,.06);">
         <div style="font-family:'Space Mono',monospace;font-size:.48rem;letter-spacing:.1em;text-transform:uppercase;color:rgba(201,185,154,.35);margin-bottom:12px;">Journal Prompts</div>
-        \${s.journalPrompts.map(function(p){ return '<div style="font-family:Cormorant Garamond,serif;font-style:italic;font-size:.95rem;font-weight:300;color:rgba(201,185,154,.6);margin-bottom:6px;padding-left:12px;border-left:2px solid rgba(201,185,154,.15);">'+p+'</div>'; }).join('')}
+        ${s.journalPrompts.map(function(p){ return '<div style="font-family:Cormorant Garamond,serif;font-style:italic;font-size:.95rem;font-weight:300;color:rgba(201,185,154,.6);margin-bottom:6px;padding-left:12px;border-left:2px solid rgba(201,185,154,.15);">'+p+'</div>'; }).join('')}
       </div>
 
       <!-- AI Ritual Generator -->
       <div style="padding:20px 24px;">
         <div style="font-family:'Space Mono',monospace;font-size:.48rem;letter-spacing:.1em;text-transform:uppercase;color:rgba(201,185,154,.35);margin-bottom:12px;">✦ Personal Ritual</div>
         <div id="woty-ritual-result" style="display:none;background:rgba(107,79,138,.06);border-left:2px solid var(--mariam);padding:14px 16px;margin-bottom:14px;font-family:'Cormorant Garamond',serif;font-size:.95rem;font-weight:300;line-height:1.85;color:rgba(240,235,224,.78);"></div>
-        <button id="woty-ritual-btn" onclick="generateWotyRitual('\${s.id}', '\${cacheKey}')" style="font-family:'Space Mono',monospace;font-size:.52rem;letter-spacing:.07em;padding:8px 18px;border:1px solid rgba(155,107,171,.4);background:rgba(107,79,138,.1);color:rgba(200,160,220,.85);cursor:pointer;width:100%;">✦ Generate My \${s.name} Ritual</button>
+        <button id="woty-ritual-btn" onclick="generateWotyRitual('${s.id}', '${cacheKey}')" style="font-family:'Space Mono',monospace;font-size:.52rem;letter-spacing:.07em;padding:8px 18px;border:1px solid rgba(155,107,171,.4);background:rgba(107,79,138,.1);color:rgba(200,160,220,.85);cursor:pointer;width:100%;">✦ Generate My ${s.name} Ritual</button>
       </div>
     </div>
   `;
