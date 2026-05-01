@@ -4378,8 +4378,60 @@ let activeSpiritTagFilter = { journal:null, workings:null, shadow:null, readings
 function saveSpiritEntries() {
   // Only save user-added entries to localStorage (preloaded ones live in the source)
   const userEntries = SPIRIT_ENTRIES.filter(e => e && !e.preloaded);
-  try { localStorage.setItem('spirit_entries', JSON.stringify(userEntries)); } catch(e) {}
-  try { localStorage.setItem('spirit_next_id', spiritNextId); } catch(e) {}
+  try {
+    localStorage.setItem('spirit_entries', JSON.stringify(userEntries));
+    localStorage.setItem('spirit_next_id', spiritNextId);
+  } catch(e) {
+    // Storage quota exceeded or other error — alert the user
+    gtAlert('⚠️ Save failed: storage may be full. Your entry was NOT saved. Please copy your text and try again, or export a backup from Settings.');
+    return false;
+  }
+  return true;
+}
+
+// ── DRAFT AUTOSAVE ───────────────────────────
+const SPIRIT_DRAFT_KEY = 'spirit_entry_draft';
+let _spiritDraftTimer = null;
+
+function saveSpiritDraft() {
+  const body = document.getElementById('s-body');
+  const title = document.getElementById('s-title');
+  const type = document.getElementById('spirit-edit-type');
+  const editId = document.getElementById('spirit-edit-id');
+  if (!body) return;
+  // Only draft NEW entries (not edits of existing ones)
+  if (editId && editId.value) return;
+  const draft = {
+    body: body.value,
+    title: title ? title.value : '',
+    type: type ? type.value : '',
+    savedAt: new Date().toISOString()
+  };
+  try { localStorage.setItem(SPIRIT_DRAFT_KEY, JSON.stringify(draft)); } catch(e) {}
+}
+
+function clearSpiritDraft() {
+  try { localStorage.removeItem(SPIRIT_DRAFT_KEY); } catch(e) {}
+}
+
+function getSpiritDraft() {
+  try {
+    const raw = localStorage.getItem(SPIRIT_DRAFT_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch(e) { return null; }
+}
+
+function startSpiritDraftAutosave() {
+  const bodyEl = document.getElementById('s-body');
+  const titleEl = document.getElementById('s-title');
+  if (!bodyEl) return;
+  // Debounced save on input — waits 5 seconds after last keystroke
+  function onInput() {
+    if (_spiritDraftTimer) clearTimeout(_spiritDraftTimer);
+    _spiritDraftTimer = setTimeout(saveSpiritDraft, 5000);
+  }
+  bodyEl.addEventListener('input', onInput);
+  if (titleEl) titleEl.addEventListener('input', onInput);
 }
 function loadSpiritEntries() {
   // Start with pre-loaded entries, assign stable negative IDs so they never clash with user entries
@@ -5639,7 +5691,24 @@ function openSpiritAdd(type, entry) {
   }
 
   document.getElementById('spirit-add-ov').classList.add('open');
-  setTimeout(wireTagInput, 50);
+  setTimeout(() => {
+    wireTagInput();
+    // For new entries, check for an unsaved draft
+    if (!entry) {
+      const draft = getSpiritDraft();
+      if (draft && draft.body && draft.body.trim().length > 20) {
+        const savedAt = draft.savedAt ? new Date(draft.savedAt).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}) : 'earlier';
+        const restore = confirm(`📝 You have an unsaved draft from ${savedAt}:\n\n"${draft.body.slice(0, 120)}${draft.body.length > 120 ? '…' : ''}"\n\nRestore it?`);
+        if (restore) {
+          document.getElementById('s-body').value = draft.body;
+          if (draft.title) document.getElementById('s-title').value = draft.title;
+        } else {
+          clearSpiritDraft();
+        }
+      }
+      startSpiritDraftAutosave();
+    }
+  }, 50);
 }
 
 function renderTagChips(tags) {
@@ -5670,6 +5739,14 @@ function wireTagInput() {
 
 function closeSpiritAdd(evt) {
   if (evt && evt.target !== document.getElementById('spirit-add-ov')) return;
+  // Warn if there's unsaved body content on a new entry
+  const editId = document.getElementById('spirit-edit-id');
+  const body = document.getElementById('s-body');
+  if ((!editId || !editId.value) && body && body.value.trim().length > 20) {
+    if (!confirm('You have unsaved text in this entry. A draft has been auto-saved and will be offered next time you open a new entry.\n\nClose anyway?')) return;
+    saveSpiritDraft(); // ensure latest is saved
+  }
+  if (_spiritDraftTimer) { clearTimeout(_spiritDraftTimer); _spiritDraftTimer = null; }
   document.getElementById('spirit-add-ov').classList.remove('open');
 }
 
@@ -5810,7 +5887,10 @@ function saveSpiritEntry() {
     const track = (type === 'gateway' && trackEl && trackEl.value) ? parseInt(trackEl.value) : undefined;
     SPIRIT_ENTRIES.push({ id:spiritNextId++, type, date, title, tags, body, moon, createdAt: localDateTimeStr(), ...(_currentEntryImage ? {image: _currentEntryImage} : {}), ...(wave?{wave}:{}),...(track?{track}:{}), ...(generatedClaude?{claude:generatedClaude}:{}), ...(generatedAstro?{astroReading:generatedAstro}:{}) });
   }
-  saveSpiritEntries();
+  if (_spiritDraftTimer) { clearTimeout(_spiritDraftTimer); _spiritDraftTimer = null; }
+  const saved = saveSpiritEntries();
+  if (!saved) return; // storage error — don't close form so user can copy text
+  clearSpiritDraft();
   closeSpiritAdd();
   if (type === 'gateway') {
     var gwDest = document.getElementById('gt-content');
@@ -5887,7 +5967,7 @@ const _userDreams = loadUserDreams();
     }
   });
 })();
-let dreams = DREAMS.slice().concat(_userDreams).filter(function(d){ return d && d.id != null; });
+let dreams = DREAMS.slice().concat(_userDreams).filter(function(d){ return d && d.id != null && d.title; });
 let nextId = (function() {
   var ids = dreams.map(function(d){ return (typeof d.id === 'number' && !isNaN(d.id)) ? d.id : 0; });
   return Math.max(130, ids.length ? Math.max.apply(null, ids) : 0) + 1;
@@ -7970,20 +8050,21 @@ function renderInsights(){
   };
 
   INSIGHTS.forEach((ins,insIdx)=>{
+    if (!ins || !ins.title) return; // guard against null/malformed entries
     try {
       const card=document.createElement('div');
       card.className='ins-card'+(ins.feat?' feat':'');
 
       // Dream links — exact title match only
       const dreamLinks=(ins.dreams||[]).map(t=>{
-        const d=dreams.find(x=>x.title===t);
-        return`<span class="ins-link"${d?` onclick="const _dr=dreams.find(x=>x.id==${d.id});if(_dr)openDream(_dr);"`:''}>${t}</span>`;
+        const d=dreams.find(x=>x && x.title===t);
+        return`<span class="ins-link"${d?` onclick="const _dr=dreams.find(x=>x&&x.id==${d.id});if(_dr)openDream(_dr);"`:''}>${t}</span>`;
       }).join('');
 
       // Spirit / waking entry links
       const spiritTitles=(SPIRIT_REFS[ins.title]||[]);
       const spiritLinks=spiritTitles.map(t=>{
-        const se=SPIRIT_ENTRIES.find(x=>x.title===t);
+        const se=SPIRIT_ENTRIES.find(x=>x && x.title===t);
         if(!se)return'';
         const label=t.split(' — ')[0];
         return`<span class="ins-link" style="border-color:rgba(155,107,171,.3);color:rgba(155,107,171,.8);" onclick="const _se=SPIRIT_ENTRIES.find(x=>x.id===${se.id});if(_se)openSpiritEntry(_se);">✦ ${label}</span>`;
@@ -11273,7 +11354,7 @@ function loadUserInsights() {
     if (stored) {
       const parsed = JSON.parse(stored);
       if (Array.isArray(parsed)) {
-        parsed.filter(p => p && p.title).forEach(p => {
+        parsed.filter(p => p && typeof p === 'object' && p.title && p.body).forEach(p => {
           // Only add if not already present (avoid duplicates on reload)
           if (!INSIGHTS.find(i => i.title === p.title)) {
             INSIGHTS.push({...p, userAdded: true});
