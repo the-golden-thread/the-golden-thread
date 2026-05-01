@@ -404,6 +404,7 @@ h1 em { display:block; font-style:italic; font-weight:300; font-size:.42em; lett
     <button class="tab-btn" id="tab-btn-practice" onclick="switchTab('practice',this)">🕯 Practice</button>
     <button class="tab-btn" id="tab-btn-insight" onclick="switchTab('insight',this)">◉ Insight</button>
     <button class="tab-btn" id="tab-btn-grimoire" onclick="switchTab('grimoire',this)">◈ Grimoire</button>
+    <button class="tab-btn" id="tab-btn-search" onclick="switchTab('search',this)">⌕ Search</button>
   </div>
 </div>
 
@@ -4398,6 +4399,8 @@ function saveSpiritDraft() {
   const title = document.getElementById('s-title');
   const type = document.getElementById('spirit-edit-type');
   const editId = document.getElementById('spirit-edit-id');
+  const tags = document.getElementById('s-tags');
+  const moon = document.getElementById('s-moon');
   if (!body) return;
   // Only draft NEW entries (not edits of existing ones)
   if (editId && editId.value) return;
@@ -4405,6 +4408,9 @@ function saveSpiritDraft() {
     body: body.value,
     title: title ? title.value : '',
     type: type ? type.value : '',
+    tags: tags ? tags.value : '',
+    moon: moon ? moon.value : '',
+    image: _currentEntryImage || null,
     savedAt: new Date().toISOString()
   };
   try { localStorage.setItem(SPIRIT_DRAFT_KEY, JSON.stringify(draft)); } catch(e) {}
@@ -5702,6 +5708,17 @@ function openSpiritAdd(type, entry) {
         if (restore) {
           document.getElementById('s-body').value = draft.body;
           if (draft.title) document.getElementById('s-title').value = draft.title;
+          if (draft.tags) {
+            document.getElementById('s-tags').value = draft.tags;
+            renderTagChips(draft.tags.split(',').map(t=>t.trim()).filter(Boolean));
+          }
+          if (draft.moon) document.getElementById('s-moon').value = draft.moon;
+          if (draft.image) {
+            _currentEntryImage = draft.image;
+            const prev = document.getElementById('s-image-preview');
+            const img = document.getElementById('s-image-preview-img');
+            if (prev && img) { img.src = draft.image; prev.style.display = 'block'; }
+          }
         } else {
           clearSpiritDraft();
         }
@@ -5737,14 +5754,16 @@ function wireTagInput() {
   }
 }
 
-function closeSpiritAdd(evt) {
+function closeSpiritAdd(evt, skipCheck) {
   if (evt && evt.target !== document.getElementById('spirit-add-ov')) return;
-  // Warn if there's unsaved body content on a new entry
-  const editId = document.getElementById('spirit-edit-id');
-  const body = document.getElementById('s-body');
-  if ((!editId || !editId.value) && body && body.value.trim().length > 20) {
-    if (!confirm('You have unsaved text in this entry. A draft has been auto-saved and will be offered next time you open a new entry.\n\nClose anyway?')) return;
-    saveSpiritDraft(); // ensure latest is saved
+  // Warn if there's unsaved body content on a new entry (skip this check when called from a successful save)
+  if (!skipCheck) {
+    const editId = document.getElementById('spirit-edit-id');
+    const body = document.getElementById('s-body');
+    if ((!editId || !editId.value) && body && body.value.trim().length > 20) {
+      if (!confirm('You have unsaved text in this entry. A draft has been auto-saved and will be offered next time you open a new entry.\n\nClose anyway?')) return;
+      saveSpiritDraft(); // ensure latest is saved
+    }
   }
   if (_spiritDraftTimer) { clearTimeout(_spiritDraftTimer); _spiritDraftTimer = null; }
   document.getElementById('spirit-add-ov').classList.remove('open');
@@ -5891,7 +5910,7 @@ function saveSpiritEntry() {
   const saved = saveSpiritEntries();
   if (!saved) return; // storage error — don't close form so user can copy text
   clearSpiritDraft();
-  closeSpiritAdd();
+  closeSpiritAdd(null, true); // true = skip unsaved check, this is a legitimate save
   if (type === 'gateway') {
     var gwDest = document.getElementById('gt-content');
     if (gwDest && gwDest.querySelector('.spirit-grid')) {
@@ -7073,6 +7092,7 @@ function switchTab(id, btn) {
   else if (id === 'practice') switchPractice(_activePracticeTab || 'workings');
   else if (id === 'insight') switchInsight(_activeInsightTab || 'patterns');
   else if (id === 'grimoire') switchGrimoire(_activeGrimoireTab || 'charts');
+  else if (id === 'search') renderGlobalSearch();
 
   // FAB
   // FAB removed
@@ -7082,6 +7102,117 @@ function switchTab(id, btn) {
 let _activePracticeTab = 'workings';
 let _activeInsightTab = 'patterns';
 let _activeGrimoireTab = 'charts';
+
+// ── GLOBAL SEARCH ─────────────────────────────
+function renderGlobalSearch() {
+  const dest = document.getElementById('gt-content');
+  if (!dest) return;
+  dest.innerHTML = `
+    <div style="max-width:740px;margin:0 auto;padding:24px 0 60px;">
+      <div style="font-family:'Space Mono',monospace;font-size:.55rem;letter-spacing:.12em;text-transform:uppercase;color:var(--moon);margin-bottom:18px;">⌕ Search Everything</div>
+      <div style="position:relative;margin-bottom:10px;">
+        <span style="position:absolute;left:13px;top:50%;transform:translateY(-50%);opacity:.4;font-size:.9rem;">⌕</span>
+        <input id="global-search-input" type="text" placeholder="Search dreams, journal, workings, shadow, readings, gateway…"
+          style="width:100%;background:rgba(255,255,255,.04);border:1px solid rgba(201,185,154,.25);color:var(--parchment);font-family:'Cormorant Garamond',serif;font-size:1.05rem;padding:11px 14px 11px 38px;outline:none;letter-spacing:.02em;box-sizing:border-box;"
+          oninput="runGlobalSearch(this.value)">
+      </div>
+      <div id="global-search-meta" style="font-family:'Space Mono',monospace;font-size:.52rem;color:rgba(201,185,154,.35);letter-spacing:.07em;min-height:18px;margin-bottom:20px;"></div>
+      <div id="global-search-results"></div>
+    </div>`;
+  setTimeout(() => document.getElementById('global-search-input')?.focus(), 80);
+}
+
+function runGlobalSearch(raw) {
+  const q = (raw || '').trim().toLowerCase();
+  const meta = document.getElementById('global-search-meta');
+  const results = document.getElementById('global-search-results');
+  if (!results) return;
+  if (!q || q.length < 2) {
+    if (meta) meta.textContent = '';
+    results.innerHTML = '<div style="font-family:\'Space Mono\',monospace;font-size:.55rem;color:rgba(201,185,154,.25);letter-spacing:.07em;">Type at least 2 characters to search.</div>';
+    return;
+  }
+
+  function hl(text, q) {
+    if (!text || !q) return text || '';
+    return text.replace(new RegExp('(' + q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&') + ')', 'gi'), '<mark style="background:rgba(201,168,76,.25);color:var(--parchment);border-radius:2px;">$1</mark>');
+  }
+
+  function matchEntry(e) {
+    if (!e) return false;
+    return (e.title||'').toLowerCase().includes(q)
+      || (e.body||'').toLowerCase().includes(q)
+      || (e.tags||[]).some(t => t.toLowerCase().includes(q))
+      || (e.moon||'').toLowerCase().includes(q)
+      || (e.ctx||'').toLowerCase().includes(q)
+      || (e.interp||'').toLowerCase().includes(q);
+  }
+
+  function excerpt(text, q) {
+    if (!text) return '';
+    const idx = text.toLowerCase().indexOf(q);
+    if (idx === -1) return text.slice(0, 140) + (text.length > 140 ? '…' : '');
+    const start = Math.max(0, idx - 60);
+    const end = Math.min(text.length, idx + q.length + 80);
+    return (start > 0 ? '…' : '') + text.slice(start, end) + (end < text.length ? '…' : '');
+  }
+
+  const TYPE_LABELS = {
+    journal: { label: 'Journal', color: 'var(--gold)', icon: '📓', open: e => openSpiritEntry(e) },
+    workings: { label: 'Workings', color: 'var(--teal)', icon: '🕯', open: e => openSpiritEntry(e) },
+    shadow: { label: 'Shadow', color: 'var(--purple)', icon: '🜃', open: e => openSpiritEntry(e) },
+    readings: { label: 'Readings', color: 'var(--rose)', icon: '🔮', open: e => openSpiritEntry(e) },
+    gateway: { label: 'Gateway', color: 'rgba(201,185,154,.7)', icon: '◈', open: e => openSpiritEntry(e) },
+    dream: { label: 'Dream', color: 'rgba(155,107,171,.9)', icon: '🌙', open: e => openDream(e) }
+  };
+
+  // Search dreams
+  const dreamHits = dreams.filter(d => d && matchEntry(d)).map(d => ({ ...d, _type: 'dream' }));
+
+  // Search spirit entries (all types)
+  const spiritHits = SPIRIT_ENTRIES.filter(e => e && !e.preloaded && matchEntry(e)).map(e => ({ ...e, _type: e.type }));
+
+  // Also search preloaded spirit entries
+  const preloadedHits = SPIRIT_ENTRIES.filter(e => e && e.preloaded && matchEntry(e)).map(e => ({ ...e, _type: e.type }));
+
+  const allHits = [...dreamHits, ...spiritHits, ...preloadedHits]
+    .sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+
+  if (meta) meta.textContent = allHits.length
+    ? allHits.length + ' result' + (allHits.length !== 1 ? 's' : '') + ' across dreams & practice entries'
+    : '0 results';
+
+  if (!allHits.length) {
+    results.innerHTML = '<div style="font-family:\'Cormorant Garamond\',serif;font-size:1rem;color:rgba(201,185,154,.3);font-style:italic;padding:20px 0;">Nothing found for "' + raw + '"</div>';
+    return;
+  }
+
+  results.innerHTML = allHits.map((hit, i) => {
+    const t = TYPE_LABELS[hit._type] || TYPE_LABELS.journal;
+    const titleHl = hl(hit.title || 'Untitled', q);
+    const bodyText = hit.body || hit.ctx || '';
+    const excerptHl = hl(excerpt(bodyText, q), q);
+    const tags = (hit.tags || []).slice(0, 4).map(tag =>
+      `<span style="font-family:'Space Mono',monospace;font-size:.48rem;padding:2px 7px;background:rgba(255,255,255,.04);border:1px solid rgba(201,185,154,.12);color:rgba(201,185,154,.5);">${tag}</span>`
+    ).join('');
+    return `<div onclick="window._gsHit_${i}()" style="cursor:pointer;padding:16px;margin-bottom:10px;background:rgba(255,255,255,.02);border:1px solid rgba(201,185,154,.1);border-left:3px solid ${t.color};transition:background .15s;" onmouseover="this.style.background='rgba(255,255,255,.04)'" onmouseout="this.style.background='rgba(255,255,255,.02)'">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+        <span style="font-family:'Space Mono',monospace;font-size:.48rem;letter-spacing:.09em;text-transform:uppercase;color:${t.color};opacity:.8;">${t.icon} ${t.label}</span>
+        <span style="font-family:'Space Mono',monospace;font-size:.48rem;color:rgba(201,185,154,.3);">${hit.date || ''}</span>
+        ${hit.preloaded ? '<span style="font-family:\'Space Mono\',monospace;font-size:.45rem;color:rgba(201,185,154,.25);">archive</span>' : ''}
+      </div>
+      <div style="font-family:'Cormorant Garamond',serif;font-size:1.05rem;font-weight:400;margin-bottom:6px;line-height:1.4;">${titleHl}</div>
+      ${excerptHl ? `<div style="font-family:'Cormorant Garamond',serif;font-size:.88rem;color:rgba(240,235,224,.55);line-height:1.7;font-style:italic;">${excerptHl}</div>` : ''}
+      ${tags ? `<div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:8px;">${tags}</div>` : ''}
+    </div>`;
+  }).join('');
+
+  // Attach click handlers
+  allHits.forEach((hit, i) => {
+    const t = TYPE_LABELS[hit._type] || TYPE_LABELS.journal;
+    window['_gsHit_' + i] = () => t.open(hit);
+  });
+}
 
 // Practice content map — renders existing tab-XXX panels into practice-content
 function switchPractice(type, btn) {
