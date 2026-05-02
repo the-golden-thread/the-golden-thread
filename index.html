@@ -1332,7 +1332,7 @@ async function generateAstroReading(dreamId) {
   const natalLine = natalCtx ? `\nHer natal chart context: ${natalCtx.summary || 'Sun in Libra 17°'}` : '\nThis is Skye, born October 10 1992, Sun in Libra 17°.';
   const prompt = 'You are a personal astrologer interpreting a dream journal entry for Tiff (born October 10, 1992, 2:37 PM EDT, Taunton MA — Sun in Libra 17°). Be insightful, specific, and grounded. Connect the astrological conditions to her natal chart AND to what happened in this specific dream.' + natalLine + '\n\n'
     + 'DREAM: "' + d.title + '"\n'
-    + d.body.slice(0, 600) + (d.body.length > 600 ? '...' : '') + '\n\n'
+    + d.body.slice(0, 8000) + (d.body.length > 8000 ? '...' : '') + '\n\n'
     + 'ASTROLOGICAL CONDITIONS ON THIS DATE:\n'
     + '- Moon: ' + moonPhase + ' (' + (astroData.moonPct || '?') + '% illuminated)\n'
     + '- Sun in: ' + sunSign + '\n'
@@ -1399,7 +1399,7 @@ async function generateClaudeReading(dreamId, btnEl) {
     var prompt = 'You are a dream analyst and spiritual companion with deep knowledge of Jungian psychology, archetypes, and spiritual symbolism, combined with knowledge of Tiff\u2019s natal chart and practice.\n\n'
       + natalLine + '\n\n'
       + 'DREAM: "' + d.title + '" (' + d.date + ')\n'
-      + (d.body||'').slice(0,800) + ((d.body||'').length > 800 ? '...' : '') + '\n\n'
+      + (d.body||'').slice(0,8000) + ((d.body||'').length > 8000 ? '...' : '') + '\n\n'
       + _1010ctx
       + (_linkedCtx ? '\n\n' + _linkedCtx : '')
       + '\nProvide a rich dream reading (4-6 paragraphs). Identify the key symbols and archetypes, note emotional or psychological themes, connect to her natal chart where relevant, and reflect on what the dream may be communicating. Be specific to this dream. Write as flowing prose addressed to Tiff. No markdown headers or bullet points — pure prose only.';
@@ -6361,7 +6361,7 @@ function buildFullArchiveContext(opts) {
   opts = opts || {};
   var maxDreams = opts.maxDreams || 128;
   var maxSpirit = opts.maxSpirit || 40;
-  var bodyLen   = opts.bodyLen   || 300;
+  var bodyLen   = opts.bodyLen   || 800;
 
   var dreamDigest = dreams
     .slice().sort(function(a,b){ return b.date.localeCompare(a.date); })
@@ -6378,7 +6378,7 @@ function buildFullArchiveContext(opts) {
     .slice(0, maxSpirit)
     .map(function(e) {
       var body = e.body || e.notes || e.content || '';
-      return '[' + e.date + '] ' + e.type + ': "' + e.title + '"' + (body?'\n'+body.slice(0,200):'');
+      return '[' + e.date + '] ' + e.type + ': "' + e.title + '"' + (body?'\n'+body.slice(0,800):'');
     }).join('\n\n');
 
   var commDigest = (COMM_ENTRIES && COMM_ENTRIES.length)
@@ -6387,7 +6387,7 @@ function buildFullArchiveContext(opts) {
 
   var visitations = (typeof getVisitations==='function') ? getVisitations() : [];
   var visitDigest = visitations.length ? visitations.sort(function(a,b){return b.date.localeCompare(a.date);}).map(function(v){
-    return '['+v.date+'] '+(v.who||'Unknown')+' via '+v.arrival+': '+(v.description||'').slice(0,150)+(v.meaning?' [meaning: '+v.meaning.slice(0,80)+']':'');
+    return '['+v.date+'] '+(v.who||'Unknown')+' via '+v.arrival+': '+(v.description||'').slice(0,600)+(v.meaning?' [meaning: '+v.meaning.slice(0,300)+']':'');
   }).join('\n') : '';
 
   var moonItems = (typeof getMoonIntentions==='function') ? getMoonIntentions() : [];
@@ -9704,7 +9704,7 @@ async function generateDailyReading(force) {
 
   // Get most recent dream for context
   const recentDream = dreams.slice().sort((a,b)=>b.date.localeCompare(a.date))[0];
-  const recentDreamCtx = recentDream ? `Most recent dream (${recentDream.date}): "${recentDream.title}" — ${(recentDream.body||'').slice(0,200)}` : '';
+  const recentDreamCtx = recentDream ? `Most recent dream (${recentDream.date}): "${recentDream.title}" — ${(recentDream.body||'').slice(0,2000)}` : '';
 
   const cachedChart = getNatalContext();
   const chartContext = cachedChart ? cachedChart.summary : '';
@@ -13143,10 +13143,10 @@ async function genRitualStep2() {
       + (cycleCtx ? 'CURRENT CYCLE: ' + cycleCtx + '\n\n' : '')
       + (astro.moon ? 'CURRENT SKY: Moon in ' + astro.moon + (astro.sun?', Sun in '+astro.sun:'') + (astro.retro?' — retrogrades: '+astro.retro:'') + '\n\n' : '')
       + 'HER ARCHIVE CONTEXT:\n'
-      + 'Recent dreams: ' + ctx.dreamDigest.slice(0,600) + '\n\n'
+      + 'Recent dreams: ' + ctx.dreamDigest.slice(0,2000) + '\n\n'
       + 'Active patterns: ' + ctx.patternDigest + '\n\n'
-      + (ctx.ancestorDigest ? 'Ancestor work: ' + ctx.ancestorDigest.slice(0,300) + '\n\n' : '')
-      + (ctx.commDigest ? 'Communication signals: ' + ctx.commDigest.slice(0,200) + '\n\n' : '')
+      + (ctx.ancestorDigest ? 'Ancestor work: ' + ctx.ancestorDigest.slice(0,1000) + '\n\n' : '')
+      + (ctx.commDigest ? 'Communication signals: ' + ctx.commDigest.slice(0,600) + '\n\n' : '')
       + 'INTENTION: ' + intention + '\n'
       + 'PURPOSE CATEGORY: ' + (purposeName?purposeName.label:purpose) + '\n\n'
       + tradInstruction + '\n\n'
