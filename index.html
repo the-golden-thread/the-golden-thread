@@ -7277,10 +7277,20 @@ const WITHIN_SEED_DATA = [{"id": "within_8", "date": "2024-11-12", "title": "Cal
 function getWithinEntries() {
   try {
     var stored = JSON.parse(localStorage.getItem('gt_within_entries') || 'null');
-    if (stored) return stored;
-    // First load — seed with migrated entries
-    localStorage.setItem('gt_within_entries', JSON.stringify(WITHIN_SEED_DATA));
-    return WITHIN_SEED_DATA;
+    if (!stored) {
+      // First load — seed with all entries
+      localStorage.setItem('gt_within_entries', JSON.stringify(WITHIN_SEED_DATA));
+      return WITHIN_SEED_DATA;
+    }
+    // Migration: check for any seed entries missing from stored data
+    var storedIds = stored.map(function(e){ return e.id; });
+    var missing = WITHIN_SEED_DATA.filter(function(e){ return e.migrated && storedIds.indexOf(e.id) === -1; });
+    if (missing.length) {
+      var merged = missing.concat(stored);
+      localStorage.setItem('gt_within_entries', JSON.stringify(merged));
+      return merged;
+    }
+    return stored;
   } catch(e) { return WITHIN_SEED_DATA; }
 }
 
