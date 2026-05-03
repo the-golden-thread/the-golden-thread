@@ -423,6 +423,7 @@ h1 em { display:block; font-style:italic; font-weight:300; font-size:.42em; lett
   <div id="sub-bar-practice" style="display:none;white-space:nowrap;">
     <button class="sub-tab-btn active" id="sub-btn-workings" onclick="switchPractice('workings',this)">🕯 Workings</button>
     <button class="sub-tab-btn" id="sub-btn-journal" onclick="switchPractice('journal',this)">📓 Journal</button>
+    <button class="sub-tab-btn" id="sub-btn-within" onclick="switchPractice('within',this)">◈ Within</button>
     <button class="sub-tab-btn" id="sub-btn-shadow" onclick="switchPractice('shadow',this)">🜃 Shadow</button>
     <button class="sub-tab-btn" id="sub-btn-readings" onclick="switchPractice('readings',this)">🔮 Readings</button>
     <button class="sub-tab-btn" id="sub-btn-gateway" onclick="switchPractice('gateway',this)">◈ Gateway</button>
@@ -468,6 +469,7 @@ h1 em { display:block; font-style:italic; font-weight:300; font-size:.42em; lett
 <div id="tab-moonintent" class="tab-panel" style="display:none;"></div>
 <div id="tab-visitations" class="tab-panel" style="display:none;"></div>
 <div id="tab-channel" class="tab-panel" style="display:none;"></div>
+<div id="tab-within" class="tab-panel" style="display:none;"></div>
 <div id="tab-prophetic" class="tab-panel" style="display:none;"></div>
 <div id="tab-manifesting" class="tab-panel" style="display:none;"></div>
 <div id="tab-threads" class="tab-panel" style="display:none;"></div>
@@ -782,9 +784,8 @@ h1 em { display:block; font-style:italic; font-weight:300; font-size:.42em; lett
     <div id="insights-ask-result" style="display:none;margin-top:14px;"></div>
   </div>
 
-  <div id="saved-patterns-section" style="margin-bottom:20px;"></div>
-
   <div class="insights-grid" id="insights-grid"></div>
+  <div id="saved-patterns-section" style="margin-top:28px;"></div>
 </div>
 </div>
 
@@ -6425,9 +6426,7 @@ function buildFullArchiveContext(opts) {
 
   var peopleDigest = PEOPLE.map(function(p){ return p.name+' ('+p.role+'): '+(p.desc||'').slice(0,120); }).join('\n');
   var patternDigest = INSIGHTS.map(function(i){return i.title;}).join(', ');
-  var today = new Date().toLocaleDateString('en-CA');
-  var yesterday = new Date(Date.now()-86400000).toLocaleDateString('en-CA');
-  var chartSummary = 'Libra Sun 17°, Aries Moon 6°, Capricorn Rising 25°, Scorpio stellium (Mercury/Venus/Pluto), North Node 23° Sag, Chiron 20° Leo. Human Design: Pure Generator 4/6, Sacral Authority. Primary clairs: claircognizance + clairsentience. Reiki I & II attuned. NOTE on dream dating: Tiff records dreams on the date she wakes up. Dreams dated ' + today + ' were dreamed between midnight and ~11am on ' + today + ' (night of ' + yesterday + '). When she says "today" she means ' + today + ', "yesterday" means ' + yesterday + '.';
+  var chartSummary = 'Libra Sun 17°, Aries Moon 6°, Capricorn Rising 25°, Scorpio stellium (Mercury/Venus/Pluto), North Node 23° Sag, Chiron 20° Leo. Human Design: Pure Generator 4/6, Sacral Authority. Primary clairs: claircognizance + clairsentience. Reiki I & II attuned.';
 
   // ANCESTORS (profiles + interaction logs)
   var ancestors = (typeof getAncestors==='function') ? getAncestors() : [];
@@ -6498,21 +6497,31 @@ function buildFullArchiveContext(opts) {
     return b.name+(b.type?' ('+b.type+')':'')+(b.description?' — '+b.description.slice(0,120):'');
   }).join('\n') : '';
 
-  // THE CHANNEL — practitioner self-knowledge entries
-  var channelEntries = [];
-  try { channelEntries = JSON.parse(localStorage.getItem('gt_channel_entries')||'[]'); } catch(e){}
-  var channelDigest = channelEntries.length ? channelEntries.slice().sort(function(a,b){return b.date.localeCompare(a.date);}).map(function(e){
+  // THE CHANNEL
+  var channelEntries2 = [];
+  try { channelEntries2 = JSON.parse(localStorage.getItem('gt_channel_entries')||'[]'); } catch(e){}
+  var channelDigest = channelEntries2.length ? channelEntries2.slice().sort(function(a,b){return b.date.localeCompare(a.date);}).map(function(e){
     return '['+e.date+'] "'+e.title+'"'+(e.categories&&e.categories.length?' ['+e.categories.join(', ')+']':'')+': '+(e.body||'').slice(0,400);
   }).join('\n\n') : '';
 
-  // DREAM MAGIC — intentional dream workings
-  var dreamMagicEntries = [];
-  try { dreamMagicEntries = JSON.parse(localStorage.getItem('gt_dream_magic')||'[]'); } catch(e){}
-  var dreamMagicDigest = dreamMagicEntries.length ? dreamMagicEntries.slice().sort(function(a,b){return b.date.localeCompare(a.date);}).map(function(e){
+  // DREAM MAGIC
+  var dmEntries = [];
+  try { dmEntries = JSON.parse(localStorage.getItem('gt_dream_magic')||'[]'); } catch(e){}
+  var dreamMagicDigest = dmEntries.length ? dmEntries.slice().sort(function(a,b){return b.date.localeCompare(a.date);}).map(function(e){
     return '['+e.date+'] "'+e.title+'" ('+e.type+', '+e.status+')'+(e.intention?' intention: '+e.intention.slice(0,120):'')+(e.method?' | working: '+e.method.slice(0,200):'')+(e.outcome?' | outcome: '+e.outcome.slice(0,120):'');
   }).join('\n') : '';
 
-  return {dreamDigest:dreamDigest, spiritDigest:spiritDigest, commDigest:commDigest, visitDigest:visitDigest, moonDigest:moonDigest, prophecyDigest:prophecyDigest, manifestDigest:manifestDigest, threadDigest:threadDigest, peopleDigest:peopleDigest, patternDigest:patternDigest, chartSummary:chartSummary, dreamCount:dreams.length, ancestorDigest:ancestorDigest, incubationDigest:incubationDigest, sigConfsDigest:sigConfsDigest, elixirDigest:elixirDigest, songDigest:songDigest, sacredDateDigest:sacredDateDigest, herbDigest:herbDigest, beingsDigest:beingsDigest, channelDigest:channelDigest, dreamMagicDigest:dreamMagicDigest};
+  // WITHIN GROUP
+  var withinEntriesCtx = (typeof getWithinEntries==='function') ? getWithinEntries() : [];
+  var withinDigest = withinEntriesCtx.length ? withinEntriesCtx.slice().sort(function(a,b){return b.date.localeCompare(a.date);}).map(function(e){
+    return '['+e.date+'] "'+e.title+'"'
+      +(e.summary?'\n  Summary: '+e.summary.slice(0,200):'')
+      +(e.myShare?'\n  My share: '+e.myShare.slice(0,150):'')
+      +(e.guidance?'\n  Guidance: '+e.guidance.slice(0,150):'')
+      +(e.homework?'\n  Homework ('+e.homeworkStatus+'): '+e.homework.slice(0,150):'');
+  }).join('\n\n') : '';
+
+  return {dreamDigest:dreamDigest, spiritDigest:spiritDigest, commDigest:commDigest, visitDigest:visitDigest, moonDigest:moonDigest, prophecyDigest:prophecyDigest, manifestDigest:manifestDigest, threadDigest:threadDigest, peopleDigest:peopleDigest, patternDigest:patternDigest, chartSummary:chartSummary, dreamCount:dreams.length, ancestorDigest:ancestorDigest, incubationDigest:incubationDigest, sigConfsDigest:sigConfsDigest, elixirDigest:elixirDigest, songDigest:songDigest, sacredDateDigest:sacredDateDigest, herbDigest:herbDigest, beingsDigest:beingsDigest, channelDigest:channelDigest, dreamMagicDigest:dreamMagicDigest, withinDigest:withinDigest};
 }
 
 async function askArchive() {
@@ -6529,13 +6538,13 @@ async function askArchive() {
   // Build full archive context
   const ctx = buildFullArchiveContext({ maxDreams: 128, maxSpirit: 80, bodyLen: 500 });
 
-  const nowStr = new Date().toLocaleDateString('en-CA'); // YYYY-MM-DD
+  const nowStr = new Date().toLocaleDateString('en-CA');
   const yesterdayStr = new Date(Date.now()-86400000).toLocaleDateString('en-CA');
   const todayReadable = new Date().toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
 
   const prompt = `You are a pattern analyst and spiritual counselor working with Tiff's complete archive — dreams, waking practice, spiritual signals, presences, prophecies, manifestations, and more. Answer her specific question by searching through everything provided.
 
-DATE CONTEXT: Today is ${todayReadable} (${nowStr}). Yesterday was ${yesterdayStr}. When Tiff says "today" or "yesterday" use these exact dates. NOTE: Tiff records dreams on the date she wakes up, so a dream dated ${nowStr} was dreamed between midnight and ~11am on ${nowStr} (i.e. the night of ${yesterdayStr} into the morning of ${nowStr}).
+DATE CONTEXT: Today is ${todayReadable} (${nowStr}). Yesterday was ${yesterdayStr}. When Tiff says "today" or "yesterday" use these exact dates. NOTE: Tiff records dreams on the date she wakes up, so a dream dated ${nowStr} was dreamed between midnight and ~11am on ${nowStr}.
 
 QUESTION: ${question}
 
@@ -6592,15 +6601,18 @@ ${ctx.herbDigest || 'No herb notes logged yet.'}
 SPIRIT BEINGS & ENTITIES:
 ${ctx.beingsDigest || 'No custom beings logged yet.'}
 
-THE CHANNEL — HOW TIFF RECEIVES & WORKS (practitioner self-knowledge):
+THE CHANNEL — HOW TIFF RECEIVES & WORKS:
 ${ctx.channelDigest || 'No channel entries yet.'}
 
 DREAM MAGIC WORKINGS:
 ${ctx.dreamMagicDigest || 'No dream magic workings yet.'}
 
+WITHIN GROUP CALLS & HOMEWORK:
+${ctx.withinDigest || 'No Within entries yet.'}
+
 NAMED PATTERNS: ${ctx.patternDigest}
 
-Answer the question thoroughly and specifically, drawing on the FULL archive — dreams, journals, shadow work, rituals, readings, ancestors, elixirs, signals, songs, herbs, channel knowledge, dream magic, and all other entries. Reference actual titles, dates, people, and specific details. If you find a pattern, name it with evidence. Write as flowing prose — conversational but precise. 3-6 paragraphs. Address her as Tiff.`;
+Answer the question thoroughly and specifically, drawing on the FULL archive — dreams, journals, shadow work, rituals, readings, ancestors, elixirs, signals, songs, herbs, channel knowledge, dream magic, Within group work, and all other entries. Reference actual titles, dates, people, and specific details. If you find a pattern, name it with evidence. Write as flowing prose — conversational but precise. 3-6 paragraphs. Address her as Tiff.`;
 
   try {
     const data = await claudeAPI(apiKey, {model:'claude-sonnet-4-6', max_tokens:2500, messages:[{role:'user', content:prompt}]});
@@ -7257,212 +7269,199 @@ function deleteChannelEntry(idx) {
   renderChannelEntries();
 }
 
-function renderDreamMagic(dest) {
+
+// ═══════════════════════════════════════════════════════════
+// WITHIN GROUP
+// ═══════════════════════════════════════════════════════════
+const WITHIN_SEED_DATA = [{"id": "within_1", "date": "2026-03-26", "title": "Alignment is Your Job", "summary": "Jenna opened with collective intention for Bunny's healing. Teaching centered on alignment: your highest dream board is the basement floor of what your higher self has for you. Following your highest excitement is your job — act on what your physical hands can act on now, take it as far as you can, then let the next thing emerge. God pays through all the branches. John processed guilt around staying home while his wife works; Jenna guided a body-based somatic process — hold the guilt like a baby, \"I don't need you to change.\" Tresa raised manifesting with a non-spiritual partner; Jenna: partners are bookends of polarity, their triggers still have charge in you. Shadow work thread: every ladder rung is necessary and valid. Upcoming: the four inner voices framework.", "myShare": "Named the tension between holding my daily alignment as sacred/private and feeling nudged to share it publicly. Jenna's response: soften resistance to what you don't want first — damning those options shrinks your buffet table. The gas pedal and brake being down simultaneously is the pattern to release.", "guidance": "I am safe to allow all jobs as options — this doesn't change your preference, it removes the resistance. Stop looking for answers in the old junk drawer of what you already know. The definition of abundance: having exactly what you need, when you need it — not a moment before or after.", "homework": "", "homeworkStatus": "Complete", "homeworkLog": [], "migrated": true}, {"id": "within_2", "date": "2026-03-26", "title": "Within Group Call March 26 — Notes", "summary": "The highest best version of my future I can imagine for myself is the lowest possible version my higher self can bring. Imagine bigger + with more unbelievable things to see what is truly possible. Doing what's in your alignment with others brings so much more to them than when you're not. Why don't we feel like we can make money doing exactly what we love? Following your highest excitement is your job. God pays me through all the branches. We don't want money itself, we want what money can give us. Loving our actual lives and our mundane is the highest level.", "myShare": "", "guidance": "", "homework": "", "homeworkStatus": "Complete", "homeworkLog": [], "migrated": true}, {"id": "within_3", "date": "2026-04-02", "title": "The Four Inner Voices", "summary": "Jenna introduced the four inner voices framework. The Shadow Voices: The Critic (distorted masculine) — lives in the mind, pushes forward through shame and \"you should.\" The Siren (distorted feminine) — lives in the body, whispers that somewhere else will feel better, tools are temptation and justification. The Exalted Voices: The Guide (healthy masculine) — steady behind you, points forward with focus and groundedness, never shames. The Guardian (healthy feminine) — present and calm, supports you without pulling you away from yourself. The Practice: when you hear a voice, name it. That naming creates a gap. The gap creates presence. The presence creates choice.", "myShare": "", "guidance": "When we can see all four voices clearly: we stop identifying with the shadow voices as who we are, stop being hijacked by them unconsciously, gain the gap between stimulus and response, and step into the exalted versions as our true inner compass.", "homework": "", "homeworkStatus": "Complete", "homeworkLog": [], "migrated": true}, {"id": "within_4", "date": "2026-04-09", "title": "The Luminous Lattice — Fascia, Plasma & Thrill", "summary": "Opened with energy sent to Bunny and Tiffany. Jenna led a layered body scan meditation — moving through skeleton, fascia, muscles, fat/tissues, organs, fluids, and reassembling. Jasper described fascia as the luminous lattice through which consciousness interfaces with incarnation — the primary substrate of the light body. Plasma explored as the pre-physical intelligent medium between pure consciousness and dense matter. Trauma = frozen charge in the fascial lattice creating perceptual looping. Healing = the fascial web recalibrating toward higher harmonic order. Ascension is not leaving the body — it is illuminating it. Shared theme across Candace, John, and Tresa: thrill has been off the buffet table — filed too close to danger or disappointment. The equal options technique was introduced.", "myShare": "Did the body layer meditation April 13 (Day 21, Luteal). Skeletal felt bare and cold, fascia sticky, muscles warm and expanding, fat/tissues goopy, organs pulled attention to uterus and ovaries, blood/fluids sloshy, hair and skin buzzy, reassembly felt good with lots of light shapes and colors. Sitting with whether blood plasma and cosmic plasma are the same substance at different densities — and what it means that my body just learned to sustain its own field. My consistent blocks: analysis paralysis at the thought layer, and stalling at integration — both may be the same nervous system protection at opposite ends. I also carry a block around thrill.", "guidance": "Core permissions practiced: it is safe to feel thrill / to go beyond control / to let things go too far. The equal options technique — seeing both familiar comfort and unknown expansion as genuinely equal choices, allowing the body to stop fighting itself.", "homework": "Work on unapologetic asking, eliminating the shoulds, and trusting free will. The show I'm in is the live edge of this — I got what I wanted and it disappointed me; learn to ask what I actually want next without guilt or obligation pulling the answer.", "homeworkStatus": "In Progress", "homeworkLog": [], "migrated": true}, {"id": "within_5", "date": "2026-04-16", "title": "Inner Knowing vs. Distortion", "summary": "The Five Things (what is always true): We exist. The All is the One and the One is the All. Everything is here and now. What we put out is what we get back. The only constant is change. Inner knowing always speaks in the now, not past or future. It focuses on what to do; distortion gets stuck in the why. Inner knowing is simple and complete; distortion adds layers and stories. Inner knowing doesn't loop. It feels calm and settled. It moves you into action, stillness, or both. It doesn't explain itself, inflate you, or diminish you. It points to the step — not the outcome. Intensity is not truth; clarity is quieter and often easy to miss. The first moment is the clearest. You cannot miss what is meant for you. True guidance leads to self-trust, not dependence.", "myShare": "", "guidance": "Look at judgments about the one thing that might be the distortion. You might enjoy the analyzing — it's not bad or wrong. It is allowed and a tool.", "homework": "", "homeworkStatus": "Complete", "homeworkLog": [], "migrated": true}, {"id": "within_6", "date": "2026-04-23", "title": "Reprogramming from Pre-Birth", "summary": "Opened with debrief around Mike (guest last week) — his projector energy asserting without invitation landed too heavily in the container before trust was built. The group held its frequency and the consensus was a win-win. Broader teaching: the deepest shifts happen when we fully adopt the timeline identity of someone who never was X — the continuity narrative is a tool, not permanent structure. Bashar: nothing affects you until you agree to be affected. The levels framework — to me, by me, for me, as me. Jenna invited us to examine how much we temper our spiritual truth around others — speaking truth with steady confidence generates more openness, not less. Guides saying: people are waking up and will be drawn toward us; use body sensation to discern what's worth engaging with.", "myShare": "Had a visceral reaction to the Mike dynamic — something about the energy triggered old patterns. When I first described the womb sound, I owned it — visceral, matter-of-fact. When I circled back later, I second-guessed myself. Jenna caught the difference and named it clearly: that second-guessing is the default pattern I'm working to release. Getting more visuals in meditations lately — want to keep claiming that rather than qualifying it away.", "guidance": "Try on the version of myself who was always hyper-fantastical. If that jump feels too big, ask: what would Jenna be seeing right now? Use a known person as a bridge identity while the visual self comes online. Do both poles — fully in 'I'm allowed to never have this claire' AND fully in 'I'm allowed for all of it.' Let the whole spectrum be true before settling anywhere.", "homework": "Continuity pole work. For the things I'm aiming toward, make sure both ends of the spectrum are truly allowed in my body — not just conceptually known. Then come from neutral preference and flirt with the version of myself who is already there so solidly that the previous version doesn't even feel like me. Lean toward what feels light and curious. Trust the body over the good idea on paper.", "homeworkStatus": "In Progress", "homeworkLog": [], "migrated": true}, {"id": "within_7", "date": "2026-04-30", "title": "Cycles, Hubris & the Mask On First", "summary": "Opened with collective moment for Bunny, who hit a milestone in rehabilitation. Grounding meditation focused on present-moment anchoring, breath, and claiming sovereign space. New member Mia joined from Austin — her arrival prompted organic nervous system regulation practice (somatic affirmations around permission to feel nervous, safety in not knowing, right-timing downloads). Check-in round: wins and sticking points. The cycles teaching came through strongly — giving yourself permission to have winters and falls, not just springs and summers. Hubris thread came through as a shared theme for several members.", "myShare": "WINS: Deep focus on practice and putting my own mask on first this moon cycle. Dream work has been wild — vivid, memorable, intentional. Asking spirit team for specific things before bed and getting immediate answers. Daily Gateway meditations for past month and a half. Tons of synchronicities, downloads, things coming full circle. Feeling buzzy and lit up. STICKING POINT: Petty gossip surfaced in theatre community. My response was different — I moved toward it rather than shrinking. Old wounds resurfacing but met with a new posture.", "guidance": "The cycles theme landed hard — already being embodied through inner seasons work. Jenna double-underlined 'cycles' while I was talking and directed Mia's whole teaching there — direct validation. Hubris thread: showing up in masculine energy, tied to past offenses and people I've quietly exed off the buffet table by deciding I don't want to be like them.", "homework": "Continue cycles/inner seasons work — already doing it, keep going. Work with hubris allowances: offer allowances to people (past and present) who have triggered this theme — they're allowed to be arrogant, I'm allowed to come across that way sometimes too — hand on heart, let the body catch up. Feel into usual suspects I've silently damned for hubris and start letting them be allowed.", "homeworkStatus": "Active", "homeworkLog": [], "migrated": true}];
+
+function getWithinEntries() {
+  try {
+    var stored = JSON.parse(localStorage.getItem('gt_within_entries') || 'null');
+    if (stored) return stored;
+    // First load — seed with migrated entries
+    localStorage.setItem('gt_within_entries', JSON.stringify(WITHIN_SEED_DATA));
+    return WITHIN_SEED_DATA;
+  } catch(e) { return WITHIN_SEED_DATA; }
+}
+
+function saveWithinEntries(entries) {
+  try { localStorage.setItem('gt_within_entries', JSON.stringify(entries)); } catch(e) {}
+}
+
+const WITHIN_STATUSES = ['Active','In Progress','Complete'];
+
+function renderWithin(dest) {
   if (!dest) return;
+  const entries = getWithinEntries().slice().sort((a,b) => b.date.localeCompare(a.date));
   dest.innerHTML = `
     <div style="max-width:740px;margin:0 auto;padding:24px 0 60px;">
-      <div style="font-family:'Space Mono',monospace;font-size:.55rem;letter-spacing:.12em;text-transform:uppercase;color:var(--moon);margin-bottom:6px;">✦ Dream Magic</div>
-      <div style="font-family:'Cormorant Garamond',serif;font-size:.95rem;color:rgba(201,185,154,.45);font-style:italic;margin-bottom:28px;">Incubation → Dream → Thread → Magic. The full arc of intentional dream work.</div>
-      <div id="dream-magic-list"></div>
-      <button onclick="openDreamMagicModal()" style="margin-top:24px;font-family:'Space Mono',monospace;font-size:.55rem;letter-spacing:.1em;text-transform:uppercase;padding:10px 22px;border:1px solid rgba(201,185,154,.3);background:transparent;color:rgba(201,185,154,.7);cursor:pointer;">+ New Working</button>
+      <div style="font-family:'Space Mono',monospace;font-size:.55rem;letter-spacing:.12em;text-transform:uppercase;color:var(--moon);margin-bottom:6px;">◈ Within</div>
+      <div style="font-family:'Cormorant Garamond',serif;font-size:.95rem;color:rgba(201,185,154,.45);font-style:italic;margin-bottom:28px;">Group calls, personal guidance, and the work between.</div>
+      <button onclick="openWithinModal()" style="font-family:'Space Mono',monospace;font-size:.55rem;letter-spacing:.1em;text-transform:uppercase;padding:10px 22px;border:1px solid rgba(201,185,154,.3);background:transparent;color:rgba(201,185,154,.7);cursor:pointer;margin-bottom:28px;">+ New Entry</button>
+      <div id="within-entries-list"></div>
     </div>`;
-  renderDreamMagicList();
+  renderWithinList();
 }
 
-function getDreamMagicEntries() {
-  try { return JSON.parse(localStorage.getItem('gt_dream_magic') || '[]'); } catch(e) { return []; }
-}
-function saveDreamMagicEntries(entries) {
-  try { localStorage.setItem('gt_dream_magic', JSON.stringify(entries)); } catch(e) {}
-}
-
-const DREAM_MAGIC_TYPES = ['Lucid Dreaming','Dream Spellwork','Waking Integration','Dream Request','Other'];
-const DREAM_MAGIC_STATUSES = ['Active','Complete','Unresolved'];
-
-function renderDreamMagicList() {
-  const list = document.getElementById('dream-magic-list');
+function renderWithinList() {
+  const list = document.getElementById('within-entries-list');
   if (!list) return;
-  const entries = getDreamMagicEntries();
+  const entries = getWithinEntries().slice().sort((a,b) => b.date.localeCompare(a.date));
   if (!entries.length) {
-    list.innerHTML = `<div style="font-family:'Cormorant Garamond',serif;font-size:1rem;color:rgba(201,185,154,.35);font-style:italic;padding:20px 0;">No workings yet. The magic begins when you do.</div>`;
+    list.innerHTML = '<div style="font-family:\'Cormorant Garamond\',serif;font-size:1rem;color:rgba(201,185,154,.35);font-style:italic;">No entries yet.</div>';
     return;
   }
-  const statusColor = {Active:'#c9a84c', Complete:'rgba(201,185,154,.4)', Unresolved:'#6b4f8a'};
-  list.innerHTML = entries.slice().sort((a,b) => b.date.localeCompare(a.date)).map((e,i) => `
-    <div style="margin-bottom:24px;padding:20px;background:rgba(255,255,255,.02);border:1px solid rgba(201,185,154,.1);cursor:pointer;" onclick="openDreamMagicModal(${i})">
+  const statusColor = {'Active':'#c9a84c','In Progress':'rgba(155,107,171,.8)','Complete':'rgba(201,185,154,.4)'};
+  list.innerHTML = entries.map((e,i) => {
+    const hasHomework = e.homework && e.homework.trim();
+    const logCount = (e.homeworkLog||[]).length;
+    return `<div style="margin-bottom:20px;padding:20px;background:rgba(255,255,255,.02);border:1px solid rgba(201,185,154,.1);cursor:pointer;" onclick="openWithinModal(${JSON.stringify(e.id).replace(/"/g,'&quot;')})">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;">
         <div>
-          <div style="font-family:'Space Mono',monospace;font-size:.48rem;letter-spacing:.1em;text-transform:uppercase;color:rgba(201,185,154,.4);margin-bottom:3px;">${e.date} · ${e.type||'Working'}</div>
+          <div style="font-family:'Space Mono',monospace;font-size:.48rem;letter-spacing:.1em;text-transform:uppercase;color:rgba(201,185,154,.4);margin-bottom:3px;">${e.date}</div>
           <div style="font-family:'Cormorant Garamond',serif;font-size:1.2rem;color:var(--parchment);">${e.title}</div>
         </div>
-        <span style="font-family:'Space Mono',monospace;font-size:.45rem;letter-spacing:.07em;padding:3px 8px;border:1px solid ${statusColor[e.status]||'rgba(201,185,154,.3)'};color:${statusColor[e.status]||'rgba(201,185,154,.5)'};">${e.status||'Active'}</span>
+        ${hasHomework ? `<span style="font-family:'Space Mono',monospace;font-size:.45rem;letter-spacing:.07em;padding:3px 8px;border:1px solid ${statusColor[e.homeworkStatus]||'rgba(201,185,154,.3)'};color:${statusColor[e.homeworkStatus]||'rgba(201,185,154,.5)'};">${e.homeworkStatus||'Active'}</span>` : ''}
       </div>
-      ${e.intention ? `<div style="font-family:'Cormorant Garamond',serif;font-size:.95rem;color:rgba(240,235,224,.55);font-style:italic;margin-bottom:8px;">${e.intention}</div>` : ''}
+      ${e.summary ? `<div style="font-family:'Cormorant Garamond',serif;font-size:.92rem;color:rgba(240,235,224,.55);line-height:1.7;margin-bottom:8px;">${e.summary.slice(0,180)}${e.summary.length>180?'…':''}</div>` : ''}
       <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;">
-        ${e.linkedIncubations&&e.linkedIncubations.length?`<span style="font-family:'Space Mono',monospace;font-size:.45rem;padding:2px 7px;border:1px solid rgba(201,185,154,.15);color:rgba(201,185,154,.5);">🌙 ${e.linkedIncubations.length} incubation${e.linkedIncubations.length>1?'s':''}</span>`:''}
-        ${e.linkedDreams&&e.linkedDreams.length?`<span style="font-family:'Space Mono',monospace;font-size:.45rem;padding:2px 7px;border:1px solid rgba(201,185,154,.15);color:rgba(201,185,154,.5);">◉ ${e.linkedDreams.length} dream${e.linkedDreams.length>1?'s':''}</span>`:''}
-        ${e.linkedThreads&&e.linkedThreads.length?`<span style="font-family:'Space Mono',monospace;font-size:.45rem;padding:2px 7px;border:1px solid rgba(201,185,154,.15);color:rgba(201,185,154,.5);">∞ ${e.linkedThreads.length} thread${e.linkedThreads.length>1?'s':''}</span>`:''}
-        ${e.images&&e.images.length?`<span style="font-family:'Space Mono',monospace;font-size:.45rem;padding:2px 7px;border:1px solid rgba(201,185,154,.15);color:rgba(201,185,154,.5);">⬡ ${e.images.length} image${e.images.length>1?'s':''}</span>`:''}
+        ${e.myShare ? '<span style="font-family:\'Space Mono\',monospace;font-size:.45rem;padding:2px 7px;border:1px solid rgba(201,185,154,.15);color:rgba(201,185,154,.5);">My Share</span>' : ''}
+        ${e.guidance ? '<span style="font-family:\'Space Mono\',monospace;font-size:.45rem;padding:2px 7px;border:1px solid rgba(201,185,154,.15);color:rgba(201,185,154,.5);">Guidance</span>' : ''}
+        ${hasHomework ? `<span style="font-family:'Space Mono',monospace;font-size:.45rem;padding:2px 7px;border:1px solid rgba(201,185,154,.15);color:rgba(201,185,154,.5);">Homework${logCount?' · '+logCount+' log note'+(logCount>1?'s':''):''}</span>` : ''}
       </div>
-    </div>`).join('');
+    </div>`;
+  }).join('');
 }
 
-function openDreamMagicModal(idx) {
-  const entries = getDreamMagicEntries();
-  const e = idx !== undefined ? entries[idx] : null;
-  const allDreams = (window.dreams || []).slice().sort((a,b) => b.date.localeCompare(a.date));
-  const allIncubations = (() => { try { return JSON.parse(localStorage.getItem('gt_incubations')||'[]'); } catch(ex){return[];} })();
-  const allThreads = (() => { try { return JSON.parse(localStorage.getItem('gt_threads')||'[]'); } catch(ex){return[];} })();
-
-  const linkedDreams = e ? (e.linkedDreams||[]) : [];
-  const linkedIncubs = e ? (e.linkedIncubations||[]) : [];
-  const linkedThreads = e ? (e.linkedThreads||[]) : [];
-
+function openWithinModal(entryId) {
+  const entries = getWithinEntries();
+  const e = entryId ? entries.find(x => x.id === entryId) : null;
   const wrap = document.createElement('div');
-  wrap.id = 'dream-magic-modal-wrap';
+  wrap.id = 'within-modal-wrap';
   wrap.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.85);z-index:9999;display:flex;align-items:flex-start;justify-content:center;padding:16px;overflow-y:auto;';
 
-  const typeOpts = DREAM_MAGIC_TYPES.map(t => `<option value="${t}" ${e&&e.type===t?'selected':''}>${t}</option>`).join('');
-  const statusOpts = DREAM_MAGIC_STATUSES.map(s => `<option value="${s}" ${(e&&e.status===s)||(s==='Active'&&!e)?'selected':''}>${s}</option>`).join('');
-  const dreamOpts = allDreams.map(d => `<option value="${d.id}" ${linkedDreams.includes(d.id)?'selected':''}>${d.date} — ${d.title}</option>`).join('');
-  const incubOpts = allIncubations.map((inc,ii) => `<option value="${ii}" ${linkedIncubs.includes(ii)?'selected':''}>${inc.date||''} — ${inc.intention||inc.title||'Incubation '+(ii+1)}</option>`).join('');
-  const threadOpts = allThreads.map((th,ti) => `<option value="${ti}" ${linkedThreads.includes(ti)?'selected':''}>${th.name||th.title||'Thread '+(ti+1)}</option>`).join('');
+  const statusOpts = WITHIN_STATUSES.map(s => `<option value="${s}" ${(e&&e.homeworkStatus===s)||(s==='Active'&&!e)?'selected':''}>${s}</option>`).join('');
+  const logHtml = e && e.homeworkLog && e.homeworkLog.length ? e.homeworkLog.map((l,li) => `
+    <div style="padding:10px 14px;background:rgba(255,255,255,.03);border:1px solid rgba(201,185,154,.08);margin-bottom:8px;border-left:2px solid rgba(201,185,154,.2);">
+      <div style="font-family:'Space Mono',monospace;font-size:.45rem;color:rgba(201,185,154,.35);margin-bottom:4px;">${l.date}</div>
+      <div style="font-family:'Cormorant Garamond',serif;font-size:.95rem;color:rgba(240,235,224,.75);line-height:1.7;white-space:pre-wrap;">${l.note}</div>
+      <button onclick="deleteWithinLogEntry('${entryId}',${li})" style="background:none;border:none;color:rgba(201,185,154,.25);cursor:pointer;font-size:.65rem;margin-top:4px;">✕ remove</button>
+    </div>`).join('') : '<div style="font-family:\'Cormorant Garamond\',serif;font-size:.9rem;color:rgba(201,185,154,.3);font-style:italic;padding:8px 0;">No log entries yet.</div>';
 
   wrap.innerHTML = `
     <div style="background:#1a1820;border:1px solid rgba(201,185,154,.2);padding:24px;max-width:680px;width:100%;margin-top:16px;">
-      <div style="font-family:'Space Mono',monospace;font-size:.55rem;letter-spacing:.12em;text-transform:uppercase;color:var(--moon);margin-bottom:18px;">✦ ${e?'Edit':'New'} Dream Magic Working</div>
+      <div style="font-family:'Space Mono',monospace;font-size:.55rem;letter-spacing:.12em;text-transform:uppercase;color:var(--moon);margin-bottom:18px;">◈ ${e?'Edit':'New'} Within Entry</div>
 
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;">
         <div><label style="font-family:'Space Mono',monospace;font-size:.5rem;letter-spacing:.08em;text-transform:uppercase;color:rgba(201,185,154,.5);display:block;margin-bottom:5px;">Title</label>
-          <input id="dm-title" value="${e?e.title:''}" style="width:100%;background:rgba(255,255,255,.04);border:1px solid rgba(201,185,154,.22);color:var(--parchment);font-family:'Cormorant Garamond',serif;font-size:1rem;padding:8px 11px;outline:none;box-sizing:border-box;"></div>
+          <input id="wi-title" value="${e?e.title.replace(/"/g,'&quot;'):''}" style="width:100%;background:rgba(255,255,255,.04);border:1px solid rgba(201,185,154,.22);color:var(--parchment);font-family:'Cormorant Garamond',serif;font-size:1rem;padding:8px 11px;outline:none;box-sizing:border-box;"></div>
         <div><label style="font-family:'Space Mono',monospace;font-size:.5rem;letter-spacing:.08em;text-transform:uppercase;color:rgba(201,185,154,.5);display:block;margin-bottom:5px;">Date</label>
-          <input id="dm-date" type="date" value="${e?e.date:new Date().toISOString().slice(0,10)}" style="width:100%;background:rgba(255,255,255,.04);border:1px solid rgba(201,185,154,.22);color:var(--parchment);font-family:'Space Mono',monospace;font-size:.75rem;padding:8px 11px;outline:none;"></div>
+          <input id="wi-date" type="date" value="${e?e.date:new Date().toISOString().slice(0,10)}" style="width:100%;background:rgba(255,255,255,.04);border:1px solid rgba(201,185,154,.22);color:var(--parchment);font-family:'Space Mono',monospace;font-size:.75rem;padding:8px 11px;outline:none;"></div>
       </div>
 
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;">
-        <div><label style="font-family:'Space Mono',monospace;font-size:.5rem;letter-spacing:.08em;text-transform:uppercase;color:rgba(201,185,154,.5);display:block;margin-bottom:5px;">Type</label>
-          <select id="dm-type" style="width:100%;background:#1a1820;border:1px solid rgba(201,185,154,.22);color:var(--parchment);font-family:'Space Mono',monospace;font-size:.7rem;padding:8px 11px;outline:none;">${typeOpts}</select></div>
+      <div style="margin-bottom:14px;"><label style="font-family:'Space Mono',monospace;font-size:.5rem;letter-spacing:.08em;text-transform:uppercase;color:rgba(201,185,154,.5);display:block;margin-bottom:5px;">Summary — Group Themes & What Came Through</label>
+        <textarea id="wi-summary" rows="5" style="width:100%;background:rgba(255,255,255,.04);border:1px solid rgba(201,185,154,.22);color:var(--parchment);font-family:'Cormorant Garamond',serif;font-size:.98rem;padding:8px 11px;outline:none;resize:vertical;line-height:1.7;box-sizing:border-box;">${e?e.summary||'':''}</textarea></div>
+
+      <div style="margin-bottom:14px;"><label style="font-family:'Space Mono',monospace;font-size:.5rem;letter-spacing:.08em;text-transform:uppercase;color:rgba(201,185,154,.5);display:block;margin-bottom:5px;">My Share — Wins & Sticking Points</label>
+        <textarea id="wi-myshare" rows="4" style="width:100%;background:rgba(255,255,255,.04);border:1px solid rgba(201,185,154,.22);color:var(--parchment);font-family:'Cormorant Garamond',serif;font-size:.98rem;padding:8px 11px;outline:none;resize:vertical;line-height:1.7;box-sizing:border-box;">${e?e.myShare||'':''}</textarea></div>
+
+      <div style="margin-bottom:14px;"><label style="font-family:'Space Mono',monospace;font-size:.5rem;letter-spacing:.08em;text-transform:uppercase;color:rgba(201,185,154,.5);display:block;margin-bottom:5px;">Guidance — What Came Through for Me</label>
+        <textarea id="wi-guidance" rows="4" style="width:100%;background:rgba(255,255,255,.04);border:1px solid rgba(201,185,154,.22);color:var(--parchment);font-family:'Cormorant Garamond',serif;font-size:.98rem;padding:8px 11px;outline:none;resize:vertical;line-height:1.7;box-sizing:border-box;">${e?e.guidance||'':''}</textarea></div>
+
+      <div style="display:grid;grid-template-columns:1fr auto;gap:12px;margin-bottom:14px;align-items:start;">
+        <div><label style="font-family:'Space Mono',monospace;font-size:.5rem;letter-spacing:.08em;text-transform:uppercase;color:rgba(201,185,154,.5);display:block;margin-bottom:5px;">Homework</label>
+          <textarea id="wi-homework" rows="3" style="width:100%;background:rgba(255,255,255,.04);border:1px solid rgba(201,185,154,.22);color:var(--parchment);font-family:'Cormorant Garamond',serif;font-size:.98rem;padding:8px 11px;outline:none;resize:vertical;line-height:1.7;box-sizing:border-box;">${e?e.homework||'':''}</textarea></div>
         <div><label style="font-family:'Space Mono',monospace;font-size:.5rem;letter-spacing:.08em;text-transform:uppercase;color:rgba(201,185,154,.5);display:block;margin-bottom:5px;">Status</label>
-          <select id="dm-status" style="width:100%;background:#1a1820;border:1px solid rgba(201,185,154,.22);color:var(--parchment);font-family:'Space Mono',monospace;font-size:.7rem;padding:8px 11px;outline:none;">${statusOpts}</select></div>
+          <select id="wi-status" style="background:#1a1820;border:1px solid rgba(201,185,154,.22);color:var(--parchment);font-family:'Space Mono',monospace;font-size:.7rem;padding:8px 11px;outline:none;white-space:nowrap;">${statusOpts}</select></div>
       </div>
 
-      <div style="margin-bottom:14px;"><label style="font-family:'Space Mono',monospace;font-size:.5rem;letter-spacing:.08em;text-transform:uppercase;color:rgba(201,185,154,.5);display:block;margin-bottom:5px;">Intention</label>
-        <input id="dm-intention" value="${e?e.intention||'':''}" placeholder="What are you working toward?" style="width:100%;background:rgba(255,255,255,.04);border:1px solid rgba(201,185,154,.22);color:var(--parchment);font-family:'Cormorant Garamond',serif;font-size:1rem;padding:8px 11px;outline:none;box-sizing:border-box;"></div>
-
-      <div style="margin-bottom:14px;"><label style="font-family:'Space Mono',monospace;font-size:.5rem;letter-spacing:.08em;text-transform:uppercase;color:rgba(201,185,154,.5);display:block;margin-bottom:5px;">Method / Working</label>
-        <textarea id="dm-method" rows="5" placeholder="What did you do? How did you work with the dream material?" style="width:100%;background:rgba(255,255,255,.04);border:1px solid rgba(201,185,154,.22);color:var(--parchment);font-family:'Cormorant Garamond',serif;font-size:.98rem;padding:8px 11px;outline:none;resize:vertical;line-height:1.7;box-sizing:border-box;">${e?e.method||'':''}</textarea></div>
-
-      <div style="margin-bottom:14px;"><label style="font-family:'Space Mono',monospace;font-size:.5rem;letter-spacing:.08em;text-transform:uppercase;color:rgba(201,185,154,.5);display:block;margin-bottom:5px;">Outcome</label>
-        <textarea id="dm-outcome" rows="4" placeholder="What happened? How did it resolve? (Can be filled in later.)" style="width:100%;background:rgba(255,255,255,.04);border:1px solid rgba(201,185,154,.22);color:var(--parchment);font-family:'Cormorant Garamond',serif;font-size:.98rem;padding:8px 11px;outline:none;resize:vertical;line-height:1.7;box-sizing:border-box;">${e?e.outcome||'':''}</textarea></div>
-
-      ${incubOpts ? `<div style="margin-bottom:14px;"><label style="font-family:'Space Mono',monospace;font-size:.5rem;letter-spacing:.08em;text-transform:uppercase;color:rgba(201,185,154,.5);display:block;margin-bottom:5px;">🌙 Linked Incubations</label>
-        <select id="dm-incubs" multiple style="width:100%;background:#1a1820;border:1px solid rgba(201,185,154,.22);color:var(--parchment);font-family:'Cormorant Garamond',serif;font-size:.9rem;padding:6px;outline:none;min-height:70px;">${incubOpts}</select>
-        <div style="font-family:'Space Mono',monospace;font-size:.44rem;color:rgba(201,185,154,.3);margin-top:4px;">Hold Ctrl/Cmd to select multiple</div></div>` : ''}
-
-      ${dreamOpts ? `<div style="margin-bottom:14px;"><label style="font-family:'Space Mono',monospace;font-size:.5rem;letter-spacing:.08em;text-transform:uppercase;color:rgba(201,185,154,.5);display:block;margin-bottom:5px;">◉ Linked Dreams</label>
-        <select id="dm-dreams" multiple style="width:100%;background:#1a1820;border:1px solid rgba(201,185,154,.22);color:var(--parchment);font-family:'Cormorant Garamond',serif;font-size:.9rem;padding:6px;outline:none;min-height:70px;">${dreamOpts}</select>
-        <div style="font-family:'Space Mono',monospace;font-size:.44rem;color:rgba(201,185,154,.3);margin-top:4px;">Hold Ctrl/Cmd to select multiple</div></div>` : ''}
-
-      ${threadOpts ? `<div style="margin-bottom:14px;"><label style="font-family:'Space Mono',monospace;font-size:.5rem;letter-spacing:.08em;text-transform:uppercase;color:rgba(201,185,154,.5);display:block;margin-bottom:5px;">∞ Linked Threads</label>
-        <select id="dm-threads" multiple style="width:100%;background:#1a1820;border:1px solid rgba(201,185,154,.22);color:var(--parchment);font-family:'Cormorant Garamond',serif;font-size:.9rem;padding:6px;outline:none;min-height:70px;">${threadOpts}</select>
-        <div style="font-family:'Space Mono',monospace;font-size:.44rem;color:rgba(201,185,154,.3);margin-top:4px;">Hold Ctrl/Cmd to select multiple</div></div>` : ''}
-
-      <div style="margin-bottom:20px;"><label style="font-family:'Space Mono',monospace;font-size:.5rem;letter-spacing:.08em;text-transform:uppercase;color:rgba(201,185,154,.5);display:block;margin-bottom:5px;">Images</label>
-        <label style="font-family:'Space Mono',monospace;font-size:.6rem;letter-spacing:.08em;padding:9px 18px;background:transparent;border:1px solid rgba(201,185,154,.25);color:var(--moon);cursor:pointer;display:inline-block;" onmouseover="this.style.borderColor='var(--moon)'" onmouseout="this.style.borderColor='rgba(201,185,154,.25)'">↑ Attach Images <input type="file" id="dm-images" accept="image/*" multiple onchange="previewDreamMagicImages(this)" style="display:none;"></label>
-        <div id="dm-image-preview" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;">${e&&e.images?e.images.map((img,ii)=>`<div style="position:relative;"><img src="${img}" style="width:80px;height:80px;object-fit:cover;border:1px solid rgba(201,185,154,.2);" /><button onclick="removeDreamMagicImage(${ii})" style="position:absolute;top:2px;right:2px;background:rgba(0,0,0,.7);border:none;color:rgba(201,185,154,.8);cursor:pointer;font-size:.6rem;padding:1px 4px;">✕</button></div>`).join(''):''}
+      ${e ? `
+      <div style="margin-bottom:20px;border-top:1px solid rgba(201,185,154,.08);padding-top:18px;">
+        <div style="font-family:'Space Mono',monospace;font-size:.5rem;letter-spacing:.08em;text-transform:uppercase;color:rgba(201,185,154,.5);margin-bottom:12px;">Homework Log</div>
+        <div id="wi-log-list">${logHtml}</div>
+        <div style="margin-top:12px;">
+          <textarea id="wi-new-log" rows="3" placeholder="Add a note about your progress…" style="width:100%;background:rgba(255,255,255,.04);border:1px solid rgba(201,185,154,.22);color:var(--parchment);font-family:'Cormorant Garamond',serif;font-size:.98rem;padding:8px 11px;outline:none;resize:vertical;line-height:1.7;box-sizing:border-box;margin-bottom:8px;"></textarea>
+          <button onclick="addWithinLogEntry('${entryId}')" style="font-family:'Space Mono',monospace;font-size:.52rem;letter-spacing:.08em;text-transform:uppercase;padding:8px 16px;border:1px solid rgba(201,185,154,.25);background:transparent;color:rgba(201,185,154,.6);cursor:pointer;">+ Add Log Note</button>
         </div>
-        <input type="hidden" id="dm-images-data" value="${e&&e.images?JSON.stringify(e.images).replace(/"/g,'&quot;'):'[]'}">
-      </div>
+      </div>` : ''}
 
-      <div style="display:flex;gap:12px;flex-wrap:wrap;">
-        <button onclick="saveDreamMagicEntry(${idx!==undefined?idx:'undefined'})" style="font-family:'Space Mono',monospace;font-size:.55rem;letter-spacing:.1em;text-transform:uppercase;padding:10px 22px;border:1px solid rgba(201,185,154,.4);background:transparent;color:rgba(201,185,154,.8);cursor:pointer;">Save</button>
-        <button onclick="document.getElementById('dream-magic-modal-wrap').remove()" style="font-family:'Space Mono',monospace;font-size:.55rem;letter-spacing:.1em;text-transform:uppercase;padding:10px 22px;border:1px solid rgba(201,185,154,.15);background:transparent;color:rgba(201,185,154,.4);cursor:pointer;">Cancel</button>
-        ${e ? `<button onclick="deleteDreamMagicEntry(${idx})" style="font-family:'Space Mono',monospace;font-size:.55rem;letter-spacing:.1em;text-transform:uppercase;padding:10px 22px;border:1px solid rgba(180,80,80,.3);background:transparent;color:rgba(180,80,80,.6);cursor:pointer;margin-left:auto;">Delete</button>` : ''}
+      <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:8px;">
+        <button onclick="saveWithinEntry('${e?e.id:''}')" style="font-family:'Space Mono',monospace;font-size:.55rem;letter-spacing:.1em;text-transform:uppercase;padding:10px 22px;border:1px solid rgba(201,185,154,.4);background:transparent;color:rgba(201,185,154,.8);cursor:pointer;">Save</button>
+        <button onclick="document.getElementById('within-modal-wrap').remove()" style="font-family:'Space Mono',monospace;font-size:.55rem;letter-spacing:.1em;text-transform:uppercase;padding:10px 22px;border:1px solid rgba(201,185,154,.15);background:transparent;color:rgba(201,185,154,.4);cursor:pointer;">Cancel</button>
+        ${e ? `<button onclick="deleteWithinEntry('${e.id}')" style="font-family:'Space Mono',monospace;font-size:.55rem;letter-spacing:.1em;text-transform:uppercase;padding:10px 22px;border:1px solid rgba(180,80,80,.3);background:transparent;color:rgba(180,80,80,.6);cursor:pointer;margin-left:auto;">Delete</button>` : ''}
       </div>
     </div>`;
   document.body.appendChild(wrap);
 }
 
-function previewDreamMagicImages(input) {
-  const preview = document.getElementById('dm-image-preview');
-  const dataInput = document.getElementById('dm-images-data');
-  if (!preview || !dataInput) return;
-  let existing = [];
-  try { existing = JSON.parse(dataInput.value || '[]'); } catch(e) {}
-  const files = Array.from(input.files);
-  let loaded = 0;
-  files.forEach(file => {
-    const reader = new FileReader();
-    reader.onload = function(ev) {
-      existing.push(ev.target.result);
-      loaded++;
-      if (loaded === files.length) {
-        dataInput.value = JSON.stringify(existing);
-        renderDreamMagicImagePreviews(existing, preview);
-      }
-    };
-    reader.readAsDataURL(file);
-  });
-}
-
-function renderDreamMagicImagePreviews(images, preview) {
-  if (!preview) return;
-  preview.innerHTML = images.map((img,i) => `<div style="position:relative;"><img src="${img}" style="width:80px;height:80px;object-fit:cover;border:1px solid rgba(201,185,154,.2);" /><button onclick="removeDreamMagicImage(${i})" style="position:absolute;top:2px;right:2px;background:rgba(0,0,0,.7);border:none;color:rgba(201,185,154,.8);cursor:pointer;font-size:.6rem;padding:1px 4px;">✕</button></div>`).join('');
-}
-
-function removeDreamMagicImage(idx) {
-  const dataInput = document.getElementById('dm-images-data');
-  const preview = document.getElementById('dm-image-preview');
-  if (!dataInput) return;
-  let images = [];
-  try { images = JSON.parse(dataInput.value || '[]'); } catch(e) {}
-  images.splice(idx, 1);
-  dataInput.value = JSON.stringify(images);
-  renderDreamMagicImagePreviews(images, preview);
-}
-
-function saveDreamMagicEntry(idx) {
-  const title = (document.getElementById('dm-title')||{}).value||'';
-  const date = (document.getElementById('dm-date')||{}).value||new Date().toISOString().slice(0,10);
-  const type = (document.getElementById('dm-type')||{}).value||'Other';
-  const status = (document.getElementById('dm-status')||{}).value||'Active';
-  const intention = (document.getElementById('dm-intention')||{}).value||'';
-  const method = (document.getElementById('dm-method')||{}).value||'';
-  const outcome = (document.getElementById('dm-outcome')||{}).value||'';
-
-  const dreamsSel = document.getElementById('dm-dreams');
-  const linkedDreams = dreamsSel ? Array.from(dreamsSel.selectedOptions).map(o=>parseInt(o.value)) : [];
-  const incubsSel = document.getElementById('dm-incubs');
-  const linkedIncubations = incubsSel ? Array.from(incubsSel.selectedOptions).map(o=>parseInt(o.value)) : [];
-  const threadsSel = document.getElementById('dm-threads');
-  const linkedThreads = threadsSel ? Array.from(threadsSel.selectedOptions).map(o=>parseInt(o.value)) : [];
-
-  let images = [];
-  try { images = JSON.parse((document.getElementById('dm-images-data')||{}).value||'[]'); } catch(e) {}
-
+function saveWithinEntry(existingId) {
+  const title = (document.getElementById('wi-title')||{}).value||'';
+  const date = (document.getElementById('wi-date')||{}).value||new Date().toISOString().slice(0,10);
+  const summary = (document.getElementById('wi-summary')||{}).value||'';
+  const myShare = (document.getElementById('wi-myshare')||{}).value||'';
+  const guidance = (document.getElementById('wi-guidance')||{}).value||'';
+  const homework = (document.getElementById('wi-homework')||{}).value||'';
+  const homeworkStatus = (document.getElementById('wi-status')||{}).value||'Active';
   if (!title.trim()) { gtAlert('Please add a title.'); return; }
-
-  const entry = { title:title.trim(), date, type, status, intention, method, outcome, linkedDreams, linkedIncubations, linkedThreads, images };
-  const entries = getDreamMagicEntries();
-  if (idx !== undefined && idx !== null && !isNaN(parseInt(idx))) {
-    entries[parseInt(idx)] = entry;
+  const entries = getWithinEntries();
+  if (existingId) {
+    const idx = entries.findIndex(x => x.id === existingId);
+    if (idx > -1) {
+      entries[idx] = { ...entries[idx], title:title.trim(), date, summary, myShare, guidance, homework, homeworkStatus };
+    }
   } else {
-    entries.push(entry);
+    entries.push({ id:'within_'+Date.now(), date, title:title.trim(), summary, myShare, guidance, homework, homeworkStatus, homeworkLog:[] });
   }
-  saveDreamMagicEntries(entries);
-  const wrap = document.getElementById('dream-magic-modal-wrap');
+  saveWithinEntries(entries);
+  const wrap = document.getElementById('within-modal-wrap');
   if (wrap) wrap.remove();
-  renderDreamMagicList();
+  renderWithinList();
 }
 
-function deleteDreamMagicEntry(idx) {
-  if (!confirm('Delete this dream magic working?')) return;
-  const entries = getDreamMagicEntries();
-  entries.splice(idx, 1);
-  saveDreamMagicEntries(entries);
-  const wrap = document.getElementById('dream-magic-modal-wrap');
+function deleteWithinEntry(entryId) {
+  if (!confirm('Delete this Within entry?')) return;
+  const entries = getWithinEntries().filter(x => x.id !== entryId);
+  saveWithinEntries(entries);
+  const wrap = document.getElementById('within-modal-wrap');
   if (wrap) wrap.remove();
-  renderDreamMagicList();
+  renderWithinList();
+}
+
+function addWithinLogEntry(entryId) {
+  const note = (document.getElementById('wi-new-log')||{}).value||'';
+  if (!note.trim()) return;
+  const entries = getWithinEntries();
+  const idx = entries.findIndex(x => x.id === entryId);
+  if (idx === -1) return;
+  if (!entries[idx].homeworkLog) entries[idx].homeworkLog = [];
+  entries[idx].homeworkLog.push({ date: localDateStr(), note: note.trim() });
+  saveWithinEntries(entries);
+  // Refresh log section in modal
+  const logList = document.getElementById('wi-log-list');
+  const newNoteField = document.getElementById('wi-new-log');
+  if (newNoteField) newNoteField.value = '';
+  if (logList) {
+    const e = entries[idx];
+    logList.innerHTML = e.homeworkLog.map((l,li) => `
+      <div style="padding:10px 14px;background:rgba(255,255,255,.03);border:1px solid rgba(201,185,154,.08);margin-bottom:8px;border-left:2px solid rgba(201,185,154,.2);">
+        <div style="font-family:'Space Mono',monospace;font-size:.45rem;color:rgba(201,185,154,.35);margin-bottom:4px;">${l.date}</div>
+        <div style="font-family:'Cormorant Garamond',serif;font-size:.95rem;color:rgba(240,235,224,.75);line-height:1.7;white-space:pre-wrap;">${l.note}</div>
+        <button onclick="deleteWithinLogEntry('${entryId}',${li})" style="background:none;border:none;color:rgba(201,185,154,.25);cursor:pointer;font-size:.65rem;margin-top:4px;">✕ remove</button>
+      </div>`).join('');
+  }
+}
+
+function deleteWithinLogEntry(entryId, logIdx) {
+  const entries = getWithinEntries();
+  const idx = entries.findIndex(x => x.id === entryId);
+  if (idx === -1) return;
+  entries[idx].homeworkLog.splice(logIdx, 1);
+  saveWithinEntries(entries);
+  // Re-open modal to refresh
+  const wrap = document.getElementById('within-modal-wrap');
+  if (wrap) wrap.remove();
+  openWithinModal(entryId);
 }
 
 function runGlobalSearch(raw) {
@@ -7508,7 +7507,8 @@ function runGlobalSearch(raw) {
     gateway: { label: 'Gateway', color: 'rgba(201,185,154,.7)', icon: '◈', open: e => openSpiritEntry(e) },
     dream: { label: 'Dream', color: 'rgba(155,107,171,.9)', icon: '🌙', open: e => openDream(e) },
     channel: { label: 'The Channel', color: 'rgba(201,185,154,.8)', icon: '◈', open: e => { switchTab('grimoire', document.getElementById('tab-btn-grimoire')); setTimeout(()=>switchGrimoire('channel'), 100); } },
-    dreammagic: { label: 'Dream Magic', color: 'rgba(155,107,171,.9)', icon: '✦', open: e => { switchTab('dreams', document.getElementById('tab-btn-dreams')); setTimeout(()=>switchDreams('magic'), 100); } }
+    dreammagic: { label: 'Dream Magic', color: 'rgba(155,107,171,.9)', icon: '✦', open: e => { switchTab('dreams', document.getElementById('tab-btn-dreams')); setTimeout(()=>switchDreams('magic'), 100); } },
+    within: { label: 'Within', color: 'rgba(201,168,76,.8)', icon: '◈', open: e => { switchTab('practice', document.getElementById('tab-btn-practice')); setTimeout(()=>switchPractice('within'), 100); } }
   };
 
   function matchGeneral(e) {
@@ -7530,15 +7530,33 @@ function runGlobalSearch(raw) {
   // Also search preloaded spirit entries
   const preloadedHits = SPIRIT_ENTRIES.filter(e => e && e.preloaded && matchEntry(e)).map(e => ({ ...e, _type: e.type }));
 
-  // Search Channel entries
+  // Channel entries
   const channelEntries = (() => { try { return JSON.parse(localStorage.getItem('gt_channel_entries')||'[]'); } catch(ex){return[];} })();
   const channelHits = channelEntries.filter(e => matchGeneral(e)).map(e => ({ ...e, _type: 'channel' }));
 
-  // Search Dream Magic entries
-  const dreamMagicEntries = getDreamMagicEntries ? getDreamMagicEntries() : [];
-  const dreamMagicHits = dreamMagicEntries.filter(e => matchGeneral(e)).map(e => ({ ...e, _type: 'dreammagic' }));
+  // Dream Magic entries
+  const dreamMagicEntries = (typeof getDreamMagicEntries==='function') ? getDreamMagicEntries() : [];
+  function matchDreamMagic(e) {
+    return (e.title||'').toLowerCase().includes(q)
+      || (e.intention||'').toLowerCase().includes(q)
+      || (e.method||'').toLowerCase().includes(q)
+      || (e.outcome||'').toLowerCase().includes(q);
+  }
+  const dreamMagicHits = dreamMagicEntries.filter(e => matchDreamMagic(e)).map(e => ({ ...e, body: e.intention||e.method||'', _type: 'dreammagic' }));
 
-  const allHits = [...dreamHits, ...spiritHits, ...preloadedHits, ...channelHits, ...dreamMagicHits]
+  // Within entries
+  const withinSearchEntries = (typeof getWithinEntries==='function') ? getWithinEntries() : [];
+  function matchWithin(e) {
+    return (e.title||'').toLowerCase().includes(q)
+      || (e.summary||'').toLowerCase().includes(q)
+      || (e.myShare||'').toLowerCase().includes(q)
+      || (e.guidance||'').toLowerCase().includes(q)
+      || (e.homework||'').toLowerCase().includes(q)
+      || (e.homeworkLog||[]).some(l => (l.note||'').toLowerCase().includes(q));
+  }
+  const withinHits = withinSearchEntries.filter(e => matchWithin(e)).map(e => ({ ...e, body: e.summary||'', _type: 'within' }));
+
+  const allHits = [...dreamHits, ...spiritHits, ...preloadedHits, ...channelHits, ...dreamMagicHits, ...withinHits]
     .sort((a, b) => (b.date || '').localeCompare(a.date || ''));
 
   if (meta) meta.textContent = allHits.length
@@ -7582,7 +7600,7 @@ function switchDreams(type, btn) {
   _activeDreamsTab = type;
   try { localStorage.setItem('gt_last_dreams', type); } catch(e) {}
   document.querySelectorAll('#sub-bar-dreams .sub-tab-btn').forEach(b => b.classList.remove('active'));
-  const activeBtnEl = btn || document.getElementById('sub-btn-' + type) || document.getElementById('sub-btn-' + type + '-d');
+  const activeBtnEl = btn || document.getElementById('sub-btn-' + type);
   if (activeBtnEl) {
     activeBtnEl.classList.add('active');
     setTimeout(function() {
@@ -7662,7 +7680,10 @@ function switchPractice(type, btn) {
   const dest = document.getElementById('gt-content');
   if (!dest) return;
 
-  if (type === 'moonintent') {
+  if (type === 'within') {
+    dest.innerHTML = '';
+    renderWithin(dest);
+  } else if (type === 'moonintent') {
     dest.innerHTML = '';
     renderMoonIntentions(dest);
   } else if (type === 'manifesting') {
@@ -7804,12 +7825,7 @@ function renderDreams(){
     const cycleData = loadSeasons();
     seasonRow.style.display = (cycleData.cycles && cycleData.cycles.length) ? 'flex' : 'none';
   }
-  filtered.sort((a,b)=>{
-    const dateDiff = b.date.localeCompare(a.date);
-    if (dateDiff !== 0) return dateDiff;
-    // Same date: higher id = entered later = more recent dream = top
-    return (b.id||0) - (a.id||0);
-  });
+  filtered.sort((a,b)=>b.date.localeCompare(a.date));
   const grid=document.getElementById('dream-grid');
   grid.innerHTML='';
   if(!filtered.length){grid.innerHTML='<div class="empty">No dreams found in this frequency...</div>';return;}
@@ -8467,7 +8483,6 @@ function renderSavedPatterns() {
   if (!sec) return;
   var patterns = [];
   try { patterns = JSON.parse(localStorage.getItem('gt_saved_patterns') || '[]'); } catch(e) {}
-  patterns = patterns.slice().sort(function(a,b){ return (b.date||'').localeCompare(a.date||''); });
   if (!patterns.length) { sec.innerHTML = ''; return; }
   sec.innerHTML = '<div style="font-family:\'Space Mono\',monospace;font-size:.52rem;color:rgba(201,185,154,.4);letter-spacing:.1em;text-transform:uppercase;margin-bottom:14px;">\u2736 Saved Insights (' + patterns.length + ')</div>';
   patterns.forEach(function(p) {
@@ -8518,6 +8533,8 @@ function renderInsights(){
   const grid=document.getElementById('insights-grid');
   if(!grid){console.error('insights-grid not found');return;}
   grid.innerHTML='';
+  renderSavedPatterns();
+  renderSavedPatterns();
 
   // Spirit entry references per insight (using exact SPIRIT_PRELOADED titles)
   const SPIRIT_REFS={
@@ -8602,21 +8619,8 @@ function renderInsights(){
     ]
   };
 
-  // Flat list — saved Ask the Archive insights first (newest first), then all patterns newest first (undated at bottom)
-  renderSavedPatterns();
-
-  // Merge and sort all patterns: dated ones newest first, undated at bottom
-  const sortedInsights = INSIGHTS.filter(i => i && i.title).sort((a,b) => {
-    const da = a.dateAdded || '';
-    const db = b.dateAdded || '';
-    if (da && db) return db.localeCompare(da);
-    if (da) return -1; // a has date, b doesn't — a comes first
-    if (db) return 1;  // b has date, a doesn't — b comes first
-    return 0; // both undated, keep original order
-  });
-
-  sortedInsights.forEach((ins,insIdx)=>{
-    if (!ins || !ins.title) return;
+  INSIGHTS.forEach((ins,insIdx)=>{
+    if (!ins || !ins.title) return; // guard against null/malformed entries
     try {
       const card=document.createElement('div');
       card.className='ins-card'+(ins.feat?' feat':'');
@@ -11945,8 +11949,7 @@ function addDiscoveredPatterns(patternsJson) {
           waking: p.waking||'',
           body: p.body||'',
           dreams: p.dreams||[],
-          userAdded: true,
-          dateAdded: localDateStr()
+          userAdded: true
         });
         added++;
       }
@@ -12013,12 +12016,12 @@ try { renderInsights(); } catch(e) { console.error('renderInsights crashed:', e)
     const lastTab = isNewSession ? 'sanctum' : (localStorage.getItem('gt_last_tab') || 'sanctum');
     // Map legacy tab IDs to new structure
     const tabMap = {'viz':'insight','insights':'insight','journal':'practice','workings':'practice',
-      'shadow':'practice','readings':'practice','gateway':'practice','moonintent':'practice','manifesting':'practice',
+      'shadow':'practice','readings':'practice','gateway':'practice','moonintent':'practice','manifesting':'practice','within':'practice',
       'charts':'grimoire','people':'grimoire','elixirs':'grimoire','songs':'grimoire','comms':'grimoire',
       'ancestors':'grimoire','places':'grimoire','rituals':'grimoire','visitations':'grimoire','channel':'grimoire',
       'herbalism':'tools','hblends':'tools','seasons':'tools','sacredDates':'tools','wheel':'tools',
-      'incubation':'dreams','symbols':'dreams','threads':'dreams','magic':'dreams','search':'insight',
-      'patterns':'insight','prophecy':'insight','dreamtimeline':'insight'};
+      'incubation':'dreams','search':'insight',
+      'patterns':'insight','prophecy':'insight','threads':'insight','dreamtimeline':'insight','symbols':'insight'};
     const resolvedTab = tabMap[lastTab] || lastTab;
     const btn = document.getElementById('tab-btn-' + resolvedTab);
     // For dreams/practice/tools/grimoire/insight there's no tab-panel div, just activate the btn and sub-content
@@ -12049,7 +12052,7 @@ try { renderInsights(); } catch(e) { console.error('renderInsights crashed:', e)
         if (slot) slot.style.display = 'block';
         if (bar) bar.style.display = 'block';
         const lastDreams = localStorage.getItem('gt_last_dreams') || 'archive';
-        const directSub = ['archive','incubation','symbols','threads','magic'].includes(lastTab) ? lastTab : lastDreams;
+        const directSub = ['archive','incubation'].includes(lastTab) ? lastTab : lastDreams;
         setTimeout(()=>switchDreams(directSub), 100);
       }
       else if (resolvedTab === 'practice') {
@@ -17863,7 +17866,6 @@ function renderSavedPatterns() {
   if (!sec) return;
   var patterns = [];
   try { patterns = JSON.parse(localStorage.getItem('gt_saved_patterns') || '[]'); } catch(e) {}
-  patterns = patterns.slice().sort(function(a,b){ return (b.date||'').localeCompare(a.date||''); });
   if (!patterns.length) { sec.innerHTML = ''; return; }
 
   sec.innerHTML = '<div style="font-family:\'Space Mono\',monospace;font-size:.52rem;color:rgba(201,185,154,.4);letter-spacing:.1em;text-transform:uppercase;margin-bottom:14px;">✦ Saved Insights (' + patterns.length + ')</div>';
