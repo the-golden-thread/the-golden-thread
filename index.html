@@ -6352,7 +6352,7 @@ function buildFullArchiveContext(opts) {
 
   var peopleDigest = PEOPLE.map(function(p){ return p.name+' ('+p.role+'): '+(p.desc||'').slice(0,120); }).join('\n');
   var patternDigest = INSIGHTS.map(function(i){return i.title;}).join(', ');
-  var chartSummary = 'Libra Sun 17°, Aries Moon 6°, Capricorn Rising 25°, Scorpio stellium (Mercury/Venus/Pluto), North Node 23° Sag, Chiron 20° Leo. Human Design: Pure Generator 4/6, Sacral Authority. Primary clairs: claircognizance + clairsentience. Reiki I & II attuned.';
+  var chartSummary = 'Libra Sun 17°, Aries Moon 6°, Capricorn Rising 25°, Scorpio stellium (Mercury/Venus/Pluto), North Node 23° Sag, Chiron 20° Leo. Human Design: Pure Generator 4/6, Sacral Authority. Primary clairs: claircognizance + clairsentience. Reiki I & II attuned. Life Path 5 (The Adventurer — freedom, change, experience). Personal Year 3 in 2026 (Expression & Growth — creativity, joy, abundance flowering). Universal Year 1 in 2026 (New Beginnings — collective field of fresh starts).';
 
   // ANCESTORS (profiles + interaction logs)
   var ancestors = (typeof getAncestors==='function') ? getAncestors() : [];
@@ -6619,6 +6619,8 @@ ${ctx.dreamMagicDigest || 'No dream magic workings yet.'}
 
 WITHIN GROUP CALLS & HOMEWORK:
 ${ctx.withinDigest || 'No Within entries yet.'}
+
+NUMEROLOGY (fixed): Life Path 5 (The Adventurer — freedom, change, versatility, experience). Personal Year 3 in 2026 (Expression & Growth — creativity flowering, joy, abundance). Universal Year 1 in 2026 (New Beginnings — fresh starts, initiation, the collective field).
 
 RECENT MEDITATION SESSIONS:
 ${ctx.meditationDigest || 'No sessions logged yet.'}
@@ -7749,7 +7751,7 @@ async function generateWithinEntryReading(entryId, btnEl) {
     return diff <= 7*86400000;
   }).map(d => `[${d.date}] "${d.title}": ${(d.body||'').slice(0,200)}`).join('\n');
 
-  const chartSummary = 'Libra Sun 17°, Aries Moon 6°, Capricorn Rising 25°, Scorpio stellium (Mercury/Venus/Pluto), North Node 23° Sag, Chiron 20° Leo. Pure Generator 4/6, Sacral Authority. Primary clairs: claircognizance + clairsentience.';
+  const chartSummary = 'Libra Sun 17°, Aries Moon 6°, Capricorn Rising 25°, Scorpio stellium (Mercury/Venus/Pluto), North Node 23° Sag, Chiron 20° Leo. Pure Generator 4/6, Sacral Authority. Primary clairs: claircognizance + clairsentience. Life Path 5 (The Adventurer — freedom, change, experience). Personal Year 3 in 2026 (Expression & Growth — creativity, joy, abundance flowering). Universal Year 1 in 2026 (New Beginnings — collective field of fresh starts).';
 
   const prompt = `You are a spiritual counselor and depth-oriented guide reading a Within Group call entry for Tiff. Within is an intimate spiritual community led by Jenna. Write a personal, specific reading that connects this call's content to Tiff's broader spiritual journey and chart.
 
@@ -7807,7 +7809,7 @@ async function generateWithinArcReading(btnEl) {
 
   if (btnEl) { btnEl.disabled = true; btnEl.textContent = '⟳ Reading the arc…'; }
 
-  const chartSummary = 'Libra Sun 17°, Aries Moon 6°, Capricorn Rising 25°, Scorpio stellium (Mercury/Venus/Pluto), North Node 23° Sag, Chiron 20° Leo. Pure Generator 4/6, Sacral Authority. Primary clairs: claircognizance + clairsentience.';
+  const chartSummary = 'Libra Sun 17°, Aries Moon 6°, Capricorn Rising 25°, Scorpio stellium (Mercury/Venus/Pluto), North Node 23° Sag, Chiron 20° Leo. Pure Generator 4/6, Sacral Authority. Primary clairs: claircognizance + clairsentience. Life Path 5 (The Adventurer — freedom, change, experience). Personal Year 3 in 2026 (Expression & Growth — creativity, joy, abundance flowering). Universal Year 1 in 2026 (New Beginnings — collective field of fresh starts).';
 
   const entryDigest = entries.map(e =>
     `[${e.date}] "${e.title}"` +
@@ -7859,7 +7861,7 @@ async function generateDreamMagicReading(idx, btnEl) {
 
   if (btnEl) { btnEl.disabled = true; btnEl.textContent = '⟳ Reading…'; }
 
-  const chartSummary = 'Libra Sun 17°, Aries Moon 6°, Capricorn Rising 25°, Scorpio stellium (Mercury/Venus/Pluto), North Node 23° Sag, Chiron 20° Leo. Pure Generator 4/6, Sacral Authority. Primary clairs: claircognizance + clairsentience.';
+  const chartSummary = 'Libra Sun 17°, Aries Moon 6°, Capricorn Rising 25°, Scorpio stellium (Mercury/Venus/Pluto), North Node 23° Sag, Chiron 20° Leo. Pure Generator 4/6, Sacral Authority. Primary clairs: claircognizance + clairsentience. Life Path 5 (The Adventurer — freedom, change, experience). Personal Year 3 in 2026 (Expression & Growth — creativity, joy, abundance flowering). Universal Year 1 in 2026 (New Beginnings — collective field of fresh starts).';
 
   // Pull linked dreams
   const linkedDreamData = (e.linkedDreams||[]).map(id => {
@@ -8200,7 +8202,7 @@ async function findRelevantCodes() {
   const allCodes = getCodesData();
   const digest = allCodes.map(c => `ID: ${c.id} | [${c.modality}] "${c.title}" | Code: ${c.code} | Use: ${c.use}`).join('\n');
 
-  const chartSummary = 'Libra Sun, Aries Moon, Capricorn Rising, Scorpio stellium, Pure Generator 4/6. Active dreamworker, Reiki practitioner, claircognizant/clairsentient.';
+  const chartSummary = 'Libra Sun, Aries Moon, Capricorn Rising, Scorpio stellium, Pure Generator 4/6. Active dreamworker, Reiki practitioner, claircognizant/clairsentient. Life Path 5 (The Adventurer — freedom, change, experience). Personal Year 3 in 2026 (Expression & Growth — creativity, joy, abundance flowering). Universal Year 1 in 2026 (New Beginnings — collective field of fresh starts).';
 
   const prompt = `You are a code librarian for a spiritual practitioner named Tiff. She has a library of healing and consciousness codes across multiple modalities. Given her request, identify the 1-4 most relevant codes from her library and explain briefly why each is relevant.
 
@@ -9901,6 +9903,182 @@ function renderPlantCareData(careData) {
   if (careLines.length) inner += `<div style="font-family:'Space Mono',monospace;font-size:.43rem;letter-spacing:.08em;text-transform:uppercase;color:rgba(80,160,100,.5);margin-bottom:7px;">Care</div>${careLines.map(renderLine).join('')}`;
   if (metaLines.length) inner += `<div style="font-family:'Space Mono',monospace;font-size:.43rem;letter-spacing:.08em;text-transform:uppercase;color:rgba(107,155,201,.5);margin-top:10px;margin-bottom:7px;">Metaphysical</div>${metaLines.map(renderLine).join('')}`;
   return `<details style="margin-top:12px;"><summary style="list-style:none;cursor:pointer;font-family:'Space Mono',monospace;font-size:.47rem;letter-spacing:.08em;text-transform:uppercase;color:rgba(80,160,100,.5);">▸ Care & Properties</summary><div style="padding:10px 0 4px;">${inner}</div></details>`;
+}
+
+
+// ═══════════════════════════════════════════════════════════
+// NUMEROLOGY
+// ═══════════════════════════════════════════════════════════
+
+function numerologyReduce(n, preserveMaster) {
+  while (n > 9) {
+    if (preserveMaster && (n === 11 || n === 22 || n === 33)) return n;
+    n = String(n).split('').reduce(function(s,d){ return s+parseInt(d); }, 0);
+  }
+  return n;
+}
+
+function getNumerologyNumbers() {
+  // Birth: October 10, 1992
+  const birthMonth = 10, birthDay = 10, birthYear = 1992;
+  const m = numerologyReduce(birthMonth, true);
+  const d = numerologyReduce(birthDay, true);
+  const y = numerologyReduce(birthYear, true);
+  const lifePath = numerologyReduce(m + d + y, true);
+
+  // Current year
+  const currentYear = new Date().getFullYear();
+  const universalYear = numerologyReduce(
+    String(currentYear).split('').reduce(function(s,c){ return s+parseInt(c); }, 0), true
+  );
+
+  // Personal Year: birth month + birth day + universal year digits summed
+  const uyDigits = String(currentYear).split('').reduce(function(s,c){ return s+parseInt(c); }, 0);
+  const personalYear = numerologyReduce(m + d + uyDigits, true);
+
+  return { lifePath, universalYear, personalYear, currentYear };
+}
+
+const NUMEROLOGY_MEANINGS = {
+  1: { title: 'The Pioneer', keywords: ['independence','leadership','new beginnings','originality','drive'], essence: 'The number of the self — initiating, original, the force that begins.'},
+  2: { title: 'The Diplomat', keywords: ['partnership','balance','sensitivity','cooperation','intuition'], essence: 'The number of duality and union — sensitive, receptive, the force that relates.'},
+  3: { title: 'The Creator', keywords: ['expression','creativity','communication','joy','expansion'], essence: 'The number of creation and joy — expressive, abundant, the force that brings things to life.'},
+  4: { title: 'The Builder', keywords: ['structure','stability','discipline','foundation','work'], essence: 'The number of form — grounded, reliable, the force that builds to last.'},
+  5: { title: 'The Adventurer', keywords: ['freedom','change','versatility','experience','sensory'], essence: 'The number of change — dynamic, curious, the force that seeks experience.'},
+  6: { title: 'The Nurturer', keywords: ['responsibility','harmony','family','service','beauty'], essence: 'The number of love and responsibility — caring, harmonious, the force that tends.'},
+  7: { title: 'The Seeker', keywords: ['analysis','introspection','wisdom','mystery','solitude'], essence: 'The number of depth — inward, investigative, the force that seeks truth.'},
+  8: { title: 'The Achiever', keywords: ['power','abundance','authority','ambition','manifestation'], essence: 'The number of material mastery — ambitious, capable, the force that manifests.'},
+  9: { title: 'The Sage', keywords: ['completion','wisdom','compassion','universality','release'], essence: 'The number of completion — universal, selfless, the force that concludes and releases.'},
+  11: { title: 'The Illuminator', keywords: ['intuition','inspiration','spiritual insight','vision','sensitivity'], essence: 'The master number of spiritual illumination — heightened sensitivity and the channel between worlds.'},
+  22: { title: 'The Master Builder', keywords: ['vision','manifestation','practicality','legacy','ambition'], essence: 'The master number of the architect — able to build lasting structures from visionary blueprints.'},
+  33: { title: 'The Master Teacher', keywords: ['compassion','teaching','healing','service','truth'], essence: 'The master number of healing through love — the highest expression of creative and spiritual service.'},
+};
+
+const PERSONAL_YEAR_THEMES = {
+  1: { theme: 'New Beginnings', events: 'Starting fresh, planting seeds, independence, bold new initiatives. This is a year of personal reinvention — what you plant now grows for the next 9 years.', alignment: 'Take initiative. Trust your instincts about what to begin.' },
+  2: { theme: 'Patience & Partnership', events: 'Deepening relationships, collaboration, waiting for seeds to germinate. Subtle progress, intuition sharpening, details matter.', alignment: 'Receive. Let things come to you. Nurture existing bonds.' },
+  3: { theme: 'Expression & Growth', events: 'Creativity expands, social life brightens, joy and abundance begin to flower. What was planted in year 1 starts to visibly grow.', alignment: 'Create, communicate, play. Let joy be a guide.' },
+  4: { theme: 'Foundation & Work', events: 'A year of disciplined building, practical groundwork, establishing structures that will support the years ahead. Less glamour, more integrity.', alignment: 'Do the work. Build well. Invest in lasting foundations.' },
+  5: { theme: 'Freedom & Change', events: 'Unexpected shifts, travel, new experiences, liberation from what was constraining. A year of dynamic movement and sensory expansion.', alignment: 'Embrace change. Stay flexible. Follow what excites.' },
+  6: { theme: 'Love & Responsibility', events: 'Home and family come into focus, relationships deepen or clarify, beauty and harmony become priorities. Creative work flourishes.', alignment: 'Tend your relationships and your home. Let beauty matter.' },
+  7: { theme: 'Reflection & Wisdom', events: 'A quieter, more internal year of analysis, spiritual deepening, and inner work. Questions come before answers. Rest and solitude are productive.', alignment: 'Go inward. Study, reflect, trust the quiet.' },
+  8: { theme: 'Power & Abundance', events: 'Material and professional momentum, recognition, authority, and harvest of past efforts. Power must be handled with integrity.', alignment: 'Step into authority. Claim what you have built.' },
+  9: { theme: 'Completion & Release', events: 'The final year of the cycle — clearing, releasing, completing what began in year 1. Grief and gratitude coexist. The past year prepares for a new beginning.', alignment: 'Let go. Complete. Trust that what ends makes space for what comes next.' },
+  11: { theme: 'Spiritual Illumination', events: 'A master year of heightened sensitivity and spiritual breakthrough. Intuition peaks. Visions and insights carry unusual clarity and weight.', alignment: 'Trust your channel. The extraordinary is available this year.' },
+  22: { theme: 'Master Building', events: 'A year of enormous potential — what you build now can have lasting, large-scale impact. Vision must be matched with disciplined practical action.', alignment: 'Think large. Act carefully. Build for the long arc.' },
+};
+
+function renderNumerologySection() {
+  const { lifePath, universalYear, personalYear, currentYear } = getNumerologyNumbers();
+  const lpM = NUMEROLOGY_MEANINGS[lifePath] || NUMEROLOGY_MEANINGS[lifePath % 9 || 9];
+  const pyT = PERSONAL_YEAR_THEMES[personalYear] || PERSONAL_YEAR_THEMES[personalYear % 9 || 9];
+  const uyT = PERSONAL_YEAR_THEMES[universalYear] || PERSONAL_YEAR_THEMES[universalYear % 9 || 9];
+
+  const savedKey = 'gt_chart_numerology_reading';
+  let savedReading = '';
+  try { savedReading = localStorage.getItem(savedKey) || ''; } catch(e) {}
+
+  return `
+    <div style="max-width:680px;">
+      <!-- Three Number Cards -->
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:24px;">
+        <div style="padding:16px;background:rgba(107,79,138,.08);border:1px solid rgba(107,79,138,.25);text-align:center;">
+          <div style="font-family:'Space Mono',monospace;font-size:.44rem;letter-spacing:.1em;text-transform:uppercase;color:rgba(155,107,171,.5);margin-bottom:6px;">Life Path</div>
+          <div style="font-family:'Cormorant Garamond',serif;font-size:2.8rem;font-weight:300;color:var(--parchment);line-height:1;">${lifePath}</div>
+          <div style="font-family:'Space Mono',monospace;font-size:.48rem;color:rgba(155,107,171,.7);margin-top:5px;">${lpM?.title||''}</div>
+        </div>
+        <div style="padding:16px;background:rgba(201,168,76,.06);border:1px solid rgba(201,168,76,.2);text-align:center;">
+          <div style="font-family:'Space Mono',monospace;font-size:.44rem;letter-spacing:.1em;text-transform:uppercase;color:rgba(201,168,76,.5);margin-bottom:6px;">Personal Year</div>
+          <div style="font-family:'Cormorant Garamond',serif;font-size:2.8rem;font-weight:300;color:var(--parchment);line-height:1;">${personalYear}</div>
+          <div style="font-family:'Space Mono',monospace;font-size:.48rem;color:rgba(201,168,76,.7);margin-top:5px;">${pyT?.theme||''}</div>
+        </div>
+        <div style="padding:16px;background:rgba(107,155,201,.06);border:1px solid rgba(107,155,201,.2);text-align:center;">
+          <div style="font-family:'Space Mono',monospace;font-size:.44rem;letter-spacing:.1em;text-transform:uppercase;color:rgba(107,155,201,.5);margin-bottom:6px;">Universal ${currentYear}</div>
+          <div style="font-family:'Cormorant Garamond',serif;font-size:2.8rem;font-weight:300;color:var(--parchment);line-height:1;">${universalYear}</div>
+          <div style="font-family:'Space Mono',monospace;font-size:.48rem;color:rgba(107,155,201,.7);margin-top:5px;">${uyT?.theme||''}</div>
+        </div>
+      </div>
+
+      <!-- Detail Cards -->
+      <div style="margin-bottom:16px;padding:16px 18px;background:rgba(107,79,138,.04);border:1px solid rgba(107,79,138,.15);border-left:3px solid rgba(107,79,138,.3);">
+        <div style="font-family:'Space Mono',monospace;font-size:.46rem;letter-spacing:.08em;text-transform:uppercase;color:rgba(155,107,171,.6);margin-bottom:6px;">Life Path ${lifePath} · ${lpM?.title||''}</div>
+        <div style="font-family:'Cormorant Garamond',serif;font-size:.95rem;color:rgba(240,235,224,.75);line-height:1.75;margin-bottom:8px;">${lpM?.essence||''}</div>
+        <div style="display:flex;flex-wrap:wrap;gap:5px;">${(lpM?.keywords||[]).map(k=>`<span style="font-family:'Space Mono',monospace;font-size:.43rem;padding:2px 7px;border:1px solid rgba(107,79,138,.2);color:rgba(155,107,171,.6);">${k}</span>`).join('')}</div>
+      </div>
+
+      <div style="margin-bottom:16px;padding:16px 18px;background:rgba(201,168,76,.04);border:1px solid rgba(201,168,76,.15);border-left:3px solid rgba(201,168,76,.3);">
+        <div style="font-family:'Space Mono',monospace;font-size:.46rem;letter-spacing:.08em;text-transform:uppercase;color:rgba(201,168,76,.6);margin-bottom:6px;">Personal Year ${personalYear} · ${pyT?.theme||''}</div>
+        <div style="font-family:'Cormorant Garamond',serif;font-size:.95rem;color:rgba(240,235,224,.75);line-height:1.75;margin-bottom:8px;">${pyT?.events||''}</div>
+        <div style="font-family:'Cormorant Garamond',serif;font-size:.88rem;color:rgba(201,168,76,.6);font-style:italic;">${pyT?.alignment||''}</div>
+      </div>
+
+      <div style="margin-bottom:24px;padding:16px 18px;background:rgba(107,155,201,.04);border:1px solid rgba(107,155,201,.15);border-left:3px solid rgba(107,155,201,.3);">
+        <div style="font-family:'Space Mono',monospace;font-size:.46rem;letter-spacing:.08em;text-transform:uppercase;color:rgba(107,155,201,.6);margin-bottom:6px;">Universal Year ${universalYear} · ${uyT?.theme||''} · The Collective Field</div>
+        <div style="font-family:'Cormorant Garamond',serif;font-size:.95rem;color:rgba(240,235,224,.75);line-height:1.75;">${uyT?.events||''}</div>
+      </div>
+
+      <!-- AI Reading -->
+      <div id="numerology-reading-wrap">
+        ${savedReading ? `
+          <div style="font-family:'Space Mono',monospace;font-size:.46rem;letter-spacing:.08em;text-transform:uppercase;color:rgba(201,185,154,.35);margin-bottom:10px;">✦ Combined Numerology Reading</div>
+          <div id="numerology-reading-text" style="font-family:'Cormorant Garamond',serif;font-size:1rem;line-height:1.9;color:rgba(240,235,224,.85);">${savedReading.split('\n\n').filter(p=>p.trim()).map(p=>`<p style="margin-bottom:12px;">${p}</p>`).join('')}</div>
+          <button onclick="generateNumerologyReading(true)" style="margin-top:12px;font-family:'Space Mono',monospace;font-size:.5rem;letter-spacing:.08em;text-transform:uppercase;background:transparent;border:1px solid rgba(201,185,154,.2);color:rgba(201,185,154,.35);cursor:pointer;padding:6px 14px;">↻ Regenerate</button>
+        ` : `
+          <button onclick="generateNumerologyReading(false)" id="numerology-gen-btn" class="astro-gen-btn" style="width:100%;justify-content:center;">✦ Generate Combined Reading</button>
+        `}
+      </div>
+    </div>`;
+}
+
+async function generateNumerologyReading(force) {
+  const apiKey = getApiKey();
+  if (!apiKey) { gtAlert('Add your API key in Settings first.'); return; }
+  const savedKey = 'gt_chart_numerology_reading';
+  if (!force) {
+    try { const s = localStorage.getItem(savedKey); if (s) { renderSavedNumerologyReading(s); return; } } catch(e) {}
+  }
+  const btn = document.getElementById('numerology-gen-btn');
+  const wrap = document.getElementById('numerology-reading-wrap');
+  if (btn) { btn.disabled = true; btn.textContent = '⟳ Calculating…'; }
+
+  const { lifePath, universalYear, personalYear, currentYear } = getNumerologyNumbers();
+  const lpM = NUMEROLOGY_MEANINGS[lifePath];
+  const pyT = PERSONAL_YEAR_THEMES[personalYear];
+  const uyT = PERSONAL_YEAR_THEMES[universalYear];
+
+  const prompt = `You are a numerologist giving a personal reading for Tiff, born October 10, 1992 (Libra, Capricorn Rising, Pure Generator 4/6, claircognizant witch and dreamworker).
+
+HER NUMBERS:
+- Life Path ${lifePath} (${lpM?.title||''}): ${lpM?.essence||''} Keywords: ${(lpM?.keywords||[]).join(', ')}
+- Personal Year ${personalYear} for ${currentYear} (${pyT?.theme||''}): ${pyT?.events||''}
+- Universal Year ${universalYear} for ${currentYear} (${uyT?.theme||''}): ${uyT?.events||''} — the collective field everyone is moving through
+
+Write a personal reading covering:
+1. Her Life Path ${lifePath} — her core nature, strengths, and what she is here to embody. Speak specifically to how ${lpM?.keywords?.join(', ')} shows up in a witch and dreamworker.
+2. Her Personal Year ${personalYear} — what this year specifically holds for her: opportunities, challenges, what to lean into, what to release. Connect it to her actual life — spiritual practice, creative work, relationships.
+3. The intersection — how her Personal Year ${personalYear} is operating inside Universal Year ${universalYear}. Is this flowing or in tension? What does the collective energy amplify or complicate for her specifically?
+4. Best alignment — one short paragraph on how to work WITH these numbers: what to prioritize, what timing principle to follow, where her power sits this year.
+
+4-5 paragraphs total. Specific, grounded, no generic astrology platitudes. Address her as Tiff.`;
+
+  try {
+    const data = await claudeAPI(apiKey, { model:'claude-sonnet-4-6', max_tokens:1400, messages:[{role:'user', content:prompt}] });
+    const text = data.content?.find(c=>c.type==='text')?.text||'';
+    try { localStorage.setItem(savedKey, text); } catch(e) {}
+    renderSavedNumerologyReading(text);
+  } catch(err) {
+    gtAlert('Error generating reading: ' + err.message);
+    if (btn) { btn.disabled = false; btn.textContent = '✦ Generate Combined Reading'; }
+  }
+}
+
+function renderSavedNumerologyReading(text) {
+  const wrap = document.getElementById('numerology-reading-wrap');
+  if (!wrap) return;
+  wrap.innerHTML = `
+    <div style="font-family:'Space Mono',monospace;font-size:.46rem;letter-spacing:.08em;text-transform:uppercase;color:rgba(201,185,154,.35);margin-bottom:10px;">✦ Combined Numerology Reading</div>
+    <div id="numerology-reading-text" style="font-family:'Cormorant Garamond',serif;font-size:1rem;line-height:1.9;color:rgba(240,235,224,.85);">${text.split('\n\n').filter(p=>p.trim()).map(p=>`<p style="margin-bottom:12px;">${p}</p>`).join('')}</div>
+    <button onclick="generateNumerologyReading(true)" style="margin-top:12px;font-family:'Space Mono',monospace;font-size:.5rem;letter-spacing:.08em;text-transform:uppercase;background:transparent;border:1px solid rgba(201,185,154,.2);color:rgba(201,185,154,.35);cursor:pointer;padding:6px 14px;">↻ Regenerate</button>`;
 }
 
 function runGlobalSearch(raw) {
@@ -12904,6 +13082,12 @@ function renderChartsTab() {
       emoji: '🗺',
       title: 'Astrocartography — Lines & Power Places',
       content: renderAstroCartoSection()
+    },
+    {
+      id: 'numerology',
+      emoji: '✦',
+      title: 'Numerology — Life Path, Personal Year & Universal Year',
+      content: renderNumerologySection()
     }
   ];
 
