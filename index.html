@@ -6352,7 +6352,7 @@ function buildFullArchiveContext(opts) {
 
   var peopleDigest = PEOPLE.map(function(p){ return p.name+' ('+p.role+'): '+(p.desc||'').slice(0,120); }).join('\n');
   var patternDigest = INSIGHTS.map(function(i){return i.title;}).join(', ');
-  var chartSummary = 'Libra Sun 17°, Aries Moon 6°, Capricorn Rising 25°, Scorpio stellium (Mercury/Venus/Pluto), North Node 23° Sag, Chiron 20° Leo. Human Design: Pure Generator 4/6, Sacral Authority. Primary clairs: claircognizance + clairsentience. Reiki I & II attuned. Life Path 5 (The Adventurer — freedom, change, experience). Personal Year 3 in 2026 (Expression & Growth — creativity, joy, abundance flowering). Universal Year 1 in 2026 (New Beginnings — collective field of fresh starts).';
+  var chartSummary = 'Libra Sun 17°, Aries Moon 6°, Capricorn Rising 25°, Scorpio stellium (Mercury/Venus/Pluto), North Node 23° Sag, Chiron 20° Leo. Human Design: Pure Generator 4/6, Sacral Authority. Primary clairs: claircognizance + clairsentience. Reiki I & II attuned.' + getNumerologyChartSummary() + '';
 
   // ANCESTORS (profiles + interaction logs)
   var ancestors = (typeof getAncestors==='function') ? getAncestors() : [];
@@ -6620,7 +6620,7 @@ ${ctx.dreamMagicDigest || 'No dream magic workings yet.'}
 WITHIN GROUP CALLS & HOMEWORK:
 ${ctx.withinDigest || 'No Within entries yet.'}
 
-NUMEROLOGY (fixed): Life Path 5 (The Adventurer — freedom, change, versatility, experience). Personal Year 3 in 2026 (Expression & Growth — creativity flowering, joy, abundance). Universal Year 1 in 2026 (New Beginnings — fresh starts, initiation, the collective field).
+NUMEROLOGY: ${getNumerologyChartSummary()}
 
 RECENT MEDITATION SESSIONS:
 ${ctx.meditationDigest || 'No sessions logged yet.'}
@@ -7751,7 +7751,7 @@ async function generateWithinEntryReading(entryId, btnEl) {
     return diff <= 7*86400000;
   }).map(d => `[${d.date}] "${d.title}": ${(d.body||'').slice(0,200)}`).join('\n');
 
-  const chartSummary = 'Libra Sun 17°, Aries Moon 6°, Capricorn Rising 25°, Scorpio stellium (Mercury/Venus/Pluto), North Node 23° Sag, Chiron 20° Leo. Pure Generator 4/6, Sacral Authority. Primary clairs: claircognizance + clairsentience. Life Path 5 (The Adventurer — freedom, change, experience). Personal Year 3 in 2026 (Expression & Growth — creativity, joy, abundance flowering). Universal Year 1 in 2026 (New Beginnings — collective field of fresh starts).';
+  const chartSummary = 'Libra Sun 17°, Aries Moon 6°, Capricorn Rising 25°, Scorpio stellium (Mercury/Venus/Pluto), North Node 23° Sag, Chiron 20° Leo. Pure Generator 4/6, Sacral Authority. Primary clairs: claircognizance + clairsentience.' + getNumerologyChartSummary() + '';
 
   const prompt = `You are a spiritual counselor and depth-oriented guide reading a Within Group call entry for Tiff. Within is an intimate spiritual community led by Jenna. Write a personal, specific reading that connects this call's content to Tiff's broader spiritual journey and chart.
 
@@ -7809,7 +7809,7 @@ async function generateWithinArcReading(btnEl) {
 
   if (btnEl) { btnEl.disabled = true; btnEl.textContent = '⟳ Reading the arc…'; }
 
-  const chartSummary = 'Libra Sun 17°, Aries Moon 6°, Capricorn Rising 25°, Scorpio stellium (Mercury/Venus/Pluto), North Node 23° Sag, Chiron 20° Leo. Pure Generator 4/6, Sacral Authority. Primary clairs: claircognizance + clairsentience. Life Path 5 (The Adventurer — freedom, change, experience). Personal Year 3 in 2026 (Expression & Growth — creativity, joy, abundance flowering). Universal Year 1 in 2026 (New Beginnings — collective field of fresh starts).';
+  const chartSummary = 'Libra Sun 17°, Aries Moon 6°, Capricorn Rising 25°, Scorpio stellium (Mercury/Venus/Pluto), North Node 23° Sag, Chiron 20° Leo. Pure Generator 4/6, Sacral Authority. Primary clairs: claircognizance + clairsentience.' + getNumerologyChartSummary() + '';
 
   const entryDigest = entries.map(e =>
     `[${e.date}] "${e.title}"` +
@@ -7861,7 +7861,7 @@ async function generateDreamMagicReading(idx, btnEl) {
 
   if (btnEl) { btnEl.disabled = true; btnEl.textContent = '⟳ Reading…'; }
 
-  const chartSummary = 'Libra Sun 17°, Aries Moon 6°, Capricorn Rising 25°, Scorpio stellium (Mercury/Venus/Pluto), North Node 23° Sag, Chiron 20° Leo. Pure Generator 4/6, Sacral Authority. Primary clairs: claircognizance + clairsentience. Life Path 5 (The Adventurer — freedom, change, experience). Personal Year 3 in 2026 (Expression & Growth — creativity, joy, abundance flowering). Universal Year 1 in 2026 (New Beginnings — collective field of fresh starts).';
+  const chartSummary = 'Libra Sun 17°, Aries Moon 6°, Capricorn Rising 25°, Scorpio stellium (Mercury/Venus/Pluto), North Node 23° Sag, Chiron 20° Leo. Pure Generator 4/6, Sacral Authority. Primary clairs: claircognizance + clairsentience.' + getNumerologyChartSummary() + '';
 
   // Pull linked dreams
   const linkedDreamData = (e.linkedDreams||[]).map(id => {
@@ -8202,7 +8202,7 @@ async function findRelevantCodes() {
   const allCodes = getCodesData();
   const digest = allCodes.map(c => `ID: ${c.id} | [${c.modality}] "${c.title}" | Code: ${c.code} | Use: ${c.use}`).join('\n');
 
-  const chartSummary = 'Libra Sun, Aries Moon, Capricorn Rising, Scorpio stellium, Pure Generator 4/6. Active dreamworker, Reiki practitioner, claircognizant/clairsentient. Life Path 5 (The Adventurer — freedom, change, experience). Personal Year 3 in 2026 (Expression & Growth — creativity, joy, abundance flowering). Universal Year 1 in 2026 (New Beginnings — collective field of fresh starts).';
+  const chartSummary = 'Libra Sun, Aries Moon, Capricorn Rising, Scorpio stellium, Pure Generator 4/6. Active dreamworker, Reiki practitioner, claircognizant/clairsentient.' + getNumerologyChartSummary() + '';
 
   const prompt = `You are a code librarian for a spiritual practitioner named Tiff. She has a library of healing and consciousness codes across multiple modalities. Given her request, identify the 1-4 most relevant codes from her library and explain briefly why each is relevant.
 
@@ -9916,6 +9916,17 @@ function numerologyReduce(n, preserveMaster) {
     n = String(n).split('').reduce(function(s,d){ return s+parseInt(d); }, 0);
   }
   return n;
+}
+
+
+function getNumerologyChartSummary() {
+  var nums = getNumerologyNumbers();
+  var lp = NUMEROLOGY_MEANINGS[nums.lifePath];
+  var py = PERSONAL_YEAR_THEMES[nums.personalYear];
+  var uy = PERSONAL_YEAR_THEMES[nums.universalYear];
+  return 'Life Path ' + nums.lifePath + ' (' + (lp ? lp.title : '') + ' — ' + (lp ? lp.keywords.slice(0,3).join(', ') : '') + '). '
+    + 'Personal Year ' + nums.personalYear + ' in ' + nums.currentYear + ' (' + (py ? py.theme : '') + '). '
+    + 'Universal Year ' + nums.universalYear + ' in ' + nums.currentYear + ' (' + (uy ? uy.theme : '') + ').';
 }
 
 function getNumerologyNumbers() {
