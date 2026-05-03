@@ -10653,9 +10653,6 @@ function tapSync() {
   taps.push(new Date().toISOString());
   saveSyncTaps(taps);
   renderSyncSpotter();
-  renderDreamWeather();
-  renderThisDayWidget();
-  renderProphecyWatch();
   // Flash animation
   const btn = document.getElementById('sync-tap-btn');
   const flash = document.getElementById('sync-flash');
@@ -11477,6 +11474,10 @@ async function initSanctum() {
 
   await generateDailyReading(false);
   generateDailyMantra(false);
+  renderDreamWeather();
+  renderThisDayWidget();
+  renderProphecyWatch();
+  renderProphecyDateBanner();
 }
 
 async function generateStrengths() {
