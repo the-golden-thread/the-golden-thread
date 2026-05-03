@@ -1349,7 +1349,7 @@ async function generateAstroReading(dreamId) {
   const natalLine = natalCtx ? `\nHer natal chart context: ${natalCtx.summary || 'Sun in Libra 17°'}` : '\nThis is Skye, born October 10 1992, Sun in Libra 17°.';
   const prompt = 'You are a personal astrologer interpreting a dream journal entry for Tiff (born October 10, 1992, 2:37 PM EDT, Taunton MA — Sun in Libra 17°). Be insightful, specific, and grounded. Connect the astrological conditions to her natal chart AND to what happened in this specific dream.' + natalLine + '\n\n'
     + 'DREAM: "' + d.title + '"\n'
-    + d.body.slice(0, 8000) + (d.body.length > 8000 ? '...' : '') + '\n\n'
+    + d.body.slice(0, 20000) + (d.body.length > 20000 ? '...' : '') + '\n\n'
     + 'ASTROLOGICAL CONDITIONS ON THIS DATE:\n'
     + '- Moon: ' + moonPhase + ' (' + (astroData.moonPct || '?') + '% illuminated)\n'
     + '- Sun in: ' + sunSign + '\n'
@@ -1416,7 +1416,7 @@ async function generateClaudeReading(dreamId, btnEl) {
     var prompt = 'You are a dream analyst and spiritual companion with deep knowledge of Jungian psychology, archetypes, and spiritual symbolism, combined with knowledge of Tiff\u2019s natal chart and practice.\n\n'
       + natalLine + '\n\n'
       + 'DREAM: "' + d.title + '" (' + d.date + ')\n'
-      + (d.body||'').slice(0,8000) + ((d.body||'').length > 8000 ? '...' : '') + '\n\n'
+      + (d.body||'').slice(0,20000) + ((d.body||'').length > 20000 ? '...' : '') + '\n\n'
       + _1010ctx
       + (_linkedCtx ? '\n\n' + _linkedCtx : '')
       + '\nProvide a rich dream reading (4-6 paragraphs). Identify the key symbols and archetypes, note emotional or psychological themes, connect to her natal chart where relevant, and reflect on what the dream may be communicating. Be specific to this dream. Write as flowing prose addressed to Tiff. No markdown headers or bullet points — pure prose only.';
