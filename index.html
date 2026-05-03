@@ -7298,7 +7298,11 @@ function renderWithin(dest) {
     <div style="max-width:740px;margin:0 auto;padding:24px 0 60px;">
       <div style="font-family:'Space Mono',monospace;font-size:.55rem;letter-spacing:.12em;text-transform:uppercase;color:var(--moon);margin-bottom:6px;">◈ Within</div>
       <div style="font-family:'Cormorant Garamond',serif;font-size:.95rem;color:rgba(201,185,154,.45);font-style:italic;margin-bottom:28px;">Group calls, personal guidance, and the work between.</div>
-      <button onclick="openWithinModal()" style="font-family:'Space Mono',monospace;font-size:.55rem;letter-spacing:.1em;text-transform:uppercase;padding:10px 22px;border:1px solid rgba(201,185,154,.3);background:transparent;color:rgba(201,185,154,.7);cursor:pointer;margin-bottom:28px;">+ New Entry</button>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:28px;">
+        <button onclick="openWithinModal()" style="font-family:'Space Mono',monospace;font-size:.55rem;letter-spacing:.1em;text-transform:uppercase;padding:10px 22px;border:1px solid rgba(201,185,154,.3);background:transparent;color:rgba(201,185,154,.7);cursor:pointer;">+ New Entry</button>
+        <button id="within-arc-btn" onclick="generateWithinArcReading(this)" class="astro-gen-btn" style="font-size:.55rem;">✦ Arc Reading</button>
+      </div>
+      <div id="within-arc-result" style="display:none;margin-bottom:28px;padding:18px 20px;background:rgba(107,79,138,.04);border:1px solid rgba(107,79,138,.15);"></div>
       <div id="within-entries-list"></div>
     </div>`;
   renderWithinList();
@@ -7330,6 +7334,14 @@ function renderWithinList() {
         ${e.guidance ? '<span style="font-family:\'Space Mono\',monospace;font-size:.45rem;padding:2px 7px;border:1px solid rgba(201,185,154,.15);color:rgba(201,185,154,.5);">Guidance</span>' : ''}
         ${hasHomework ? `<span style="font-family:'Space Mono',monospace;font-size:.45rem;padding:2px 7px;border:1px solid rgba(201,185,154,.15);color:rgba(201,185,154,.5);">Homework${logCount?' · '+logCount+' log note'+(logCount>1?'s':''):''}</span>` : ''}
       </div>
+      <div style="margin-top:12px;display:flex;gap:8px;align-items:center;" onclick="event.stopPropagation()">
+        <button onclick="generateWithinEntryReading('${e.id}',this)" class="astro-gen-btn" style="font-size:.5rem;padding:6px 14px;">✦ Reading</button>
+        ${e.withinReading ? '<span style="font-family:\'Space Mono\',monospace;font-size:.44rem;color:rgba(201,185,154,.35);">reading saved</span>' : ''}
+      </div>
+      ${e.withinReading ? `<div style="margin-top:10px;padding:14px;background:rgba(107,79,138,.04);border:1px solid rgba(107,79,138,.12);border-left:2px solid rgba(107,79,138,.3);">
+        <div style="font-family:'Space Mono',monospace;font-size:.44rem;letter-spacing:.08em;text-transform:uppercase;color:rgba(155,107,171,.5);margin-bottom:8px;">✦ Reading</div>
+        <div id="within-reading-${e.id}" style="font-family:'Cormorant Garamond',serif;font-size:.9rem;color:rgba(240,235,224,.75);line-height:1.8;">${e.withinReading.split('\n\n').map(p=>`<p style="margin-bottom:10px;">${p}</p>`).join('')}</div>
+      </div>` : `<div id="within-reading-${e.id}"></div>`}
     </div>`;
   }).join('');
 }
@@ -7515,6 +7527,14 @@ function renderDreamMagicList() {
         ${e.linkedThreads&&e.linkedThreads.length?`<span style="font-family:'Space Mono',monospace;font-size:.45rem;padding:2px 7px;border:1px solid rgba(201,185,154,.15);color:rgba(201,185,154,.5);">∞ ${e.linkedThreads.length} thread${e.linkedThreads.length>1?'s':''}</span>`:''}
         ${e.images&&e.images.length?`<span style="font-family:'Space Mono',monospace;font-size:.45rem;padding:2px 7px;border:1px solid rgba(201,185,154,.15);color:rgba(201,185,154,.5);">⬡ ${e.images.length} image${e.images.length>1?'s':''}</span>`:''}
       </div>
+      <div style="margin-top:12px;display:flex;gap:8px;align-items:center;" onclick="event.stopPropagation()">
+        <button onclick="generateDreamMagicReading(${i},this)" class="astro-gen-btn" style="font-size:.5rem;padding:6px 14px;">✦ Reading</button>
+        ${e.magicReading ? '<span style="font-family:\'Space Mono\',monospace;font-size:.44rem;color:rgba(201,185,154,.35);">reading saved</span>' : ''}
+      </div>
+      ${e.magicReading ? `<div style="margin-top:10px;padding:14px;background:rgba(107,79,138,.04);border:1px solid rgba(107,79,138,.12);border-left:2px solid rgba(107,79,138,.3);">
+        <div style="font-family:'Space Mono',monospace;font-size:.44rem;letter-spacing:.08em;text-transform:uppercase;color:rgba(155,107,171,.5);margin-bottom:8px;">✦ Reading</div>
+        <div style="font-family:'Cormorant Garamond',serif;font-size:.9rem;color:rgba(240,235,224,.75);line-height:1.8;">${e.magicReading.split('\n\n').map(p=>`<p style="margin-bottom:10px;">${p}</p>`).join('')}</div>
+      </div>` : ''}
     </div>`).join('');
 }
 
@@ -7670,6 +7690,211 @@ function deleteDreamMagicEntry(idx) {
   const wrap = document.getElementById('dream-magic-modal-wrap');
   if (wrap) wrap.remove();
   renderDreamMagicList();
+}
+
+
+// ═══════════════════════════════════════════════════════════
+// WITHIN READINGS
+// ═══════════════════════════════════════════════════════════
+
+async function generateWithinEntryReading(entryId, btnEl) {
+  const apiKey = getApiKey();
+  if (!apiKey) { gtAlert('Add your Anthropic API key in Settings first.'); return; }
+  const entries = getWithinEntries();
+  const e = entries.find(x => x.id === entryId);
+  if (!e) return;
+
+  if (btnEl) { btnEl.disabled = true; btnEl.textContent = '⟳ Reading…'; }
+
+  // Get dreams around the same date window (±7 days)
+  const eDate = new Date(e.date + 'T12:00:00');
+  const nearDreams = (window.dreams||[]).filter(d => {
+    if (!d.date) return false;
+    const diff = Math.abs(new Date(d.date+'T12:00:00') - eDate);
+    return diff <= 7*86400000;
+  }).map(d => `[${d.date}] "${d.title}": ${(d.body||'').slice(0,200)}`).join('\n');
+
+  const chartSummary = 'Libra Sun 17°, Aries Moon 6°, Capricorn Rising 25°, Scorpio stellium (Mercury/Venus/Pluto), North Node 23° Sag, Chiron 20° Leo. Pure Generator 4/6, Sacral Authority. Primary clairs: claircognizance + clairsentience.';
+
+  const prompt = `You are a spiritual counselor and depth-oriented guide reading a Within Group call entry for Tiff. Within is an intimate spiritual community led by Jenna. Write a personal, specific reading that connects this call's content to Tiff's broader spiritual journey and chart.
+
+TIFF'S CHART: ${chartSummary}
+
+CALL DATE: ${e.date}
+CALL TITLE: ${e.title}
+
+SUMMARY — WHAT CAME THROUGH FOR THE GROUP:
+${e.summary || 'Not recorded.'}
+
+TIFF'S SHARE — HER WINS & STICKING POINTS:
+${e.myShare || 'Not recorded.'}
+
+GUIDANCE RECEIVED — WHAT CAME THROUGH FOR TIFF SPECIFICALLY:
+${e.guidance || 'Not recorded.'}
+
+HOMEWORK ASSIGNED:
+${e.homework || 'None.'}
+HOMEWORK STATUS: ${e.homeworkStatus || 'Active'}
+
+DREAMS WITHIN 7 DAYS OF THIS CALL:
+${nearDreams || 'No dreams logged in this window.'}
+
+Write a reading that: honors what was worked in this session, connects the guidance to Tiff's chart and nature, speaks to what the homework is truly asking of her at a deeper level, and draws any threads between the nearby dreams and what came through in the call. 3-5 paragraphs. Warm, specific, direct. Address her as Tiff.`;
+
+  try {
+    const data = await claudeAPI(apiKey, { model:'claude-sonnet-4-6', max_tokens:1500, messages:[{role:'user', content:prompt}] });
+    const text = data.content?.find(c=>c.type==='text')?.text||'';
+
+    // Save to entry
+    const idx = entries.findIndex(x => x.id === entryId);
+    if (idx > -1) { entries[idx].withinReading = text; saveWithinEntries(entries); }
+
+    // Display in card
+    const readingDiv = document.getElementById('within-reading-' + entryId);
+    if (readingDiv) {
+      readingDiv.innerHTML = `<div style="padding:14px;background:rgba(107,79,138,.04);border:1px solid rgba(107,79,138,.12);border-left:2px solid rgba(107,79,138,.3);">
+        <div style="font-family:'Space Mono',monospace;font-size:.44rem;letter-spacing:.08em;text-transform:uppercase;color:rgba(155,107,171,.5);margin-bottom:8px;">✦ Reading</div>
+        ${text.split('\n\n').map(p=>`<p style="font-family:'Cormorant Garamond',serif;font-size:.9rem;color:rgba(240,235,224,.75);line-height:1.8;margin-bottom:10px;">${p}</p>`).join('')}
+      </div>`;
+    }
+  } catch(err) {
+    gtAlert('Error generating reading: ' + err.message);
+  } finally {
+    if (btnEl) { btnEl.disabled = false; btnEl.textContent = '✦ Reading'; }
+  }
+}
+
+async function generateWithinArcReading(btnEl) {
+  const apiKey = getApiKey();
+  if (!apiKey) { gtAlert('Add your Anthropic API key in Settings first.'); return; }
+  const entries = getWithinEntries().slice().sort((a,b) => a.date.localeCompare(b.date));
+  if (!entries.length) { gtAlert('No Within entries to read.'); return; }
+
+  if (btnEl) { btnEl.disabled = true; btnEl.textContent = '⟳ Reading the arc…'; }
+
+  const chartSummary = 'Libra Sun 17°, Aries Moon 6°, Capricorn Rising 25°, Scorpio stellium (Mercury/Venus/Pluto), North Node 23° Sag, Chiron 20° Leo. Pure Generator 4/6, Sacral Authority. Primary clairs: claircognizance + clairsentience.';
+
+  const entryDigest = entries.map(e =>
+    `[${e.date}] "${e.title}"` +
+    (e.myShare ? `
+  Share: ${e.myShare.slice(0,200)}` : '') +
+    (e.guidance ? `
+  Guidance: ${e.guidance.slice(0,200)}` : '') +
+    (e.homework ? `
+  Homework (${e.homeworkStatus}): ${e.homework.slice(0,200)}` : '')
+  ).join('\n\n');
+
+  const prompt = `You are a spiritual counselor reading across Tiff's complete Within Group journey — a series of calls in an intimate spiritual community led by Jenna. Read the arc of her work across all sessions and write a deep reading of her growth, patterns, and what is being asked of her.
+
+TIFF'S CHART: ${chartSummary}
+
+WITHIN GROUP SESSIONS (chronological):
+${entryDigest}
+
+Write a reading that: traces the arc of Tiff's growth across these sessions, names the recurring themes and what they are collectively pointing toward, reflects on the pattern of her homework and what the deeper assignment beneath all the assignments might be, and speaks to where she appears to be headed in her spiritual work. 4-6 paragraphs. Warm, specific, visionary. Address her as Tiff.`;
+
+  try {
+    const data = await claudeAPI(apiKey, { model:'claude-sonnet-4-6', max_tokens:2000, messages:[{role:'user', content:prompt}] });
+    const text = data.content?.find(c=>c.type==='text')?.text||'';
+
+    const arcDiv = document.getElementById('within-arc-result');
+    if (arcDiv) {
+      arcDiv.style.display = 'block';
+      arcDiv.innerHTML = `
+        <div style="font-family:'Space Mono',monospace;font-size:.5rem;letter-spacing:.1em;text-transform:uppercase;color:rgba(155,107,171,.6);margin-bottom:12px;">✦ Arc Reading — Your Within Journey</div>
+        ${text.split('\n\n').map(p=>`<p style="font-family:'Cormorant Garamond',serif;font-size:.95rem;color:rgba(240,235,224,.8);line-height:1.85;margin-bottom:12px;">${p}</p>`).join('')}`;
+    }
+  } catch(err) {
+    gtAlert('Error generating arc reading: ' + err.message);
+  } finally {
+    if (btnEl) { btnEl.disabled = false; btnEl.textContent = '✦ Arc Reading'; }
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+// DREAM MAGIC READINGS
+// ═══════════════════════════════════════════════════════════
+
+async function generateDreamMagicReading(idx, btnEl) {
+  const apiKey = getApiKey();
+  if (!apiKey) { gtAlert('Add your Anthropic API key in Settings first.'); return; }
+  const entries = getDreamMagicEntries().slice().sort((a,b) => b.date.localeCompare(a.date));
+  const e = entries[idx];
+  if (!e) return;
+
+  if (btnEl) { btnEl.disabled = true; btnEl.textContent = '⟳ Reading…'; }
+
+  const chartSummary = 'Libra Sun 17°, Aries Moon 6°, Capricorn Rising 25°, Scorpio stellium (Mercury/Venus/Pluto), North Node 23° Sag, Chiron 20° Leo. Pure Generator 4/6, Sacral Authority. Primary clairs: claircognizance + clairsentience.';
+
+  // Pull linked dreams
+  const linkedDreamData = (e.linkedDreams||[]).map(id => {
+    const d = (window.dreams||[]).find(x => String(x.id) === String(id));
+    return d ? `"${d.title}" (${d.date}): ${(d.body||'').slice(0,300)}` : null;
+  }).filter(Boolean).join('\n');
+
+  // Pull linked threads
+  const allThreads = (() => { try { return JSON.parse(localStorage.getItem('gt_threads')||'[]'); } catch(ex){return[];} })();
+  const linkedThreadData = (e.linkedThreads||[]).map(ti => {
+    const t = allThreads[ti];
+    return t ? `Thread "${t.name||'Unnamed'}"` + (t.notes?`: ${t.notes.slice(0,150)}`:'') : null;
+  }).filter(Boolean).join('\n');
+
+  // Pull linked incubations
+  const allIncubs = (() => { try { return JSON.parse(localStorage.getItem('gt_incubations')||'[]'); } catch(ex){return[];} })();
+  const linkedIncubData = (e.linkedIncubations||[]).map(ii => {
+    const inc = allIncubs[ii];
+    return inc ? `Incubation "${inc.intention||'Unnamed'}" (${inc.date||''}, ${inc.status||''})` : null;
+  }).filter(Boolean).join('\n');
+
+  const prompt = `You are a dream magic practitioner and spiritual counselor reading a dream magic working for Tiff. Write a deep, specific reading of this working — what it called in, what it activated, and what it is asking of her.
+
+TIFF'S CHART: ${chartSummary}
+
+WORKING DATE: ${e.date}
+WORKING TITLE: ${e.title}
+TYPE: ${e.type || 'Working'}
+STATUS: ${e.status || 'Active'}
+
+INTENTION:
+${e.intention || 'Not recorded.'}
+
+METHOD / WORKING:
+${e.method || 'Not recorded.'}
+
+OUTCOME:
+${e.outcome || 'Not yet recorded.'}
+
+${linkedIncubData ? `LINKED INCUBATIONS:
+${linkedIncubData}
+` : ''}
+${linkedDreamData ? `LINKED DREAMS:
+${linkedDreamData}
+` : ''}
+${linkedThreadData ? `LINKED THREADS:
+${linkedThreadData}
+` : ''}
+
+Write a reading that: honors the intention and craft of this working, reads what the dream material is calling into waking life, connects to Tiff's chart and nature where relevant, and speaks to what is being woven. If the outcome is still unresolved, speak to what the working is still working. 3-4 paragraphs. Warm, precise, magical. Address her as Tiff.`;
+
+  try {
+    const data = await claudeAPI(apiKey, { model:'claude-sonnet-4-6', max_tokens:1200, messages:[{role:'user', content:prompt}] });
+    const text = data.content?.find(c=>c.type==='text')?.text||'';
+
+    // Save to entry
+    const allEntries = getDreamMagicEntries();
+    const realIdx = allEntries.findIndex((x,i) => {
+      const sorted = getDreamMagicEntries().slice().sort((a,b)=>b.date.localeCompare(a.date));
+      return x === sorted[idx];
+    });
+    if (realIdx > -1) { allEntries[realIdx].magicReading = text; saveDreamMagicEntries(allEntries); }
+
+    // Re-render list to show reading
+    renderDreamMagicList();
+  } catch(err) {
+    gtAlert('Error generating reading: ' + err.message);
+  } finally {
+    if (btnEl) { btnEl.disabled = false; btnEl.textContent = '✦ Reading'; }
+  }
 }
 
 function runGlobalSearch(raw) {
