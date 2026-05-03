@@ -13671,6 +13671,10 @@ try { renderInsights(); } catch(e) { console.error('renderInsights crashed:', e)
         const dest=document.getElementById('gt-content');
         const s=document.getElementById('tab-sanctum');
         if(dest&&s) dest.innerHTML=s.innerHTML;
+        const slot = document.getElementById('sub-bar-slot');
+        const bar = document.getElementById('sub-bar-sanctum');
+        if (slot) slot.style.display = 'block';
+        if (bar) bar.style.display = 'block';
         setTimeout(initSanctum, 100);
       }
       else if (resolvedTab === 'dreams') {
@@ -13732,6 +13736,10 @@ try { renderInsights(); } catch(e) { console.error('renderInsights crashed:', e)
       if (sanctumPanel) sanctumPanel.classList.add('active');
       if (sanctumBtn) sanctumBtn.classList.add('active');
       _activeTab = 'sanctum';
+      const slotFb = document.getElementById('sub-bar-slot');
+      const barFb = document.getElementById('sub-bar-sanctum');
+      if (slotFb) slotFb.style.display = 'block';
+      if (barFb) barFb.style.display = 'block';
       setTimeout(initSanctum, 100);
     }
   } catch(e) { console.error('Tab restore failed:', e); }
