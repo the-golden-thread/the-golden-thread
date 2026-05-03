@@ -9463,7 +9463,9 @@ function renderDreams(){
     grid.appendChild(card);
   });
   // Four-pillar stats
-  const _practiceCount = SPIRIT_ENTRIES.filter(function(e){return e&&e.type;}).length;
+  const _practiceCount = SPIRIT_ENTRIES.filter(function(e){return e&&e.type;}).length
+    + ((typeof getWithinEntries==='function') ? getWithinEntries().length : 0)
+    + ((typeof getMeditationSessions==='function') ? getMeditationSessions().length : 0);
   var _ancestors = (typeof getAncestors==='function') ? getAncestors() : [];
   var _places = [];
   try { _places = JSON.parse(localStorage.getItem('gt_places')||'[]'); } catch(e){}
@@ -9471,13 +9473,19 @@ function renderDreams(){
   try { _userHerbs = JSON.parse(localStorage.getItem('gt_user_herbs')||'[]'); } catch(e){}
   var _hblends = [];
   try { _hblends = JSON.parse(localStorage.getItem('gt_hblends')||'[]'); } catch(e){}
+  var _channelEntries = [];
+  try { _channelEntries = JSON.parse(localStorage.getItem('gt_channel_entries')||'[]'); } catch(e){}
+  var _dreamMagic = [];
+  try { _dreamMagic = JSON.parse(localStorage.getItem('gt_dream_magic')||'[]'); } catch(e){}
   const _grimoireCount = (COMM_ENTRIES ? COMM_ENTRIES.length : 0)
     + _ancestors.length
     + ELIXIRS.length
     + SONGS.length
     + _places.length
     + _userHerbs.length
-    + _hblends.length;
+    + _hblends.length
+    + _channelEntries.length
+    + _dreamMagic.length;
   document.getElementById('s-dreams').textContent = dreams.length;
   document.getElementById('s-practice').textContent = _practiceCount;
   document.getElementById('s-grimoire').textContent = _grimoireCount;
@@ -18651,11 +18659,16 @@ function buildPeopleChips(selectedIds) {
     btn2.style.cssText = "font-family:'Space Mono',monospace;font-size:.5rem;letter-spacing:.06em;padding:5px 12px;border:1px solid rgba(107,79,138,.3);background:rgba(107,79,138,.08);color:rgba(155,107,171,.8);cursor:pointer;white-space:nowrap;";
     btn2.onclick = function() {
       var rawName = inp2.value.trim(); if (!rawName) return;
-      var pid2 = 'custom_' + rawName.toLowerCase().replace(/\s+/g,'_').replace(/[^a-z0-9_]/g,'');
+      var pid2 = 'custom_' + rawName.toLowerCase().replace(/\s+/g,'_').replace(/[^a-z0-9_]/g,'') + '_' + Date.now();
       if (document.querySelector('#f-people-chips .pchip-check[data-pid="'+pid2+'"]')) { inp2.value=''; return; }
+      // Save to PEOPLE and localStorage immediately
+      addNewBeingFromScan(rawName, 'Person in dreams', 'Added manually from dream entry.');
+      // Use the ID that was just created (last item in PEOPLE)
+      var savedBeing = PEOPLE[PEOPLE.length - 1];
+      var actualPid = savedBeing ? savedBeing.id : pid2;
       var chip2 = document.createElement('span');
       chip2.className = 'pchip-check selected';
-      chip2.dataset.pid = pid2; chip2.dataset.customName = rawName;
+      chip2.dataset.pid = actualPid; chip2.dataset.customName = rawName;
       chip2.style.cssText = "font-family:'Space Mono',monospace;font-size:.52rem;letter-spacing:.05em;padding:3px 10px;cursor:pointer;transition:all .15s;user-select:none;border:1px solid rgba(155,107,171,.7);background:rgba(107,79,138,.2);color:rgba(200,160,220,.9);";
       chip2.textContent = rawName;
       chip2.onclick = function() {
