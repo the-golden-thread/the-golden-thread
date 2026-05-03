@@ -6549,6 +6549,75 @@ async function askArchive() {
   // Build full archive context
   const ctx = buildFullArchiveContext({ maxDreams: 128, maxSpirit: 80, bodyLen: 500 });
 
+  // Smart dream resolution — detect which dreams to pull in full
+  const qLower = question.toLowerCase();
+  const sortedDreams = (window.dreams || []).slice().sort((a,b) => b.date.localeCompare(a.date));
+  const todayStr2 = new Date().toLocaleDateString('en-CA');
+  const yesterdayStr2 = new Date(Date.now()-86400000).toLocaleDateString('en-CA');
+
+  let mentionedDreams = [];
+
+  // "most recent" / "latest" / "last dream" / "last night" → most recent dream
+  if (/most recent|latest dream|last dream|last night|recent dream|newest dream/.test(qLower)) {
+    if (sortedDreams.length) mentionedDreams = [sortedDreams[0]];
+  }
+  // "today" → dreams dated today
+  else if (/today.s dream|dream today|this morning/.test(qLower)) {
+    mentionedDreams = sortedDreams.filter(d => d.date === todayStr2).slice(0,3);
+    if (!mentionedDreams.length) mentionedDreams = [sortedDreams[0]]; // fallback to latest
+  }
+  // "yesterday" → dreams dated yesterday
+  else if (/yesterday.s dream|dream yesterday|last night/.test(qLower)) {
+    mentionedDreams = sortedDreams.filter(d => d.date === yesterdayStr2).slice(0,3);
+  }
+  // "recent dreams" (plural) → last 3
+  else if (/recent dreams|last few dreams|last \d dreams/.test(qLower)) {
+    mentionedDreams = sortedDreams.slice(0, 3);
+  }
+  // specific date mentioned
+  else if (/\d{4}-\d{2}-\d{2}/.test(question)) {
+    const dateMatch = question.match(/\d{4}-\d{2}-\d{2}/);
+    if (dateMatch) mentionedDreams = sortedDreams.filter(d => d.date === dateMatch[0]).slice(0,3);
+  }
+
+  // Title keyword matching (fallback / supplement)
+  if (!mentionedDreams.length) {
+    mentionedDreams = sortedDreams.slice(0,30).filter(d => {
+      const title = (d.title||'').toLowerCase();
+      const words = title.split(/\s+/).filter(w => w.length > 4);
+      return words.some(w => qLower.includes(w));
+    });
+  }
+
+  // Also pull linked incubations if requested
+  let incubationContext = '';
+  if (/incubation|incubate/.test(qLower) && mentionedDreams.length) {
+    try {
+      const allIncubs = JSON.parse(localStorage.getItem('gt_incubations')||'[]');
+      // Find incubations whose date is within 3 days before the dream
+      const linked = mentionedDreams.flatMap(d => {
+        const dDate = new Date(d.date + 'T12:00:00');
+        return allIncubs.filter(inc => {
+          if (!inc.date) return false;
+          const diff = dDate - new Date(inc.date + 'T12:00:00');
+          return diff >= 0 && diff <= 3 * 86400000;
+        });
+      });
+      if (linked.length) {
+        incubationContext = '\n\nLINKED INCUBATION(S):\n' +
+          linked.map(inc => '[' + inc.date + '] Intention: "' + (inc.intention||inc.title||'') + '"' +
+            (inc.ritual ? '\nRitual: ' + inc.ritual : '') +
+            (inc.notes ? '\nNotes: ' + inc.notes : '')).join('\n\n');
+      }
+    } catch(e) {}
+  }
+
+  const fullDreamContext = mentionedDreams.length
+    ? '\n\nFULL TEXT OF REFERENCED DREAM(S) — use these for detailed analysis:\n' +
+      mentionedDreams.map(d => '[' + d.date + '] "' + d.title + '":\n' + (d.body||'')).join('\n\n---\n\n') +
+      incubationContext
+    : '';
+
   const nowStr = new Date().toLocaleDateString('en-CA');
   const yesterdayStr = new Date(Date.now()-86400000).toLocaleDateString('en-CA');
   const todayReadable = new Date().toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
@@ -6557,7 +6626,7 @@ async function askArchive() {
 
 DATE CONTEXT: Today is ${todayReadable} (${nowStr}). Yesterday was ${yesterdayStr}. When Tiff says "today" or "yesterday" use these exact dates. NOTE: Tiff records dreams on the date she wakes up, so a dream dated ${nowStr} was dreamed between midnight and ~11am on ${nowStr}.
 
-QUESTION: ${question}
+QUESTION: ${question}${fullDreamContext}
 
 CHART & NATURE: ${ctx.chartSummary}
 
