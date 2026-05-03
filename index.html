@@ -480,210 +480,119 @@ h1 em { display:block; font-style:italic; font-weight:300; font-size:.42em; lett
   <!-- ✦ SACRED DATES BANNER ✦ -->
   <div id="sacred-dates-banner" style="display:none;max-width:720px;margin:0 auto 20px;"></div>
 
-  <!-- ✦ LIVE SKY ✦ -->
-  <div id="sanctum-sky" style="max-width:720px;margin:0 auto 36px;">
-    <div style="font-family:'Space Mono',monospace;font-size:.52rem;color:rgba(201,185,154,.4);letter-spacing:.12em;text-transform:uppercase;margin-bottom:14px;">✦ The Sky Right Now</div>
-    <div id="sanctum-sky-inner" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(148px,1fr));gap:10px;"></div>
+  <!-- ✦ SANCTUM SUB-TABS ✦ -->
+  <div id="sanctum-subtab-bar" style="max-width:720px;margin:0 auto 24px;display:flex;gap:0;border-bottom:1px solid rgba(201,185,154,.1);">
+    <button id="sanctum-stab-today" onclick="switchSanctumTab('today',this)" style="font-family:'Space Mono',monospace;font-size:.52rem;letter-spacing:.1em;text-transform:uppercase;padding:10px 18px;background:transparent;border:none;border-bottom:2px solid var(--moon);color:var(--moon);cursor:pointer;">✦ Today</button>
+    <button id="sanctum-stab-sync" onclick="switchSanctumTab('sync',this)" style="font-family:'Space Mono',monospace;font-size:.52rem;letter-spacing:.1em;text-transform:uppercase;padding:10px 18px;background:transparent;border:none;border-bottom:2px solid transparent;color:rgba(201,185,154,.4);cursor:pointer;">◉ Synchronicities</button>
+    <button id="sanctum-stab-arc" onclick="switchSanctumTab('arc',this)" style="font-family:'Space Mono',monospace;font-size:.52rem;letter-spacing:.1em;text-transform:uppercase;padding:10px 18px;background:transparent;border:none;border-bottom:2px solid transparent;color:rgba(201,185,154,.4);cursor:pointer;">∞ The Arc</button>
   </div>
 
-  <!-- Strengths & Focus section -->
-  <!-- ✦ DAILY MANTRA ✦ -->
-  <div id="sanctum-mantra-wrap" style="max-width:720px;margin:0 auto 28px;">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
-      <div style="font-family:'Space Mono',monospace;font-size:.52rem;color:rgba(201,185,154,.4);letter-spacing:.12em;text-transform:uppercase;">✦ Today's Mantra</div>
-      <button onclick="generateDailyMantra(true)" id="mantra-refresh-btn" style="background:transparent;border:1px solid rgba(201,185,154,.15);color:rgba(201,185,154,.35);font-family:'Space Mono',monospace;font-size:.5rem;letter-spacing:.08em;padding:4px 10px;cursor:pointer;transition:all .2s;" onmouseover="this.style.borderColor='var(--moon)';this.style.color='var(--moon)'" onmouseout="this.style.borderColor='rgba(201,185,154,.15)';this.style.color='rgba(201,185,154,.35)'">↻</button>
+  <!-- ══ TODAY PANEL ══ -->
+  <div id="sanctum-panel-today" style="max-width:720px;margin:0 auto;">
+
+    <!-- ✦ LIVE SKY ✦ -->
+    <div id="sanctum-sky" style="margin-bottom:28px;">
+      <div style="font-family:'Space Mono',monospace;font-size:.52rem;color:rgba(201,185,154,.4);letter-spacing:.12em;text-transform:uppercase;margin-bottom:14px;">✦ The Sky Right Now</div>
+      <div id="sanctum-sky-inner" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(148px,1fr));gap:10px;"></div>
     </div>
-    <div id="sanctum-mantra-text" style="font-family:'Cormorant Garamond',serif;font-size:1.15rem;font-weight:300;font-style:italic;line-height:1.85;color:rgba(240,235,224,.82);padding:18px 22px;background:rgba(201,168,76,.04);border:1px solid rgba(201,168,76,.12);border-left:2px solid rgba(201,168,76,.3);min-height:52px;">
-      <div style="display:flex;align-items:center;gap:10px;color:rgba(201,185,154,.3);font-family:'Space Mono',monospace;font-size:.58rem;"><div class="astro-spinner"></div> Listening…</div>
-    </div>
-  </div>
 
-  <!-- ✦ DREAM WEATHER ✦ -->
-  <div id="dream-weather-widget" style="max-width:720px;margin:0 auto 20px;"></div>
-
-  <!-- ✦ THIS DAY IN YOUR ARCHIVE ✦ -->
-  <div id="this-day-widget" style="max-width:720px;margin:0 auto 20px;"></div>
-
-  <!-- ✦ PROPHECY WATCH ✦ -->
-  <div id="prophecy-watch-widget" style="max-width:720px;margin:0 auto 28px;"></div>
-
-  <div id="sanctum-strengths" style="max-width:720px;margin:0 auto 40px;">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
-      <div style="font-family:'Space Mono',monospace;font-size:.55rem;color:rgba(201,185,154,.4);letter-spacing:.12em;text-transform:uppercase;">✦ Strengths &amp; Focus</div>
-      <button onclick="generateStrengths()" id="strengths-gen-btn" style="font-family:'Space Mono',monospace;font-size:.52rem;letter-spacing:.08em;padding:5px 12px;border:1px solid rgba(201,185,154,.2);background:transparent;color:rgba(201,185,154,.55);cursor:pointer;transition:all .2s;" onmouseover="this.style.borderColor='var(--moon)';this.style.color='var(--moon)'" onmouseout="this.style.borderColor='rgba(201,185,154,.2)';this.style.color='rgba(201,185,154,.55)'">↻ Refresh</button>
-    </div>
-    <div id="sanctum-strengths-content">
-      <div style="font-family:'Space Mono',monospace;font-size:.6rem;color:rgba(201,185,154,.3);padding:20px 0;">Click refresh to generate your strengths reading from your charts and archive.</div>
-    </div>
-  </div>
-
-
-
-  <div id="sanctum-daily" style="margin-bottom:36px;padding:28px;background:rgba(107,79,138,.06);border:1px solid rgba(107,79,138,.18);position:relative;">
-    <div style="font-family:'Space Mono',monospace;font-size:.55rem;letter-spacing:.14em;text-transform:uppercase;color:rgba(155,107,171,.6);margin-bottom:8px;">✦ Today's Reading</div>
-    <div id="sanctum-date" style="font-family:'Space Mono',monospace;font-size:.6rem;color:rgba(201,185,154,.4);margin-bottom:16px;"></div>
-    <div id="sanctum-reading-text" style="font-size:1rem;font-weight:300;line-height:1.9;color:rgba(240,235,224,.85);">
-      <div style="display:flex;align-items:center;gap:10px;color:rgba(201,185,154,.4);font-family:'Space Mono',monospace;font-size:.62rem;"><div class="astro-spinner"></div> Consulting the sky…</div>
-    </div>
-    <button id="sanctum-refresh-btn" onclick="generateDailyReading(true)" style="position:absolute;top:20px;right:20px;background:transparent;border:1px solid rgba(107,79,138,.3);color:rgba(155,107,171,.6);font-family:'Space Mono',monospace;font-size:.55rem;letter-spacing:.08em;padding:5px 10px;cursor:pointer;transition:all .2s;" onmouseover="this.style.borderColor='var(--mariam)';this.style.color='var(--mariam)'" onmouseout="this.style.borderColor='rgba(107,79,138,.3)';this.style.color='rgba(155,107,171,.6)'">↻ refresh</button>
-  </div>
-
-
-  <!-- ✦ PATTERN ALERT REPLAY ✦ -->
-  <div id="sanctum-alert-replay" style="max-width:720px;margin:0 auto 20px;display:none;">  </div>
-
-  <!-- ✦ SYNCHRONICITY SPOTTER ✦ -->
-  <div id="sync-spotter-section" style="max-width:720px;margin:0 auto 36px;">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;">
-      <div style="font-family:'Space Mono',monospace;font-size:.52rem;color:rgba(201,185,154,.4);letter-spacing:.12em;text-transform:uppercase;">✦ Synchronicity Spotter</div>
-      <button onclick="openAddCustomTracker()" style="font-family:'Space Mono',monospace;font-size:.5rem;letter-spacing:.07em;padding:4px 12px;border:1px solid rgba(201,185,154,.18);background:transparent;color:rgba(201,185,154,.5);cursor:pointer;transition:all .2s;" onmouseover="this.style.borderColor='var(--moon)';this.style.color='var(--moon)'" onmouseout="this.style.borderColor='rgba(201,185,154,.18)';this.style.color='rgba(201,185,154,.5)'">+ Add Synchronicity</button>
-    </div>
-    <div style="display:flex;gap:16px;align-items:stretch;flex-wrap:wrap;">
-      <!-- Tap button -->
-      <div style="flex:0 0 auto;display:flex;flex-direction:column;align-items:center;justify-content:center;">
-        <button id="sync-tap-btn" onclick="tapSync()" style="width:108px;height:108px;border-radius:50%;background:radial-gradient(circle at 38% 35%, rgba(201,168,76,.18), rgba(107,79,138,.1) 70%);border:1.5px solid rgba(201,168,76,.35);color:var(--gold);font-family:'Cormorant Garamond',serif;font-size:2rem;cursor:pointer;transition:all .18s ease;position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;box-shadow:0 0 0 0 rgba(201,168,76,0);" onmouseover="this.style.borderColor='rgba(201,168,76,.7)';this.style.boxShadow='0 0 18px rgba(201,168,76,.15)'" onmouseout="this.style.borderColor='rgba(201,168,76,.35)';this.style.boxShadow='0 0 0 0 rgba(201,168,76,0)'">
-          <span style="font-size:1.8rem;line-height:1;">1010</span>
-          <span style="font-family:'Space Mono',monospace;font-size:.5rem;letter-spacing:.1em;color:rgba(201,168,76,.65);">I SEE IT</span>
-        </button>
-        <div style="font-family:'Space Mono',monospace;font-size:.5rem;color:rgba(201,185,154,.3);margin-top:8px;letter-spacing:.06em;">tap to log</div>
+    <!-- ✦ DAILY MANTRA ✦ -->
+    <div id="sanctum-mantra-wrap" style="margin-bottom:20px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+        <div style="font-family:'Space Mono',monospace;font-size:.52rem;color:rgba(201,185,154,.4);letter-spacing:.12em;text-transform:uppercase;">✦ Today's Mantra</div>
+        <button onclick="generateDailyMantra(true)" id="mantra-refresh-btn" style="background:transparent;border:1px solid rgba(201,185,154,.15);color:rgba(201,185,154,.35);font-family:'Space Mono',monospace;font-size:.5rem;letter-spacing:.08em;padding:4px 10px;cursor:pointer;" onmouseover="this.style.borderColor='var(--moon)';this.style.color='var(--moon)'" onmouseout="this.style.borderColor='rgba(201,185,154,.15)';this.style.color='rgba(201,185,154,.35)'">↻</button>
       </div>
-      <!-- Stats panel -->
-      <div style="flex:1;min-width:180px;display:flex;flex-direction:column;gap:10px;">
-        <div style="display:flex;gap:10px;">
-          <div id="sync-today-count" style="flex:1;padding:14px 16px;background:rgba(201,168,76,.05);border:1px solid rgba(201,168,76,.15);text-align:center;">
-            <div id="sync-today-num" style="font-family:'Cormorant Garamond',serif;font-size:2.2rem;font-weight:300;color:var(--gold);line-height:1;">0</div>
-            <div style="font-family:'Space Mono',monospace;font-size:.5rem;color:rgba(201,185,154,.4);letter-spacing:.08em;margin-top:4px;">TODAY</div>
-          </div>
-          <button onclick="show1010Graph()" style="flex:1;padding:14px 16px;background:rgba(255,255,255,.02);border:1px solid rgba(201,185,154,.1);text-align:center;cursor:pointer;transition:border-color .2s;" onmouseover="this.style.borderColor='rgba(201,185,154,.3)'" onmouseout="this.style.borderColor='rgba(201,185,154,.1)'">
-            <div id="sync-total-num" style="font-family:'Cormorant Garamond',serif;font-size:2.2rem;font-weight:300;color:var(--parchment);line-height:1;">0</div>
-            <div style="font-family:'Space Mono',monospace;font-size:.5rem;color:rgba(201,185,154,.4);letter-spacing:.08em;margin-top:4px;">ALL TIME</div>
+      <div id="sanctum-mantra-text" style="font-family:'Cormorant Garamond',serif;font-size:1.15rem;font-weight:300;font-style:italic;line-height:1.85;color:rgba(240,235,224,.82);padding:18px 22px;background:rgba(201,168,76,.04);border:1px solid rgba(201,168,76,.12);border-left:2px solid rgba(201,168,76,.3);min-height:52px;">
+        <div style="display:flex;align-items:center;gap:10px;color:rgba(201,185,154,.3);font-family:'Space Mono',monospace;font-size:.58rem;"><div class="astro-spinner"></div> Listening…</div>
+      </div>
+    </div>
+
+    <!-- ✦ THIS TIME LAST YEAR ✦ -->
+    <div id="this-day-widget" style="margin-bottom:20px;"></div>
+
+    <!-- ✦ DREAM WEATHER ✦ -->
+    <div id="dream-weather-widget" style="margin-bottom:20px;"></div>
+
+    <!-- ✦ PROPHECY WATCH ✦ -->
+    <div id="prophecy-watch-widget" style="margin-bottom:24px;"></div>
+
+    <!-- ✦ TODAY'S READING ✦ (on demand) -->
+    <div id="sanctum-daily" style="margin-bottom:36px;">
+      <div id="sanctum-date" style="font-family:'Space Mono',monospace;font-size:.6rem;color:rgba(201,185,154,.35);margin-bottom:12px;"></div>
+      <div id="sanctum-reading-text" style="display:none;font-size:1rem;font-weight:300;line-height:1.9;color:rgba(240,235,224,.85);padding:24px 28px;background:rgba(107,79,138,.06);border:1px solid rgba(107,79,138,.18);margin-bottom:12px;"></div>
+      <button id="sanctum-refresh-btn" onclick="generateDailyReading(true)" style="width:100%;font-family:'Space Mono',monospace;font-size:.55rem;letter-spacing:.1em;text-transform:uppercase;padding:12px 24px;background:transparent;border:1px solid rgba(107,79,138,.3);color:rgba(155,107,171,.6);cursor:pointer;" onmouseover="this.style.borderColor='var(--mariam)';this.style.color='var(--mariam)'" onmouseout="this.style.borderColor='rgba(107,79,138,.3)';this.style.color='rgba(155,107,171,.6)'">✦ Get Today's Reading</button>
+    </div>
+
+    <!-- PATTERN ALERT REPLAY -->
+    <div id="sanctum-alert-replay" style="margin-bottom:20px;display:none;"></div>
+
+  </div><!-- /sanctum-panel-today -->
+
+  <!-- ══ SYNCHRONICITIES PANEL ══ -->
+  <div id="sanctum-panel-sync" style="max-width:720px;margin:0 auto;display:none;">
+
+    <!-- ✦ SYNCHRONICITY SPOTTER ✦ -->
+    <div id="sync-spotter-section" style="margin-bottom:36px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;">
+        <div style="font-family:'Space Mono',monospace;font-size:.52rem;color:rgba(201,185,154,.4);letter-spacing:.12em;text-transform:uppercase;">✦ Synchronicity Spotter</div>
+        <button onclick="openAddCustomTracker()" style="font-family:'Space Mono',monospace;font-size:.5rem;letter-spacing:.07em;padding:4px 12px;border:1px solid rgba(201,185,154,.18);background:transparent;color:rgba(201,185,154,.5);cursor:pointer;" onmouseover="this.style.borderColor='var(--moon)';this.style.color='var(--moon)'" onmouseout="this.style.borderColor='rgba(201,185,154,.18)';this.style.color='rgba(201,185,154,.5)'">+ Add Synchronicity</button>
+      </div>
+      <div style="display:flex;gap:16px;align-items:stretch;flex-wrap:wrap;">
+        <div style="flex:0 0 auto;display:flex;flex-direction:column;align-items:center;justify-content:center;">
+          <button id="sync-tap-btn" onclick="tapSync()" style="width:108px;height:108px;border-radius:50%;background:radial-gradient(circle at 38% 35%, rgba(201,168,76,.18), rgba(107,79,138,.1) 70%);border:1.5px solid rgba(201,168,76,.35);color:var(--gold);font-family:'Cormorant Garamond',serif;font-size:2rem;cursor:pointer;transition:all .18s ease;position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;box-shadow:0 0 0 0 rgba(201,168,76,0);" onmouseover="this.style.borderColor='rgba(201,168,76,.7)';this.style.boxShadow='0 0 18px rgba(201,168,76,.15)'" onmouseout="this.style.borderColor='rgba(201,168,76,.35)';this.style.boxShadow='0 0 0 0 rgba(201,168,76,0)'">
+            <span style="font-size:1.8rem;line-height:1;">1010</span>
+            <span style="font-family:'Space Mono',monospace;font-size:.5rem;letter-spacing:.1em;color:rgba(201,168,76,.65);">I SEE IT</span>
           </button>
+          <div style="font-family:'Space Mono',monospace;font-size:.5rem;color:rgba(201,185,154,.3);margin-top:8px;letter-spacing:.06em;">tap to log</div>
         </div>
-        <!-- Recent log -->
-        <div id="sync-recent-log" style="flex:1;padding:12px 14px;background:rgba(255,255,255,.015);border:1px solid rgba(201,185,154,.08);font-family:'Space Mono',monospace;font-size:.55rem;color:rgba(201,185,154,.45);line-height:2;min-height:52px;">
-          <span style="color:rgba(201,185,154,.25);letter-spacing:.06em;">No sightings logged yet.</span>
+        <div style="flex:1;min-width:180px;display:flex;flex-direction:column;gap:10px;">
+          <div style="display:flex;gap:10px;">
+            <div id="sync-today-count" style="flex:1;padding:14px 16px;background:rgba(201,168,76,.05);border:1px solid rgba(201,168,76,.15);text-align:center;">
+              <div id="sync-today-num" style="font-family:'Cormorant Garamond',serif;font-size:2.2rem;font-weight:300;color:var(--gold);line-height:1;">0</div>
+              <div style="font-family:'Space Mono',monospace;font-size:.5rem;color:rgba(201,185,154,.4);letter-spacing:.08em;margin-top:4px;">TODAY</div>
+            </div>
+            <button onclick="show1010Graph()" style="flex:1;padding:14px 16px;background:rgba(255,255,255,.02);border:1px solid rgba(201,185,154,.1);text-align:center;cursor:pointer;" onmouseover="this.style.borderColor='rgba(201,185,154,.3)'" onmouseout="this.style.borderColor='rgba(201,185,154,.1)'">
+              <div id="sync-total-num" style="font-family:'Cormorant Garamond',serif;font-size:2.2rem;font-weight:300;color:var(--parchment);line-height:1;">0</div>
+              <div style="font-family:'Space Mono',monospace;font-size:.5rem;color:rgba(201,185,154,.4);letter-spacing:.08em;margin-top:4px;">ALL TIME</div>
+            </button>
+          </div>
+          <div id="sync-recent-log" style="flex:1;padding:12px 14px;background:rgba(255,255,255,.015);border:1px solid rgba(201,185,154,.08);font-family:'Space Mono',monospace;font-size:.55rem;color:rgba(201,185,154,.45);line-height:2;min-height:52px;">
+            <span style="color:rgba(201,185,154,.25);letter-spacing:.06em;">No sightings logged yet.</span>
+          </div>
         </div>
       </div>
-    </div>
-    <!-- Tap flash message -->
-    <div id="sync-flash" style="font-family:'Space Mono',monospace;font-size:.58rem;color:var(--gold);letter-spacing:.1em;text-align:center;margin-top:14px;opacity:0;transition:opacity .3s;height:20px;"></div>
-  </div>
-
-  <!-- ✦ CUSTOM TRACKERS ✦ -->
-  <div id="custom-sync-section" style="max-width:720px;margin:0 auto 40px;">
-    <div id="custom-trackers-grid" style="display:flex;flex-direction:column;gap:20px;"></div>
-    <div id="custom-flash" style="font-family:'Space Mono',monospace;font-size:.58rem;color:rgba(201,185,154,.6);letter-spacing:.1em;text-align:center;opacity:0;transition:opacity .3s;height:20px;margin-top:8px;"></div>
-  </div>
-
-  <div style="max-width:720px;margin:0 auto 48px;">
-    <div style="text-align:center;margin-bottom:32px;">
-      <div style="display:flex;justify-content:center;margin-bottom:12px;"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 90 110" width="64" height="78">
-  <defs>
-    <linearGradient id="gt-tbody" x1="0%" y1="0%" x2="100%" y2="0%">
-      <stop offset="0%" stop-color="#6a4208"/>
-      <stop offset="15%" stop-color="#c9940c"/>
-      <stop offset="35%" stop-color="#e8b820"/>
-      <stop offset="50%" stop-color="#f5d040"/>
-      <stop offset="65%" stop-color="#d4a020"/>
-      <stop offset="82%" stop-color="#b87010"/>
-      <stop offset="100%" stop-color="#7a4a08"/>
-    </linearGradient>
-    <linearGradient id="gt-trim" x1="0%" y1="0%" x2="100%" y2="0%">
-      <stop offset="0%" stop-color="#a09080"/>
-      <stop offset="18%" stop-color="#d8cfc0"/>
-      <stop offset="40%" stop-color="#ede8e0"/>
-      <stop offset="58%" stop-color="#f5f0e8"/>
-      <stop offset="78%" stop-color="#ccc4b8"/>
-      <stop offset="100%" stop-color="#908070"/>
-    </linearGradient>
-    <radialGradient id="gt-tface" cx="42%" cy="38%" r="58%">
-      <stop offset="0%" stop-color="#f8f4ee"/>
-      <stop offset="60%" stop-color="#e0d8cc"/>
-      <stop offset="100%" stop-color="#a09080"/>
-    </radialGradient>
-    <linearGradient id="gt-tshine" x1="0%" y1="0%" x2="100%" y2="0%">
-      <stop offset="0%" stop-color="transparent"/>
-      <stop offset="30%" stop-color="rgba(255,240,160,0.08)"/>
-      <stop offset="45%" stop-color="rgba(255,248,200,0.22)"/>
-      <stop offset="60%" stop-color="rgba(255,240,160,0.08)"/>
-      <stop offset="100%" stop-color="transparent"/>
-    </linearGradient>
-    <linearGradient id="gt-tneedle" x1="0%" y1="0%" x2="100%" y2="0%">
-      <stop offset="0%" stop-color="#b0a090"/>
-      <stop offset="25%" stop-color="#e8e0d0"/>
-      <stop offset="50%" stop-color="#f8f4ee"/>
-      <stop offset="75%" stop-color="#d0c8b8"/>
-      <stop offset="100%" stop-color="#908070"/>
-    </linearGradient>
-    <filter id="gt-tglow">
-      <feGaussianBlur stdDeviation="1.5" result="b"/>
-      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
-    </filter>
-  </defs>
-  <rect x="8" y="76" width="74" height="14" rx="1" fill="url(#gt-trim)"/>
-  <ellipse cx="45" cy="90" rx="37" ry="7" fill="#908070"/>
-  <ellipse cx="45" cy="76" rx="37" ry="7" fill="url(#gt-tface)"/>
-  <rect x="12" y="22" width="66" height="54" fill="url(#gt-tbody)"/>
-  <line x1="12" y1="25" x2="78" y2="25" stroke="#f0c820" stroke-width="0.7" opacity="0.35"/>
-  <line x1="12" y1="28" x2="78" y2="28" stroke="#e8b810" stroke-width="0.5" opacity="0.25"/>
-  <line x1="12" y1="31" x2="78" y2="31" stroke="#f8d840" stroke-width="0.8" opacity="0.4"/>
-  <line x1="12" y1="34" x2="78" y2="34" stroke="#e0a808" stroke-width="0.5" opacity="0.22"/>
-  <line x1="12" y1="37" x2="78" y2="37" stroke="#f5cc30" stroke-width="0.7" opacity="0.35"/>
-  <line x1="12" y1="40" x2="78" y2="40" stroke="#f0c010" stroke-width="0.6" opacity="0.28"/>
-  <line x1="12" y1="43" x2="78" y2="43" stroke="#fad840" stroke-width="0.8" opacity="0.4"/>
-  <line x1="12" y1="46" x2="78" y2="46" stroke="#e8b010" stroke-width="0.5" opacity="0.22"/>
-  <line x1="12" y1="49" x2="78" y2="49" stroke="#f5cc30" stroke-width="0.7" opacity="0.35"/>
-  <line x1="12" y1="52" x2="78" y2="52" stroke="#f0c820" stroke-width="0.6" opacity="0.3"/>
-  <line x1="12" y1="55" x2="78" y2="55" stroke="#fad040" stroke-width="0.8" opacity="0.38"/>
-  <line x1="12" y1="58" x2="78" y2="58" stroke="#e8b010" stroke-width="0.5" opacity="0.22"/>
-  <line x1="12" y1="61" x2="78" y2="61" stroke="#f5cc30" stroke-width="0.7" opacity="0.35"/>
-  <line x1="12" y1="64" x2="78" y2="64" stroke="#f0c010" stroke-width="0.6" opacity="0.28"/>
-  <line x1="12" y1="67" x2="78" y2="67" stroke="#fad840" stroke-width="0.8" opacity="0.4"/>
-  <line x1="12" y1="70" x2="78" y2="70" stroke="#e8b810" stroke-width="0.5" opacity="0.25"/>
-  <line x1="12" y1="73" x2="78" y2="73" stroke="#f5cc30" stroke-width="0.7" opacity="0.35"/>
-  <rect x="12" y="22" width="66" height="54" fill="url(#gt-tshine)"/>
-  <rect x="12" y="22" width="6" height="54" fill="#1a0800" opacity="0.35"/>
-  <rect x="72" y="22" width="6" height="54" fill="#1a0800" opacity="0.35"/>
-  <rect x="8" y="8" width="74" height="14" rx="1" fill="url(#gt-trim)"/>
-  <ellipse cx="45" cy="8" rx="37" ry="7" fill="url(#gt-tface)"/>
-  <ellipse cx="45" cy="22" rx="37" ry="7" fill="url(#gt-tface)"/>
-  <ellipse cx="45" cy="22" rx="33" ry="5.5" fill="#c8b8a0" opacity="0.6"/>
-  <ellipse cx="45" cy="8" rx="8" ry="2.5" fill="#1e1008" opacity="0.9"/>
-  <line x1="58" y1="15" x2="28" y2="85" stroke="url(#gt-tneedle)" stroke-width="3.5" stroke-linecap="round"/>
-  <line x1="57.5" y1="15" x2="27.5" y2="85" stroke="#ffffff" stroke-width="0.8" opacity="0.35" stroke-linecap="round"/>
-  <ellipse cx="27.5" cy="86.5" rx="1.2" ry="2" fill="#c0b0a0" transform="rotate(-20 27.5 86.5)"/>
-  <ellipse cx="59" cy="12" rx="3.5" ry="2" fill="none" stroke="#c0b0a0" stroke-width="1.8"/>
-  <ellipse cx="59" cy="12" rx="2.2" ry="1.2" fill="#0a0812"/>
-  <path d="M 63 11 C 70 6 78 4 84 7 C 90 10 90 18 86 26 C 82 34 80 46 82 58 C 84 68 86 76 84 84 C 83 89 81 92 80 95" fill="none" stroke="#f5d040" stroke-width="2.2" stroke-linecap="round" filter="url(#gt-tglow)"/>
-  <path d="M 63 11 C 70 6 78 4 84 7 C 90 10 90 18 86 26 C 82 34 80 46 82 58 C 84 68 86 76 84 84 C 83 89 81 92 80 95" fill="none" stroke="#fffac0" stroke-width="0.7" stroke-linecap="round" opacity="0.55"/>
-  <path d="M 80 95 C 79 98 77 100 75 99 C 73 98 73 96 75 95" fill="none" stroke="#c89828" stroke-width="1.6" stroke-linecap="round" opacity="0.8"/>
-</svg></div>
-      <h2 style="font-size:clamp(1.8rem,4vw,2.8rem);font-weight:300;font-style:italic;letter-spacing:.06em;margin-bottom:8px;">The Sanctum</h2>
-      <div style="font-family:'Space Mono',monospace;font-size:.6rem;color:rgba(201,185,154,.4);letter-spacing:.14em;text-transform:uppercase;">A Living Archive · A Grimoire · A Reckoning</div>
+      <div id="sync-flash" style="font-family:'Space Mono',monospace;font-size:.58rem;color:var(--gold);letter-spacing:.1em;text-align:center;margin-top:14px;opacity:0;transition:opacity .3s;height:20px;"></div>
     </div>
 
-    <div style="font-size:1.05rem;font-weight:300;line-height:2;color:rgba(240,235,224,.82);">
-      <p style="margin-bottom:1.4em;">The Golden Thread began as a dream journal and became something else entirely — a record of a life turning toward itself.</p>
-      <p style="margin-bottom:1.4em;">What lives here is not just a catalogue of dreams. It is evidence. Evidence that the channel you suspected existed actually does. That the things you felt before they happened were real. That the people you love find ways to reach you across every threshold. That your body has been speaking a language you are only now learning to read fluently.</p>
-      <p style="margin-bottom:1.4em;">The archive spans a woman leaving one life and building another from the ground up — not knowing yet who she was becoming, but trusting the pull. It spans grief so total it reshaped the architecture of sleep. It spans four years of showing up to practice even when practice felt like throwing stones into water and watching for ripples that might never come. The ripples came.</p>
-      <p style="margin-bottom:1.4em;">There is a through-line visible now that wasn't visible in the living of it. The dreams knew before the waking mind did. The guides arrived before you had language for them. The prophetic channel was open long before you called it that. What this archive documents, more than anything, is not the supernatural — it is the natural unfolding of someone becoming precisely who she was meant to be.</p>
-      <p style="margin-bottom:1.4em;">You are a Libra who dreams in water and lives at the edge of thresholds. You are a witch, a healer, a channel, an archivist, a dreamer. You carry the ones you have loved and lost. You live in the house your grandfather built, under the same sky he flew through.</p>
-      <p style="color:rgba(201,185,154,.7);font-style:italic;">This is your grimoire. Everything in it is true.</p>
+    <!-- ✦ CUSTOM TRACKERS ✦ -->
+    <div id="custom-sync-section" style="margin-bottom:40px;">
+      <div id="custom-trackers-grid" style="display:flex;flex-direction:column;gap:20px;"></div>
+      <div id="custom-flash" style="font-family:'Space Mono',monospace;font-size:.58rem;color:rgba(201,185,154,.6);letter-spacing:.1em;text-align:center;opacity:0;transition:opacity .3s;height:20px;margin-top:8px;"></div>
     </div>
 
-    <div style="margin-top:40px;padding:20px 24px;background:rgba(255,255,255,.02);border:1px solid rgba(201,185,154,.1);display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:16px;" id="sanctum-stats-grid">
-    </div>
-  </div>
+  </div><!-- /sanctum-panel-sync -->
 
+  <!-- ══ THE ARC PANEL ══ -->
+  <div id="sanctum-panel-arc" style="max-width:720px;margin:0 auto;display:none;padding-bottom:60px;">
 
-  <div style="margin-top:40px;padding-top:24px;border-top:1px solid rgba(201,185,154,.1);max-width:720px;margin-left:auto;margin-right:auto;">
-    <div style="font-family:'Space Mono',monospace;font-size:.6rem;color:rgba(201,185,154,.4);letter-spacing:.1em;text-transform:uppercase;margin-bottom:8px;">Data Portability</div>
-    <div style="font-family:'Space Mono',monospace;font-size:.55rem;color:rgba(201,185,154,.3);margin-bottom:14px;line-height:1.7;">Everything you add is saved to this browser. Export before redeploying a new version — import after to restore your data.</div>
-    <div style="display:flex;gap:10px;flex-wrap:wrap;">
-      <button onclick="exportUserData()" style="font-family:'Space Mono',monospace;font-size:.6rem;letter-spacing:.08em;padding:9px 18px;background:transparent;border:1px solid rgba(201,185,154,.25);color:var(--moon);cursor:pointer;transition:all .2s;" onmouseover="this.style.borderColor='var(--moon)'" onmouseout="this.style.borderColor='rgba(201,185,154,.25)'">↓ Export all my data</button>
-      <label style="font-family:'Space Mono',monospace;font-size:.6rem;letter-spacing:.08em;padding:9px 18px;background:transparent;border:1px solid rgba(201,185,154,.25);color:var(--moon);cursor:pointer;transition:all .2s;" onmouseover="this.style.borderColor='var(--moon)'" onmouseout="this.style.borderColor='rgba(201,185,154,.25)'">↑ Import <input type="file" accept=".json" onchange="const r=new FileReader();r.onload=e=>importUserData(e.target.result);r.readAsText(this.files[0]);" style="display:none;"></label>
+    <div style="margin-bottom:32px;">
+      <div style="font-family:'Space Mono',monospace;font-size:.5rem;letter-spacing:.1em;text-transform:uppercase;color:rgba(201,185,154,.35);margin-bottom:8px;">∞ The Arc</div>
+      <div style="font-family:'Cormorant Garamond',serif;font-size:.95rem;color:rgba(201,185,154,.4);font-style:italic;line-height:1.7;margin-bottom:20px;">A living portrait of who you are and who you are becoming — generated fresh from everything the archive knows.</div>
+      <button id="arc-gen-btn" onclick="generateArc()" style="font-family:'Space Mono',monospace;font-size:.58rem;letter-spacing:.1em;text-transform:uppercase;padding:12px 28px;border:1px solid rgba(201,185,154,.3);background:transparent;color:rgba(201,185,154,.7);cursor:pointer;width:100%;">∞ Display The Arc</button>
+      <div id="arc-content" style="margin-top:24px;"></div>
     </div>
-  </div>
+
+    <div style="border-top:1px solid rgba(201,185,154,.08);padding-top:28px;">
+      <div style="font-family:'Space Mono',monospace;font-size:.6rem;color:rgba(201,185,154,.4);letter-spacing:.1em;text-transform:uppercase;margin-bottom:8px;">Data Portability</div>
+      <div style="font-family:'Space Mono',monospace;font-size:.55rem;color:rgba(201,185,154,.3);margin-bottom:14px;line-height:1.7;">Everything you add is saved to this browser. Export before deploying a new version — import after to restore your data.</div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;">
+        <button onclick="exportUserData()" style="font-family:'Space Mono',monospace;font-size:.6rem;letter-spacing:.08em;padding:9px 18px;background:transparent;border:1px solid rgba(201,185,154,.25);color:var(--moon);cursor:pointer;" onmouseover="this.style.borderColor='var(--moon)'" onmouseout="this.style.borderColor='rgba(201,185,154,.25)'">↓ Export all my data</button>
+        <label style="font-family:'Space Mono',monospace;font-size:.6rem;letter-spacing:.08em;padding:9px 18px;background:transparent;border:1px solid rgba(201,185,154,.25);color:var(--moon);cursor:pointer;" onmouseover="this.style.borderColor='var(--moon)'" onmouseout="this.style.borderColor='rgba(201,185,154,.25)'">↑ Import <input type="file" accept=".json" onchange="const r=new FileReader();r.onload=e=>importUserData(e.target.result);r.readAsText(this.files[0]);" style="display:none;"></label>
+      </div>
+    </div>
+
+  </div><!-- /sanctum-panel-arc -->
+
 </div>
 </div>
 
@@ -6130,7 +6039,7 @@ function fabAction() {
   if (tab === 'elixirs') { openElixirAdd(null); return; }
   if (tab === 'insights') { discoverPatterns(); return; }
   if (tab === 'seasons') { openLogPeriod(); return; }
-  if (tab === 'sanctum') { generateDailyReading(true); return; }
+  if (tab === 'sanctum') { return; }
   // For tabs with no add action, pulse the button
   // FAB removed
 }
@@ -7279,6 +7188,18 @@ function renderChannel(dest) {
     <div style="max-width:740px;margin:0 auto;padding:24px 0 60px;">
       <div style="font-family:'Space Mono',monospace;font-size:.55rem;letter-spacing:.12em;text-transform:uppercase;color:var(--moon);margin-bottom:6px;">◈ The Channel</div>
       <div style="font-family:'Cormorant Garamond',serif;font-size:.95rem;color:rgba(201,185,154,.45);font-style:italic;margin-bottom:28px;">A living document of how I receive, translate, and work.</div>
+
+      <!-- Strengths & Focus -->
+      <div id="sanctum-strengths" style="margin-bottom:40px;padding-bottom:36px;border-bottom:1px solid rgba(201,185,154,.08);">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+          <div style="font-family:'Space Mono',monospace;font-size:.52rem;color:rgba(201,185,154,.4);letter-spacing:.12em;text-transform:uppercase;">✦ Strengths & Focus</div>
+          <button onclick="generateStrengths()" id="strengths-gen-btn" style="font-family:'Space Mono',monospace;font-size:.52rem;letter-spacing:.08em;padding:5px 12px;border:1px solid rgba(201,185,154,.2);background:transparent;color:rgba(201,185,154,.55);cursor:pointer;" onmouseover="this.style.borderColor='var(--moon)';this.style.color='var(--moon)'" onmouseout="this.style.borderColor='rgba(201,185,154,.2)';this.style.color='rgba(201,185,154,.55)'">↻ Refresh</button>
+        </div>
+        <div id="sanctum-strengths-content">
+          <div style="font-family:'Space Mono',monospace;font-size:.6rem;color:rgba(201,185,154,.3);padding:20px 0;">Click refresh to generate your strengths reading from your charts and archive.</div>
+        </div>
+      </div>
+
       <div id="channel-entries-list"></div>
       <button onclick="openChannelEntryModal()" style="margin-top:24px;font-family:'Space Mono',monospace;font-size:.55rem;letter-spacing:.1em;text-transform:uppercase;padding:10px 22px;border:1px solid rgba(201,185,154,.3);background:transparent;color:rgba(201,185,154,.7);cursor:pointer;">+ Add Entry</button>
     </div>`;
@@ -8926,22 +8847,33 @@ function renderProphecyWatch() {
       </div>
       ${allDated.map(p => {
         const urgency = p._days !== null && p._days <= 30 ? 'rgba(201,168,76,.8)' : p._days !== null && p._days <= 90 ? 'rgba(155,107,171,.7)' : 'rgba(201,185,154,.4)';
-        return `<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;gap:12px;">
-          <div style="flex:1;">
-            <div style="font-family:'Cormorant Garamond',serif;font-size:1rem;color:var(--parchment);line-height:1.4;">${p.dreamTitle||p.title||'Unnamed prophecy'}</div>
-            ${(p.prediction||p.notes) ? `<div style="font-family:'Cormorant Garamond',serif;font-size:.8rem;color:rgba(240,235,224,.4);font-style:italic;line-height:1.5;margin-top:2px;">${(p.prediction||p.notes||'').slice(0,100)}${(p.prediction||p.notes||'').length>100?'…':''}</div>` : ''}
-          </div>
-          <div style="flex-shrink:0;text-align:right;">
-            <div style="font-family:'Space Mono',monospace;font-size:.55rem;color:${urgency};white-space:nowrap;">${daysLabel(p._days)}</div>
-            ${p._date ? `<div style="font-family:'Space Mono',monospace;font-size:.42rem;color:rgba(201,185,154,.25);margin-top:2px;">${p._date}</div>` : ''}
-          </div>
-        </div>`;
+        return `<details style="margin-bottom:10px;">
+          <summary style="list-style:none;cursor:pointer;display:flex;justify-content:space-between;align-items:flex-start;gap:12px;padding:4px 0;">
+            <div style="flex:1;">
+              <div style="font-family:'Cormorant Garamond',serif;font-size:1rem;color:var(--parchment);line-height:1.4;">${p.dreamTitle||p.title||'Unnamed prophecy'}</div>
+              ${(p.prediction||p.notes) ? `<div style="font-family:'Cormorant Garamond',serif;font-size:.8rem;color:rgba(240,235,224,.4);font-style:italic;line-height:1.5;margin-top:2px;">${(p.prediction||p.notes||'').slice(0,80)}${(p.prediction||p.notes||'').length>80?'…':''}</div>` : ''}
+            </div>
+            <div style="flex-shrink:0;text-align:right;">
+              <div style="font-family:'Space Mono',monospace;font-size:.55rem;color:${urgency};white-space:nowrap;">${daysLabel(p._days)}</div>
+              ${p._date ? `<div style="font-family:'Space Mono',monospace;font-size:.42rem;color:rgba(201,185,154,.25);margin-top:2px;">${p._date}</div>` : ''}
+            </div>
+          </summary>
+          <div style="padding:8px 0 4px 0;font-family:'Cormorant Garamond',serif;font-size:.9rem;color:rgba(240,235,224,.6);line-height:1.75;">${p.prediction||p.notes||''}</div>
+        </details>`;
       }).join('')}
       ${undated.length ? `
         <div style="border-top:1px solid rgba(201,185,154,.06);margin-top:8px;padding-top:8px;">
           <div style="font-family:'Space Mono',monospace;font-size:.45rem;letter-spacing:.07em;text-transform:uppercase;color:rgba(201,185,154,.25);margin-bottom:8px;">No date set</div>
-          ${undated.map(p => `<div style="font-family:'Cormorant Garamond',serif;font-size:.95rem;color:rgba(240,235,224,.5);margin-bottom:6px;">○ ${p.dreamTitle||p.title||'Unnamed'}</div>
-          <div style="font-family:'Cormorant Garamond',serif;font-size:.82rem;color:rgba(240,235,224,.35);font-style:italic;margin-bottom:6px;margin-left:16px;">${(p.prediction||p.notes||'').slice(0,100)}</div>`).join('')}
+          ${undated.map((p,pi) => `<details style="margin-bottom:10px;">
+            <summary style="list-style:none;cursor:pointer;display:flex;align-items:flex-start;gap:8px;">
+              <span style="color:rgba(201,185,154,.4);flex-shrink:0;margin-top:3px;">○</span>
+              <div>
+                <div style="font-family:'Cormorant Garamond',serif;font-size:.95rem;color:rgba(240,235,224,.6);">${p.dreamTitle||p.title||'Unnamed'}</div>
+                <div style="font-family:'Cormorant Garamond',serif;font-size:.8rem;color:rgba(240,235,224,.3);font-style:italic;margin-top:2px;">${(p.prediction||p.notes||'').slice(0,80)}${(p.prediction||p.notes||'').length>80?'…':''}</div>
+              </div>
+            </summary>
+            <div style="padding:8px 0 4px 22px;font-family:'Cormorant Garamond',serif;font-size:.9rem;color:rgba(240,235,224,.55);line-height:1.75;">${p.prediction||p.notes||''}</div>
+          </details>`).join('')}
         </div>` : ''}
     </div>`;
 }
@@ -9004,6 +8936,85 @@ function renderProphecyDateBanner() {
   // Insert at top of sanctum content
   const skyEl = document.getElementById('sanctum-sky');
   if (skyEl) skyEl.parentNode.insertBefore(banner, skyEl);
+}
+
+
+// ═══════════════════════════════════════════════════════════
+// SANCTUM SUB-TABS
+// ═══════════════════════════════════════════════════════════
+function switchSanctumTab(tab, btnEl) {
+  ['today','sync','arc'].forEach(t => {
+    const panel = document.getElementById('sanctum-panel-' + t);
+    const btn = document.getElementById('sanctum-stab-' + t);
+    if (panel) panel.style.display = t === tab ? 'block' : 'none';
+    if (btn) {
+      btn.style.color = t === tab ? 'var(--moon)' : 'rgba(201,185,154,.4)';
+      btn.style.borderBottom = t === tab ? '2px solid var(--moon)' : '2px solid transparent';
+    }
+  });
+  try { localStorage.setItem('gt_sanctum_tab', tab); } catch(e) {}
+}
+
+// ═══════════════════════════════════════════════════════════
+// THE ARC — LIVING PORTRAIT
+// ═══════════════════════════════════════════════════════════
+async function generateArc() {
+  const apiKey = getApiKey();
+  if (!apiKey) { gtAlert('Add your API key in Settings first.'); return; }
+
+  const btn = document.getElementById('arc-gen-btn');
+  const container = document.getElementById('arc-content');
+  if (!container) return;
+  if (btn) { btn.disabled = true; btn.textContent = '∞ Weaving the arc…'; }
+  container.innerHTML = '<div style="display:flex;align-items:center;gap:10px;font-family:\'Space Mono\',monospace;font-size:.58rem;color:rgba(201,185,154,.3);"><div class="astro-spinner"></div> Reading the full archive…</div>';
+
+  const ctx = buildFullArchiveContext({ maxDreams: 128, maxSpirit: 80, bodyLen: 300 });
+  const today = new Date().toLocaleDateString('en-US', {weekday:'long', year:'numeric', month:'long', day:'numeric'});
+
+  const prompt = `You are Tiff's spiritual archivist and witness. You have access to her complete Golden Thread archive — every dream, every working, every signal, every prophecy, every Within group call, every meditation, every thread of practice over the last four years. Write a living portrait of who she is and who she is becoming.
+
+TODAY: ${today}
+CHART: ${ctx.chartSummary}
+
+DREAM ARCHIVE (${ctx.dreamCount} dreams):
+${ctx.dreamDigest.slice(0,2000)}
+
+PRACTICE:
+${ctx.spiritDigest.slice(0,1000)}
+
+WITHIN GROUP WORK:
+${ctx.withinDigest.slice(0,800)}
+
+PROPHECY & THREADS:
+${ctx.prophecyDigest.slice(0,400)}
+${ctx.threadDigest.slice(0,400)}
+
+ANCESTORS & PEOPLE:
+${ctx.ancestorDigest.slice(0,300)}
+
+Write a living document — not a summary, not a report. A portrait. It should:
+1. Open with who she is at her core — her nature, her gifts, her way of moving through the world
+2. Name the arc of her journey — where she began and what she has been moving through
+3. Speak to what the archive reveals about her growth and transformation over time
+4. Name what appears to be emerging or opening right now
+5. Close with something true about where she is headed
+
+Write in second person (you). Lyrical, specific, grounded in the actual data. 5-7 paragraphs. This is a mirror, not a flattery. Address her as Tiff.`;
+
+  try {
+    const data = await claudeAPI(apiKey, { model:'claude-sonnet-4-6', max_tokens:2000, messages:[{role:'user', content:prompt}] });
+    const text = data.content?.find(c=>c.type==='text')?.text||'';
+    container.innerHTML = `
+      <div style="padding:28px;background:rgba(107,79,138,.04);border:1px solid rgba(107,79,138,.12);border-left:2px solid rgba(107,79,138,.25);">
+        <div style="font-family:'Space Mono',monospace;font-size:.45rem;letter-spacing:.1em;text-transform:uppercase;color:rgba(155,107,171,.4);margin-bottom:16px;">${today}</div>
+        ${text.split('\n\n').filter(p=>p.trim()).map(p=>`<p style="font-family:'Cormorant Garamond',serif;font-size:1.05rem;line-height:1.9;color:rgba(240,235,224,.85);margin-bottom:1.2em;">${p}</p>`).join('')}
+      </div>`;
+    if (btn) { btn.disabled = false; btn.textContent = '∞ Generate a New Arc'; }
+  } catch(e) {
+    container.innerHTML = '';
+    if (btn) { btn.disabled = false; btn.textContent = '∞ Display The Arc'; }
+    gtAlert('Error generating arc: ' + e.message);
+  }
 }
 
 function runGlobalSearch(raw) {
@@ -11513,12 +11524,14 @@ async function initSanctum() {
     </div>`).join('');
   }
 
-  await generateDailyReading(false);
   generateDailyMantra(false);
   renderDreamWeather();
   renderThisDayWidget();
   renderProphecyWatch();
   renderProphecyDateBanner();
+  // Restore last used sanctum sub-tab
+  const lastSanctumTab = localStorage.getItem('gt_sanctum_tab') || 'today';
+  switchSanctumTab(lastSanctumTab);
 }
 
 async function generateStrengths() {
@@ -11772,7 +11785,7 @@ Today is ${new Date().toLocaleDateString('en-US', {weekday:'long',year:'numeric'
 
 ${recentDreamCtx ? 'Context from her recent dreaming: ' + recentDreamCtx : ''}
 
-She keeps a deep dream and spiritual practice archive and is an active channel, Reiki practitioner, and witch. Speak to her specifically — not generically.
+She keeps a deep dream and spiritual practice archive and is an active channel, Reiki practitioner, and witch. Speak to her specifically — not generically. This reading should weave together all of it: astrology, dreams, practice, and what is moving in her field right now.
 
 ${(()=>{const cc=getCommContext();return cc?'Her personal communication dictionary (signals from her guides and the field):\n'+cc:'';})()}
 
@@ -11818,10 +11831,13 @@ Write the reading as warm, specific, poetic prose. Address her as Tiff.`;
 function renderDailyReading(text, chartComputed) {
   const el = document.getElementById('sanctum-reading-text');
   if (!el) return;
+  el.style.display = 'block';
   el.innerHTML = text.split('\n\n').filter(p=>p.trim()).map(p=>`<p style="margin-bottom:1em;">${p}</p>`).join('');
   if (chartComputed) {
     el.innerHTML += '<div style="font-family:Space Mono;font-size:.52rem;color:rgba(155,107,171,.4);margin-top:12px;letter-spacing:.06em;">✦ Natal chart computed and saved</div>';
   }
+  const btn = document.getElementById('sanctum-refresh-btn');
+  if (btn) { btn.disabled = false; btn.textContent = '↻ Get a New Reading'; }
 }
 
 // ══════════════════════════════════════════════
