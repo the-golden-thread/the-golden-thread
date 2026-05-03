@@ -9602,11 +9602,11 @@ function openPlantModal(existingIdx) {
     <div style="background:#1a1820;border:1px solid rgba(80,160,100,.25);padding:24px;max-width:600px;width:100%;margin-top:16px;">
       <div style="font-family:'Space Mono',monospace;font-size:.52rem;letter-spacing:.1em;text-transform:uppercase;color:rgba(80,160,100,.7);margin-bottom:18px;">🌱 ${p?'Edit':'New'} Plant</div>
 
-      ${p?.image ? `<div style="margin-bottom:14px;text-align:center;"><img src="${p.image}" style="max-height:140px;max-width:100%;object-fit:contain;border:1px solid rgba(80,160,100,.2);" /></div>` : ''}
       <div style="margin-bottom:14px;">
         <label style="font-family:'Space Mono',monospace;font-size:.5rem;letter-spacing:.08em;text-transform:uppercase;color:rgba(201,185,154,.5);display:block;margin-bottom:6px;">Photo</label>
-        <label style="font-family:'Space Mono',monospace;font-size:.55rem;letter-spacing:.07em;padding:8px 16px;background:transparent;border:1px solid rgba(80,160,100,.3);color:rgba(80,160,100,.7);cursor:pointer;display:inline-block;">📷 ${p?.image ? 'Change Photo' : 'Upload Photo'}<input type="file" accept="image/*" onchange="handlePlantImage(this)" style="display:none;"></label>
-        <input type="hidden" id="plant-image-data" value="${p?.image||''}">
+        <div id="plant-img-preview-slot" style="${p?.image ? 'display:block;margin-bottom:8px;' : 'display:none;margin-bottom:8px;'}">${p?.image ? `<img src="${p.image}" style="max-height:130px;max-width:100%;object-fit:contain;border:1px solid rgba(80,160,100,.2);display:block;margin:0 auto;" />` : ''}</div>
+        <label style="font-family:'Space Mono',monospace;font-size:.52rem;letter-spacing:.07em;padding:7px 14px;background:transparent;border:1px solid rgba(80,160,100,.3);color:rgba(80,160,100,.7);cursor:pointer;display:inline-block;">📷 ${p?.image ? 'Change Photo' : 'Upload Photo'}<input type="file" accept="image/*" onchange="handlePlantImage(this)" style="display:none;"></label>
+        <input type="hidden" id="plant-image-data" value="">
       </div>
 
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:13px;">
@@ -9614,6 +9614,11 @@ function openPlantModal(existingIdx) {
           <input id="plant-name" value="${p?.name||''}" placeholder="e.g. Lavender" style="width:100%;background:rgba(255,255,255,.04);border:1px solid rgba(80,160,100,.25);color:var(--parchment);font-family:'Cormorant Garamond',serif;font-size:1rem;padding:8px 11px;outline:none;box-sizing:border-box;"></div>
         <div><label style="font-family:'Space Mono',monospace;font-size:.5rem;letter-spacing:.08em;text-transform:uppercase;color:rgba(201,185,154,.5);display:block;margin-bottom:5px;">Species (optional)</label>
           <input id="plant-species" value="${p?.species||''}" placeholder="e.g. Lavandula angustifolia" style="width:100%;background:rgba(255,255,255,.04);border:1px solid rgba(80,160,100,.25);color:var(--parchment);font-family:'Cormorant Garamond',serif;font-size:.9rem;font-style:italic;padding:8px 11px;outline:none;box-sizing:border-box;"></div>
+      </div>
+
+      <div style="margin-bottom:13px;">
+        <button id="plant-ai-fill-btn" onclick="aiPlantFill()" style="font-family:'Space Mono',monospace;font-size:.5rem;letter-spacing:.08em;text-transform:uppercase;padding:7px 16px;border:1px solid rgba(80,160,100,.3);background:rgba(80,160,100,.05);color:rgba(80,160,100,.7);cursor:pointer;width:100%;">✦ Fill in Details with AI</button>
+        <div id="plant-ai-fill-result" style="display:none;font-family:'Space Mono',monospace;font-size:.48rem;color:rgba(80,160,100,.5);margin-top:5px;text-align:center;"></div>
       </div>
 
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:13px;">
@@ -9654,53 +9659,52 @@ function handlePlantImage(input) {
   reader.onload = function(e) {
     const dataInput = document.getElementById('plant-image-data');
     if (dataInput) dataInput.value = e.target.result;
-    // Show preview
-    const modal = document.getElementById('plant-modal-wrap');
-    if (modal) {
-      let preview = modal.querySelector('.plant-img-preview');
-      if (!preview) {
-        preview = document.createElement('div');
-        preview.className = 'plant-img-preview';
-        preview.style.cssText = 'margin-bottom:14px;text-align:center;';
-        const uploadLabel = modal.querySelector('label[style*="Upload"]') || modal.querySelector('label[style*="Change"]');
-        if (uploadLabel) uploadLabel.parentElement.insertBefore(preview, uploadLabel.parentElement.firstChild);
-      }
-      preview.innerHTML = `<img src="${e.target.result}" style="max-height:120px;max-width:100%;object-fit:contain;border:1px solid rgba(80,160,100,.2);" />`;
+    const preview = document.getElementById('plant-img-preview-slot');
+    if (preview) {
+      preview.innerHTML = `<img src="${e.target.result}" style="max-height:130px;max-width:100%;object-fit:contain;border:1px solid rgba(80,160,100,.2);display:block;margin:0 auto;" />`;
+      preview.style.display = 'block';
     }
   };
   reader.readAsDataURL(file);
 }
 
 function savePlant(existingIdx) {
-  const name = (document.getElementById('plant-name')||{}).value?.trim()||'';
-  if (!name) { gtAlert('Plant name is required.'); return; }
-  const plant = {
-    name,
-    species: (document.getElementById('plant-species')||{}).value?.trim()||'',
-    status: (document.getElementById('plant-status')||{}).value||'Thriving',
-    count: parseInt((document.getElementById('plant-count')||{}).value)||1,
-    waterFreqDays: parseInt((document.getElementById('plant-waterfreq')||{}).value)||null,
-    lastWatered: (document.getElementById('plant-lastwatered')||{}).value||'',
-    sunlight: (document.getElementById('plant-sun')||{}).value?.trim()||'',
-    notes: (document.getElementById('plant-notes')||{}).value?.trim()||'',
-    image: (document.getElementById('plant-image-data')||{}).value||'',
-  };
-  const plants = getGardenPlants();
-  if (existingIdx !== undefined && !isNaN(parseInt(existingIdx))) {
-    const idx = parseInt(existingIdx);
-    plant.careData = plants[idx]?.careData||'';
-    plant.magicalUse = plants[idx]?.magicalUse||'';
-    plant.log = plants[idx]?.log||[];
-    plants[idx] = plant;
-  } else {
-    plant.log = [];
-    plants.push(plant);
+  try {
+    const name = (document.getElementById('plant-name')||{}).value?.trim()||'';
+    if (!name) { gtAlert('Plant name is required.'); return; }
+    // Get image - either from hidden input (new upload) or existing plant
+    let imageData = (document.getElementById('plant-image-data')||{}).value||'';
+    const plants = getGardenPlants();
+    const existingPlant = (existingIdx !== undefined && !isNaN(parseInt(existingIdx))) ? plants[parseInt(existingIdx)] : null;
+    // If no new image was uploaded, keep existing
+    if (!imageData && existingPlant?.image) imageData = existingPlant.image;
+    const plant = {
+      name,
+      species: (document.getElementById('plant-species')||{}).value?.trim()||'',
+      status: (document.getElementById('plant-status')||{}).value||'Thriving',
+      count: parseInt((document.getElementById('plant-count')||{}).value)||1,
+      waterFreqDays: parseInt((document.getElementById('plant-waterfreq')||{}).value)||null,
+      lastWatered: (document.getElementById('plant-lastwatered')||{}).value||'',
+      sunlight: (document.getElementById('plant-sun')||{}).value?.trim()||'',
+      notes: (document.getElementById('plant-notes')||{}).value?.trim()||'',
+      image: imageData,
+      careData: existingPlant?.careData||'',
+      magicalUse: existingPlant?.magicalUse||'',
+      log: existingPlant?.log||[],
+    };
+    if (existingPlant) {
+      plants[parseInt(existingIdx)] = plant;
+    } else {
+      plants.push(plant);
+    }
+    saveGardenPlants(plants);
+    const wrap = document.getElementById('plant-modal-wrap');
+    if (wrap) wrap.remove();
+    renderGardenList();
+    renderGardenTodayWidget();
+  } catch(err) {
+    gtAlert('Error saving plant: ' + err.message);
   }
-  saveGardenPlants(plants);
-  const wrap = document.getElementById('plant-modal-wrap');
-  if (wrap) wrap.remove();
-  renderGardenList();
-  renderGardenTodayWidget();
 }
 
 function deletePlant(idx) {
@@ -9782,6 +9786,71 @@ function renderGardenTodayWidget() {
     </div>`;
 }
 
+
+
+async function aiPlantFill() {
+  const apiKey = getApiKey();
+  if (!apiKey) { gtAlert('Add your API key in Settings first.'); return; }
+  const nameEl = document.getElementById('plant-name');
+  const name = nameEl ? nameEl.value.trim() : '';
+  if (!name) { gtAlert('Enter the plant name first.'); return; }
+
+  const btn = document.getElementById('plant-ai-fill-btn');
+  const resultEl = document.getElementById('plant-ai-fill-result');
+  if (btn) { btn.disabled = true; btn.textContent = '⟳ Looking up…'; }
+  if (resultEl) { resultEl.style.display = 'block'; resultEl.textContent = 'Fetching details…'; }
+
+  const prompt = `For the plant "${name}", provide the following details in this exact JSON format. Be specific and practical.
+
+{
+  "species": "scientific name if known, empty string if not",
+  "waterFreqDays": number (how many days between waterings, typical home/garden conditions),
+  "sunlight": "Full Sun / Partial Shade / Full Shade / etc",
+  "notes": "2-3 sentence summary of key care notes and best growing conditions"
+}
+
+Return ONLY valid JSON.`;
+
+  try {
+    const data = await claudeAPI(apiKey, { model:'claude-sonnet-4-6', max_tokens:300, messages:[{role:'user', content:prompt}] });
+    const text = data.content?.find(c=>c.type==='text')?.text||'';
+    const info = JSON.parse(text.replace(/\`\`\`json|\`\`\`/g,'').trim());
+
+    // Fill in fields only if currently empty
+    const speciesEl = document.getElementById('plant-species');
+    const waterEl = document.getElementById('plant-waterfreq');
+    const sunEl = document.getElementById('plant-sun');
+    const notesEl = document.getElementById('plant-notes');
+
+    let filled = [];
+    if (info.species && speciesEl && !speciesEl.value.trim()) {
+      speciesEl.value = info.species;
+      speciesEl.style.borderColor = 'rgba(80,160,100,.6)';
+      filled.push('species');
+    }
+    if (info.waterFreqDays && waterEl && !waterEl.value) {
+      waterEl.value = info.waterFreqDays;
+      waterEl.style.borderColor = 'rgba(80,160,100,.6)';
+      filled.push('water frequency');
+    }
+    if (info.sunlight && sunEl && !sunEl.value.trim()) {
+      sunEl.value = info.sunlight;
+      sunEl.style.borderColor = 'rgba(80,160,100,.6)';
+      filled.push('sunlight');
+    }
+    if (info.notes && notesEl && !notesEl.value.trim()) {
+      notesEl.value = info.notes;
+      notesEl.style.borderColor = 'rgba(80,160,100,.6)';
+      filled.push('notes');
+    }
+
+    if (resultEl) resultEl.textContent = filled.length ? '✓ Filled in: ' + filled.join(', ') : 'Fields already filled — nothing to update.';
+    if (btn) { btn.disabled = false; btn.textContent = '↻ Refresh Details'; }
+  } catch(err) {
+    if (resultEl) resultEl.textContent = 'Error: ' + err.message;
+    if (btn) { btn.disabled = false; btn.textContent = '✦ Fill in Details with AI'; }
+  }
+}
 
 function runGlobalSearch(raw) {
   const q = (raw || '').trim().toLowerCase();
