@@ -6551,7 +6551,7 @@ async function askArchive() {
 
   // Smart dream resolution — detect which dreams to pull in full
   const qLower = question.toLowerCase();
-  const sortedDreams = (window.dreams || []).slice().sort((a,b) => b.date.localeCompare(a.date));
+  const sortedDreams = (typeof dreams !== 'undefined' ? dreams : []).slice().sort((a,b) => b.date.localeCompare(a.date));
   const todayStr2 = new Date().toLocaleDateString('en-CA');
   const yesterdayStr2 = new Date(Date.now()-86400000).toLocaleDateString('en-CA');
 
@@ -7631,7 +7631,7 @@ function renderDreamMagicList() {
 function openDreamMagicModal(idx) {
   const entries = getDreamMagicEntries();
   const e = idx !== undefined ? entries[idx] : null;
-  const allDreams = (window.dreams || []).slice().sort((a,b) => b.date.localeCompare(a.date));
+  const allDreams = (typeof dreams !== 'undefined' ? dreams : []).slice().sort((a,b) => b.date.localeCompare(a.date));
   const allIncubations = (() => { try { return JSON.parse(localStorage.getItem('gt_incubations')||'[]'); } catch(ex){return[];} })();
   const allThreads = (() => { try { return JSON.parse(localStorage.getItem('gt_threads')||'[]'); } catch(ex){return[];} })();
 
