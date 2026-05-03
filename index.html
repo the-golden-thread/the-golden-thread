@@ -783,7 +783,6 @@ h1 em { display:block; font-style:italic; font-weight:300; font-size:.42em; lett
   </div>
 
   <div class="insights-grid" id="insights-grid"></div>
-  <div id="saved-patterns-section" style="margin-top:28px;"></div>
 </div>
 </div>
 
@@ -6424,7 +6423,9 @@ function buildFullArchiveContext(opts) {
 
   var peopleDigest = PEOPLE.map(function(p){ return p.name+' ('+p.role+'): '+(p.desc||'').slice(0,120); }).join('\n');
   var patternDigest = INSIGHTS.map(function(i){return i.title;}).join(', ');
-  var chartSummary = 'Libra Sun 17°, Aries Moon 6°, Capricorn Rising 25°, Scorpio stellium (Mercury/Venus/Pluto), North Node 23° Sag, Chiron 20° Leo. Human Design: Pure Generator 4/6, Sacral Authority. Primary clairs: claircognizance + clairsentience. Reiki I & II attuned.';
+  var today = new Date().toLocaleDateString('en-CA');
+  var yesterday = new Date(Date.now()-86400000).toLocaleDateString('en-CA');
+  var chartSummary = 'Libra Sun 17°, Aries Moon 6°, Capricorn Rising 25°, Scorpio stellium (Mercury/Venus/Pluto), North Node 23° Sag, Chiron 20° Leo. Human Design: Pure Generator 4/6, Sacral Authority. Primary clairs: claircognizance + clairsentience. Reiki I & II attuned. NOTE on dream dating: Tiff records dreams on the date she wakes up. Dreams dated ' + today + ' were dreamed between midnight and ~11am on ' + today + ' (night of ' + yesterday + '). When she says "today" she means ' + today + ', "yesterday" means ' + yesterday + '.';
 
   // ANCESTORS (profiles + interaction logs)
   var ancestors = (typeof getAncestors==='function') ? getAncestors() : [];
@@ -6495,7 +6496,21 @@ function buildFullArchiveContext(opts) {
     return b.name+(b.type?' ('+b.type+')':'')+(b.description?' — '+b.description.slice(0,120):'');
   }).join('\n') : '';
 
-  return {dreamDigest:dreamDigest, spiritDigest:spiritDigest, commDigest:commDigest, visitDigest:visitDigest, moonDigest:moonDigest, prophecyDigest:prophecyDigest, manifestDigest:manifestDigest, threadDigest:threadDigest, peopleDigest:peopleDigest, patternDigest:patternDigest, chartSummary:chartSummary, dreamCount:dreams.length, ancestorDigest:ancestorDigest, incubationDigest:incubationDigest, sigConfsDigest:sigConfsDigest, elixirDigest:elixirDigest, songDigest:songDigest, sacredDateDigest:sacredDateDigest, herbDigest:herbDigest, beingsDigest:beingsDigest};
+  // THE CHANNEL — practitioner self-knowledge entries
+  var channelEntries = [];
+  try { channelEntries = JSON.parse(localStorage.getItem('gt_channel_entries')||'[]'); } catch(e){}
+  var channelDigest = channelEntries.length ? channelEntries.slice().sort(function(a,b){return b.date.localeCompare(a.date);}).map(function(e){
+    return '['+e.date+'] "'+e.title+'"'+(e.categories&&e.categories.length?' ['+e.categories.join(', ')+']':'')+': '+(e.body||'').slice(0,400);
+  }).join('\n\n') : '';
+
+  // DREAM MAGIC — intentional dream workings
+  var dreamMagicEntries = [];
+  try { dreamMagicEntries = JSON.parse(localStorage.getItem('gt_dream_magic')||'[]'); } catch(e){}
+  var dreamMagicDigest = dreamMagicEntries.length ? dreamMagicEntries.slice().sort(function(a,b){return b.date.localeCompare(a.date);}).map(function(e){
+    return '['+e.date+'] "'+e.title+'" ('+e.type+', '+e.status+')'+(e.intention?' intention: '+e.intention.slice(0,120):'')+(e.method?' | working: '+e.method.slice(0,200):'')+(e.outcome?' | outcome: '+e.outcome.slice(0,120):'');
+  }).join('\n') : '';
+
+  return {dreamDigest:dreamDigest, spiritDigest:spiritDigest, commDigest:commDigest, visitDigest:visitDigest, moonDigest:moonDigest, prophecyDigest:prophecyDigest, manifestDigest:manifestDigest, threadDigest:threadDigest, peopleDigest:peopleDigest, patternDigest:patternDigest, chartSummary:chartSummary, dreamCount:dreams.length, ancestorDigest:ancestorDigest, incubationDigest:incubationDigest, sigConfsDigest:sigConfsDigest, elixirDigest:elixirDigest, songDigest:songDigest, sacredDateDigest:sacredDateDigest, herbDigest:herbDigest, beingsDigest:beingsDigest, channelDigest:channelDigest, dreamMagicDigest:dreamMagicDigest};
 }
 
 async function askArchive() {
@@ -6512,7 +6527,13 @@ async function askArchive() {
   // Build full archive context
   const ctx = buildFullArchiveContext({ maxDreams: 128, maxSpirit: 80, bodyLen: 500 });
 
+  const nowStr = new Date().toLocaleDateString('en-CA'); // YYYY-MM-DD
+  const yesterdayStr = new Date(Date.now()-86400000).toLocaleDateString('en-CA');
+  const todayReadable = new Date().toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+
   const prompt = `You are a pattern analyst and spiritual counselor working with Tiff's complete archive — dreams, waking practice, spiritual signals, presences, prophecies, manifestations, and more. Answer her specific question by searching through everything provided.
+
+DATE CONTEXT: Today is ${todayReadable} (${nowStr}). Yesterday was ${yesterdayStr}. When Tiff says "today" or "yesterday" use these exact dates. NOTE: Tiff records dreams on the date she wakes up, so a dream dated ${nowStr} was dreamed between midnight and ~11am on ${nowStr} (i.e. the night of ${yesterdayStr} into the morning of ${nowStr}).
 
 QUESTION: ${question}
 
@@ -6569,9 +6590,15 @@ ${ctx.herbDigest || 'No herb notes logged yet.'}
 SPIRIT BEINGS & ENTITIES:
 ${ctx.beingsDigest || 'No custom beings logged yet.'}
 
+THE CHANNEL — HOW TIFF RECEIVES & WORKS (practitioner self-knowledge):
+${ctx.channelDigest || 'No channel entries yet.'}
+
+DREAM MAGIC WORKINGS:
+${ctx.dreamMagicDigest || 'No dream magic workings yet.'}
+
 NAMED PATTERNS: ${ctx.patternDigest}
 
-Answer the question thoroughly and specifically, drawing on the FULL archive — dreams, journals, shadow work, rituals, readings, ancestors, elixirs, signals, songs, herbs, and all other entries. Reference actual titles, dates, people, and specific details. If you find a pattern, name it with evidence. Write as flowing prose — conversational but precise. 3-6 paragraphs. Address her as Tiff.`;
+Answer the question thoroughly and specifically, drawing on the FULL archive — dreams, journals, shadow work, rituals, readings, ancestors, elixirs, signals, songs, herbs, channel knowledge, dream magic, and all other entries. Reference actual titles, dates, people, and specific details. If you find a pattern, name it with evidence. Write as flowing prose — conversational but precise. 3-6 paragraphs. Address her as Tiff.`;
 
   try {
     const data = await claudeAPI(apiKey, {model:'claude-sonnet-4-6', max_tokens:2500, messages:[{role:'user', content:prompt}]});
@@ -7477,8 +7504,20 @@ function runGlobalSearch(raw) {
     shadow: { label: 'Shadow', color: 'var(--purple)', icon: '🜃', open: e => openSpiritEntry(e) },
     readings: { label: 'Readings', color: 'var(--rose)', icon: '🔮', open: e => openSpiritEntry(e) },
     gateway: { label: 'Gateway', color: 'rgba(201,185,154,.7)', icon: '◈', open: e => openSpiritEntry(e) },
-    dream: { label: 'Dream', color: 'rgba(155,107,171,.9)', icon: '🌙', open: e => openDream(e) }
+    dream: { label: 'Dream', color: 'rgba(155,107,171,.9)', icon: '🌙', open: e => openDream(e) },
+    channel: { label: 'The Channel', color: 'rgba(201,185,154,.8)', icon: '◈', open: e => { switchTab('grimoire', document.getElementById('tab-btn-grimoire')); setTimeout(()=>switchGrimoire('channel'), 100); } },
+    dreammagic: { label: 'Dream Magic', color: 'rgba(155,107,171,.9)', icon: '✦', open: e => { switchTab('dreams', document.getElementById('tab-btn-dreams')); setTimeout(()=>switchDreams('magic'), 100); } }
   };
+
+  function matchGeneral(e) {
+    if (!e) return false;
+    return (e.title||'').toLowerCase().includes(q)
+      || (e.body||'').toLowerCase().includes(q)
+      || (e.intention||'').toLowerCase().includes(q)
+      || (e.method||'').toLowerCase().includes(q)
+      || (e.outcome||'').toLowerCase().includes(q)
+      || (e.categories||[]).some(c => c.toLowerCase().includes(q));
+  }
 
   // Search dreams
   const dreamHits = dreams.filter(d => d && matchEntry(d)).map(d => ({ ...d, _type: 'dream' }));
@@ -7489,11 +7528,19 @@ function runGlobalSearch(raw) {
   // Also search preloaded spirit entries
   const preloadedHits = SPIRIT_ENTRIES.filter(e => e && e.preloaded && matchEntry(e)).map(e => ({ ...e, _type: e.type }));
 
-  const allHits = [...dreamHits, ...spiritHits, ...preloadedHits]
+  // Search Channel entries
+  const channelEntries = (() => { try { return JSON.parse(localStorage.getItem('gt_channel_entries')||'[]'); } catch(ex){return[];} })();
+  const channelHits = channelEntries.filter(e => matchGeneral(e)).map(e => ({ ...e, _type: 'channel' }));
+
+  // Search Dream Magic entries
+  const dreamMagicEntries = getDreamMagicEntries ? getDreamMagicEntries() : [];
+  const dreamMagicHits = dreamMagicEntries.filter(e => matchGeneral(e)).map(e => ({ ...e, _type: 'dreammagic' }));
+
+  const allHits = [...dreamHits, ...spiritHits, ...preloadedHits, ...channelHits, ...dreamMagicHits]
     .sort((a, b) => (b.date || '').localeCompare(a.date || ''));
 
   if (meta) meta.textContent = allHits.length
-    ? allHits.length + ' result' + (allHits.length !== 1 ? 's' : '') + ' across dreams & practice entries'
+    ? allHits.length + ' result' + (allHits.length !== 1 ? 's' : '') + ' across all entries'
     : '0 results';
 
   if (!allHits.length) {
@@ -7504,7 +7551,7 @@ function runGlobalSearch(raw) {
   results.innerHTML = allHits.map((hit, i) => {
     const t = TYPE_LABELS[hit._type] || TYPE_LABELS.journal;
     const titleHl = hl(hit.title || 'Untitled', q);
-    const bodyText = hit.body || hit.ctx || '';
+    const bodyText = hit.body || hit.ctx || hit.method || hit.intention || '';
     const excerptHl = hl(excerpt(bodyText, q), q);
     const tags = (hit.tags || []).slice(0, 4).map(tag =>
       `<span style="font-family:'Space Mono',monospace;font-size:.48rem;padding:2px 7px;background:rgba(255,255,255,.04);border:1px solid rgba(201,185,154,.12);color:rgba(201,185,154,.5);">${tag}</span>`
@@ -7755,7 +7802,12 @@ function renderDreams(){
     const cycleData = loadSeasons();
     seasonRow.style.display = (cycleData.cycles && cycleData.cycles.length) ? 'flex' : 'none';
   }
-  filtered.sort((a,b)=>b.date.localeCompare(a.date));
+  filtered.sort((a,b)=>{
+    const dateDiff = b.date.localeCompare(a.date);
+    if (dateDiff !== 0) return dateDiff;
+    // Same date: higher id = entered later = more recent dream = top
+    return (b.id||0) - (a.id||0);
+  });
   const grid=document.getElementById('dream-grid');
   grid.innerHTML='';
   if(!filtered.length){grid.innerHTML='<div class="empty">No dreams found in this frequency...</div>';return;}
@@ -8413,6 +8465,7 @@ function renderSavedPatterns() {
   if (!sec) return;
   var patterns = [];
   try { patterns = JSON.parse(localStorage.getItem('gt_saved_patterns') || '[]'); } catch(e) {}
+  patterns = patterns.slice().sort(function(a,b){ return (b.date||'').localeCompare(a.date||''); });
   if (!patterns.length) { sec.innerHTML = ''; return; }
   sec.innerHTML = '<div style="font-family:\'Space Mono\',monospace;font-size:.52rem;color:rgba(201,185,154,.4);letter-spacing:.1em;text-transform:uppercase;margin-bottom:14px;">\u2736 Saved Insights (' + patterns.length + ')</div>';
   patterns.forEach(function(p) {
@@ -8463,8 +8516,6 @@ function renderInsights(){
   const grid=document.getElementById('insights-grid');
   if(!grid){console.error('insights-grid not found');return;}
   grid.innerHTML='';
-  renderSavedPatterns();
-  renderSavedPatterns();
 
   // Spirit entry references per insight (using exact SPIRIT_PRELOADED titles)
   const SPIRIT_REFS={
@@ -8549,8 +8600,21 @@ function renderInsights(){
     ]
   };
 
-  INSIGHTS.forEach((ins,insIdx)=>{
-    if (!ins || !ins.title) return; // guard against null/malformed entries
+  // Flat list — saved Ask the Archive insights first (newest first), then all patterns newest first (undated at bottom)
+  renderSavedPatterns();
+
+  // Merge and sort all patterns: dated ones newest first, undated at bottom
+  const sortedInsights = INSIGHTS.filter(i => i && i.title).sort((a,b) => {
+    const da = a.dateAdded || '';
+    const db = b.dateAdded || '';
+    if (da && db) return db.localeCompare(da);
+    if (da) return -1; // a has date, b doesn't — a comes first
+    if (db) return 1;  // b has date, a doesn't — b comes first
+    return 0; // both undated, keep original order
+  });
+
+  sortedInsights.forEach((ins,insIdx)=>{
+    if (!ins || !ins.title) return;
     try {
       const card=document.createElement('div');
       card.className='ins-card'+(ins.feat?' feat':'');
@@ -11879,7 +11943,8 @@ function addDiscoveredPatterns(patternsJson) {
           waking: p.waking||'',
           body: p.body||'',
           dreams: p.dreams||[],
-          userAdded: true
+          userAdded: true,
+          dateAdded: localDateStr()
         });
         added++;
       }
@@ -17796,6 +17861,7 @@ function renderSavedPatterns() {
   if (!sec) return;
   var patterns = [];
   try { patterns = JSON.parse(localStorage.getItem('gt_saved_patterns') || '[]'); } catch(e) {}
+  patterns = patterns.slice().sort(function(a,b){ return (b.date||'').localeCompare(a.date||''); });
   if (!patterns.length) { sec.innerHTML = ''; return; }
 
   sec.innerHTML = '<div style="font-family:\'Space Mono\',monospace;font-size:.52rem;color:rgba(201,185,154,.4);letter-spacing:.1em;text-transform:uppercase;margin-bottom:14px;">✦ Saved Insights (' + patterns.length + ')</div>';
