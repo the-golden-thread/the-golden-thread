@@ -445,6 +445,7 @@ h1 em { display:block; font-style:italic; font-weight:300; font-size:.42em; lett
     <button class="sub-tab-btn" id="sub-btn-sacredDates-t" onclick="switchTools('sacredDates',this)">◎ Sacred Dates</button>
     <button class="sub-tab-btn" id="sub-btn-wheel-t" onclick="switchTools('wheel',this)">☽ Wheel</button>
     <button class="sub-tab-btn" id="sub-btn-codes-t" onclick="switchTools('codes',this)">⌗ Codes</button>
+    <button class="sub-tab-btn" id="sub-btn-deities-t" onclick="switchTools('deities',this)">✦ Deities</button>
   </div>
   <!-- Grimoire sub-bar -->
   <div id="sub-bar-grimoire" style="display:none;white-space:nowrap;">
@@ -9018,6 +9019,336 @@ Write in second person (you). Lyrical, specific, grounded in the actual data. 5-
   }
 }
 
+
+// ═══════════════════════════════════════════════════════════
+// DEITIES
+// ═══════════════════════════════════════════════════════════
+const DEITIES_SEED = [{"id": "deity_hecate", "name": "Hecate", "culture": "Greek", "domains": ["witchcraft", "crossroads", "moon", "magic", "necromancy", "liminal spaces", "shadow work"], "symbols": ["torches", "keys", "serpents", "black dogs", "crossroads", "cauldron", "crescent moon"], "description": "Goddess of witchcraft, magic, and the crossroads. She stands at the threshold between worlds — the living and the dead, the known and unknown. Guardian of liminal spaces, guide through transformation and shadow. She holds keys to hidden knowledge and is one of the most powerful allies for witches, dreamworkers, and those in deep transformation.", "howToWork": "Meet her at crossroads, thresholds, or in night rituals. Leave offerings at a three-way crossroads. Call on her during the dark moon, at midnight, or before shadow work. Light black or silver candles. She responds to honesty and courage — show her your whole self.", "offerings": ["garlic", "eggs", "honey", "dark moon water", "black candles", "keys", "bones", "lavender", "silver coins at crossroads"], "notes": "Especially potent for dreamwork, spirit communication, and crossing thresholds. Works well with claircognizant practitioners."}, {"id": "deity_hermes", "name": "Hermes", "culture": "Greek", "domains": ["communication", "travel", "messages", "dreams", "the dead", "magic", "trickster", "crossroads"], "symbols": ["caduceus", "winged sandals", "winged helmet", "tortoise", "rooster", "lyre"], "description": "Messenger of the gods and guide of souls. Hermes moves between all worlds — Olympus, Earth, and the Underworld — carrying messages across every threshold. He is the divine communicator, patron of magic users (Hermeticism is named for him), and the escort of souls in death. A trickster who opens locked doors.", "howToWork": "Call on him for communication, clarity of message, safe travel (including astral), or when you need something delivered across a threshold. Hermes is fast and responsive. Brief, specific requests work well. He appreciates wit and cleverness.", "offerings": ["wine", "olive oil", "coins", "incense", "small statues at doorways", "honey", "travel tokens"], "notes": "Excellent ally for dreamwork, spirit communication, and receiving messages. His Roman counterpart is Mercury."}, {"id": "deity_persephone", "name": "Persephone", "culture": "Greek", "domains": ["death", "rebirth", "spring", "underworld", "transformation", "sovereignty", "shadow"], "symbols": ["pomegranate", "narcissus", "wheat", "torch", "crescent moon", "bat"], "description": "Queen of the Underworld and goddess of spring's return. She moves between worlds — six months above with Demeter, six months below as Hades' queen — and her journey is the archetype of death and rebirth, descending into the dark and returning transformed. She knows both worlds and holds the secret of becoming whole through what is hardest.", "howToWork": "Call on her during inner winter, in grief work, when descending into shadow, or at any threshold of transformation. She understands the necessity of the dark. Pomegranate seeds as offerings. Call on her when you feel you are 'in the underworld' — she knows the way through.", "offerings": ["pomegranate seeds", "narcissus flowers", "spring water", "honey", "grain", "dark flowers"], "notes": "Deeply resonant for anyone doing shadow work or grief work. A powerful ally for cycle-aware practice — she embodies inner winter and the return."}, {"id": "deity_artemis", "name": "Artemis", "culture": "Greek", "domains": ["moon", "hunt", "wilderness", "protection", "women", "independence", "animals", "silver"], "symbols": ["crescent moon", "bow and arrow", "deer", "cypress tree", "hunting dogs", "silver"], "description": "Goddess of the moon, the hunt, and the wild. She roams free, fiercely independent, protectress of women and of all wild creatures. She is the full and crescent moon in the night sky — huntress, healer, guardian of young women and those in transition. She values sovereignty above all.", "howToWork": "Call on her under the crescent or full moon, outdoors or in wild places. She responds to independence and self-sovereignty. Ask for protection, clarity of aim, and connection to the wild self. Silver candles, moonwater, and time in nature are her sacred offerings.", "offerings": ["silver coins", "moonwater", "cypress", "hunting tokens", "wild herbs", "offerings to animals"], "notes": "Powerful ally for those reclaiming their independence and wildness. Works with moon cycles naturally."}, {"id": "deity_aphrodite", "name": "Aphrodite", "culture": "Greek", "domains": ["love", "beauty", "desire", "pleasure", "self-worth", "relationships", "creativity"], "symbols": ["rose", "myrtle", "dove", "swan", "mirror", "seashell", "sea foam"], "description": "Goddess of love, beauty, and pleasure in all its forms. She is not the soft, passive version often depicted — she is desire itself, sovereign pleasure, self-worth embodied. She teaches that love begins with the self and that beauty is a form of power. She rose from the sea, fully formed, whole.", "howToWork": "Call on her for matters of love (self and other), creative work, beauty rituals, and reclaiming pleasure. Rose petals, pink or red candles, honey, perfume. She appreciates beauty in your environment — flowers, adornment, sensory pleasure. Work with her during waxing moon.", "offerings": ["red roses", "honey", "perfume", "wine", "seashells", "pink candles", "chocolate", "adornments"], "notes": "Excellent for reclaiming self-worth and pleasure. Her Roman counterpart is Venus."}, {"id": "deity_dionysus", "name": "Dionysus", "culture": "Greek", "domains": ["ecstasy", "transformation", "wine", "theater", "altered states", "rebirth", "the vine", "liberation"], "symbols": ["grapevine", "ivy", "thyrsus", "wine cup", "leopard", "mask", "bull"], "description": "God of wine, ecstasy, theater, and transformation. He is the dying and rising god — twice-born, dismembered and reassembled. He tears down false structures and liberates through dissolution. He governs altered states of consciousness, creative madness, and the kind of transformation that requires you to come apart first.", "howToWork": "Call on him when you need to dissolve rigid structures, when you are in the middle of a transformation that feels like falling apart, or when creative work needs to break through inhibition. He responds to music, dance, wine, and full surrender.", "offerings": ["wine", "ivy", "music", "dance", "theater", "grapes", "masks"], "notes": "Works with those doing deep transformation work. The dissolution before rebirth."}, {"id": "deity_isis", "name": "Isis", "culture": "Egyptian", "domains": ["magic", "healing", "rebirth", "protection", "motherhood", "grief", "restoration", "the dead"], "symbols": ["throne", "wings", "ankh", "tyet knot", "moon disk", "sistrum", "star Sirius"], "description": "The Great Mother, the supreme sorceress of Egypt. Isis reassembled Osiris from his scattered pieces and resurrected him — she is the magician who defeats death itself, the healer who restores wholeness, the protector of the dead and the living. She is magic in its highest form: love that refuses to accept dissolution as final.", "howToWork": "Call on Isis for healing, magical protection, grief work, and restoration of what has been scattered or lost. She is especially powerful for spirit communication and working with the dead. Draw her protective wings around what needs guarding. Lapis lazuli, ankh symbols, blue and gold candles.", "offerings": ["lapis lazuli", "blue lotus", "myrrh", "ankh tokens", "bread", "beer", "blue or gold candles", "sistrum sounds"], "notes": "Deeply resonant for working with grief and those who have passed. Powerful ally for dreamwork and spirit contact."}, {"id": "deity_bastet", "name": "Bastet", "culture": "Egyptian", "domains": ["protection", "cats", "home", "joy", "music", "dance", "fertility", "moon", "women's mysteries"], "symbols": ["cat", "sistrum", "aegis", "papyrus", "eye of ra"], "description": "Cat goddess and protector of home, family, and the feminine mysteries. She guards against evil spirits and disease, blesses homes and children, and governs the joyful aspects of life — music, dance, pleasure, fertility. She has a fierce protective aspect and a playful, loving one; both are real.", "howToWork": "Call on Bastet for protection of home and family, for joy and pleasure, for working with cat familiars. She blesses creative and musical work. Leave offerings near the threshold of your home. She is easily approached with warmth and genuine love.", "offerings": ["sistrum music", "catnip", "cream or milk", "small cat figures", "perfume", "flowers", "candles in amber or gold"], "notes": "Works beautifully with those who have cats. A gentle but fiercely protective deity."}, {"id": "deity_anubis", "name": "Anubis", "culture": "Egyptian", "domains": ["death", "transition", "the dead", "weighing the heart", "protection of the dead", "spirit guides"], "symbols": ["jackal head", "scales", "ankh", "flail", "black dog", "feather of ma'at"], "description": "The jackal-headed guide of souls, guardian of the dead and protector during the transition between worlds. He weighs the heart against the feather of Ma'at — a judge of truthfulness and love. Anubis is not feared but trusted; he is the compassionate guide who ensures safe passage through death and transformation.", "howToWork": "Call on Anubis for grief work, communication with those who have passed, protection during sleep and dreamwork, and guidance through major transitions. He responds to honesty — he cannot be deceived. Black candles, frankincense, obsidian.", "offerings": ["frankincense", "black candles", "obsidian", "dog tokens", "meat", "linen", "myrrh"], "notes": "Potent ally for those working with grief, dreamwork involving the dead, and any major life transition."}, {"id": "deity_thoth", "name": "Thoth", "culture": "Egyptian", "domains": ["writing", "knowledge", "magic", "moon", "time", "records", "communication", "dreams"], "symbols": ["ibis head", "baboon", "scroll and stylus", "lunar disk", "scales"], "description": "The divine scribe and keeper of all knowledge. Thoth invented writing, mathematics, and magic — he is the recorder of all that happens, the keeper of cosmic records, the measurer of time. He presides over the Hall of Two Truths and is the mediator between opposing forces. Master of spoken and written magic.", "howToWork": "Call on Thoth for study, writing, magical language, accessing hidden knowledge, and understanding cosmic patterns. He is an excellent deity for those who keep archives — he honors the act of recording. Offer him written work, ink, papyrus. He responds to careful, thorough thought.", "offerings": ["written offerings", "ink", "feathers", "lapis lazuli", "moonwater", "ibis imagery"], "notes": "Resonant for archivists, writers, and those who work with pattern and knowledge. Keeper of the Akashic Records analog."}, {"id": "deity_sekhmet", "name": "Sekhmet", "culture": "Egyptian", "domains": ["healing", "destruction", "fire", "war", "protection", "shadow", "transformation", "medicine"], "symbols": ["lioness head", "sun disk", "uraeus", "red linen", "eye of ra"], "description": "The lioness goddess of healing and destruction — both, equally. She brings plague and she cures it. She is the fierce solar force that destroys what cannot be healed so that healing can begin. She is feared and beloved, a healer who does not flinch from what must be burned away.", "howToWork": "Call on Sekhmet when facing illness (physical or energetic), when something must be destroyed to allow healing, or when fierce protection is needed. She is not for subtle work — she is fire and force. Red candles, lioness imagery, offerings of red wine.", "offerings": ["red wine", "red candles", "red meat", "beer", "lioness imagery", "gold", "fire"], "notes": "Not a gentle deity. Call on her when you need power to destroy what is causing harm."}, {"id": "deity_freya", "name": "Freya", "culture": "Norse", "domains": ["love", "war", "death", "magic", "seidr", "gold", "cats", "sovereignty", "beauty", "prophecy"], "symbols": ["Brisingamen necklace", "cats", "boar", "falcon cloak", "chariot", "amber", "sword"], "description": "The most powerful of the Norse goddesses — sovereign of love and battle, mistress of seidr magic, chooser of the slain. She takes half of all fallen warriors to her hall Fólkvangr. She is not simply a love goddess — she is magic, sovereignty, desire, war, and the deep wisdom of the völva (seeress). She taught Odin seidr.", "howToWork": "Call on Freya for seidr work (trance, prophecy, working with fate), sovereignty, self-love, love of all kinds, protection in battle (spiritual or physical), and work with the dead. She loves gold, amber, and beauty. Fridays (Freya's day) are her sacred day.", "offerings": ["mead", "gold jewelry", "amber", "honey", "roses", "boar imagery", "cat offerings", "red candles"], "notes": "Deeply resonant for seeresses and practitioners. One of the most complete goddesses — holding light and dark, love and war, life and death."}, {"id": "deity_odin", "name": "Odin", "culture": "Norse", "domains": ["wisdom", "poetry", "war", "death", "runes", "magic", "shamanism", "ravens", "the hanged"], "symbols": ["ravens Huginn and Muninn", "wolves", "spear Gungnir", "Sleipnir", "one eye", "runes", "gallows"], "description": "The All-Father, the Wanderer, the God of Wisdom who sacrificed his eye for cosmic knowledge and hung on Yggdrasil nine days to receive the runes. He is the shamanic god of death and rebirth, patron of poets and warriors, the one who crosses all boundaries in search of truth.", "howToWork": "Call on Odin for rune work, deep knowledge seeking, poetry, shamanic journeys, and threshold crossings. He requires sacrifice — you must give something real. He respects honesty and courage. Wednesday (Woden's day) is his. Work with him at crossroads, at twilight.", "offerings": ["mead", "poetry written for him", "rune-carved wood", "one eye covered", "hanging tokens", "ravens", "self-sacrifice of time or comfort"], "notes": "Not a comfortable deity. He will push you. Call on him for depth of knowledge not surface answers."}, {"id": "deity_hela", "name": "Hela", "culture": "Norse", "domains": ["death", "the dead", "the underworld", "shadow", "healing", "wholeness", "ice", "the invisible"], "symbols": ["half-living half-dead face", "Helheim", "wolves", "ice", "bare bones", "mist"], "description": "Ruler of Helheim — the realm of those who die peacefully (not in battle). Her face and body are half living and half dead, reflecting her dual nature. She receives the dead with quiet authority. She governs the shadow self, the parts we hide or refuse, and the integration of the whole.", "howToWork": "Call on Hela for shadow integration, ancestor work, working with those who have died peacefully, and facing the parts of yourself you have hidden. She asks for acceptance, not performance. She does not respond to prettiness — she responds to wholeness.", "offerings": ["black candles", "silver", "bones", "cold water", "evergreen", "salt", "ash"], "notes": "Powerful ally for shadow work and ancestor work. She holds the half you've been hiding."}, {"id": "deity_skadi", "name": "Skadi", "culture": "Norse", "domains": ["winter", "mountains", "hunting", "independence", "wilderness", "cold", "justice", "skiing"], "symbols": ["skis", "bow and arrows", "mountains", "wolf", "winter", "ice"], "description": "Goddess of winter, mountains, and the hunt. She came to Asgard seeking justice for her father's death and negotiated her terms with fierce dignity. She is at home in harsh cold places — the dignity of grief, the reclaiming of sovereignty after loss. She represents endurance through hardship.", "howToWork": "Call on Skadi for winter work, independence and sovereignty, justice when you have been wronged, and endurance through hardship. She is at home in inner winter. Ask her for clarity of aim and the courage to stand alone in the cold if necessary.", "offerings": ["bones", "hunting tokens", "evergreen", "snow or ice water", "cold offerings", "wolf imagery"], "notes": "Especially resonant during inner winter or when processing injustice and loss."}, {"id": "deity_brigid", "name": "Brigid", "culture": "Celtic (Irish)", "domains": ["healing", "poetry", "smithcraft", "fire", "fertility", "spring", "dawn", "inspiration", "the sacred flame"], "symbols": ["Brigid's cross", "eternal flame", "serpent", "sun wheel", "well", "sunrise", "forge fire"], "description": "One of Ireland's most beloved goddesses — she holds the three fires of healing, poetry, and smithcraft. She is the goddess of Imbolc, the first breath of spring, the eternal flame that is never extinguished. She governs creative inspiration, healing arts, and the transformation of raw material into something new.", "howToWork": "Call on Brigid for healing (physical and creative), poetic inspiration, beginning new projects, working with fire, and the turning of inner winter into spring. Imbolc (Feb 1-2) is her sacred day. Brigid's crosses woven of wheat, candle flames, and well water.", "offerings": ["flame", "water from a well", "wheat crosses", "white candles", "poetry written for her", "milk", "healing herbs"], "notes": "Deeply resonant for creative practitioners and those transitioning from inner winter. The fire that warms but does not consume."}, {"id": "deity_morrigan", "name": "The Morrigan", "culture": "Celtic (Irish)", "domains": ["war", "fate", "death", "prophecy", "transformation", "sovereignty", "crows", "shapeshifting", "shadow"], "symbols": ["crow/raven", "red hair", "washer at the ford", "wolf", "eel", "red cloak"], "description": "The Great Queen, the Phantom Queen — a triple goddess of war, fate, and sovereignty. She appears as a crow, a wolf, a washer at the ford (washing the clothes of those about to die in battle). She is the shadow of sovereignty — she tests, she challenges, she transforms. She does not offer comfort; she offers truth and power.", "howToWork": "She chooses her practitioners; you do not simply call her. Approach with respect, honesty, and willingness to face what you are avoiding. Crow feathers, red candles, blood-red wine. She works best in darkness and at crossroads. Accept her challenges.", "offerings": ["crow feathers", "red wine", "red candles", "iron", "raw meat", "whiskey", "blood-red water"], "notes": "Not for the faint of heart. She will test you. If she shows up — a crow crossing your path — acknowledge her."}, {"id": "deity_cernunnos", "name": "Cernunnos", "culture": "Celtic", "domains": ["wild animals", "nature", "fertility", "the underworld", "liminal spaces", "hunting", "cycles of life"], "symbols": ["antlers", "serpent", "torque", "stag", "cauldron", "the horned man"], "description": "The Horned God of the wild, lord of beasts and liminal spaces. He sits between worlds — between civilization and wilderness, between the living and the dead, between the conscious and unconscious. He governs the deep wildness within nature and within us.", "howToWork": "Call on Cernunnos for work with wild nature, animal communication, moving between worlds, and accessing the deep unconscious. He is encountered in forests, at the edge of wilderness. Best worked with in silence and deep nature.", "offerings": ["oak", "antler", "soil from a forest", "acorns", "wild herbs", "grain", "animal tokens"], "notes": "Excellent for nature-based practice and working with liminal consciousness."}, {"id": "deity_rhiannon", "name": "Rhiannon", "culture": "Celtic (Welsh)", "domains": ["horses", "sovereignty", "the otherworld", "grief", "endurance", "birds", "magic", "wrongful accusation"], "symbols": ["white horse", "birds", "golden bowl", "sovereignty"], "description": "Sovereign goddess of Wales who rode her pale horse so fast no one could catch her. Unjustly accused and made to carry guests on her back as penance — she bore it with quiet dignity and was eventually vindicated. She is the archetype of enduring wrongful suffering with grace, of sovereignty that cannot ultimately be taken away.", "howToWork": "Call on Rhiannon for sovereignty work, processing wrongful accusation or injustice, endurance through unjust circumstances, and connection to the Otherworld through dreamwork. Her birds are said to sing the dead to sleep and wake the living.", "offerings": ["white flowers", "silver", "horse imagery", "apples", "birds", "singing offerings"], "notes": "Resonant for those who have been wrongly accused or had their story taken from them."}, {"id": "deity_kali", "name": "Kali", "culture": "Hindu", "domains": ["death", "time", "transformation", "shadow", "liberation", "destruction of ego", "protection", "truth", "fierce love"], "symbols": ["skull necklace", "severed head", "kali yantra", "blue-black skin", "third eye", "sword", "lotus"], "description": "The Dark Mother — goddess of time, death, and liberation. She devours what must die, destroys the ego, and liberates the soul from illusion. Her name means both 'black' and 'time.' She kills only what needs to die. She is terrifying to look at and completely loving — she is necessity.", "howToWork": "Call on Kali when you need ego death, when something must be destroyed completely, when you are stuck in illusion. She does not tiptoe — invoke her only when you are ready to lose something. Red hibiscus flowers are her sacred offering. Dark moon is her time.", "offerings": ["red hibiscus", "red wine", "rum", "red candles", "dark flowers", "rice", "raw meat"], "notes": "One of the most powerful transformation deities. Not gentle. Call on her when the situation demands total dissolution."}, {"id": "deity_lakshmi", "name": "Lakshmi", "culture": "Hindu", "domains": ["abundance", "prosperity", "beauty", "grace", "lotus", "home", "good fortune", "spiritual wealth"], "symbols": ["lotus", "gold coins", "owls", "elephants", "pink and gold", "four arms"], "description": "Goddess of abundance, beauty, and grace in all its forms — material and spiritual. She dwells where there is cleanliness, gratitude, and sincere effort. She governs not just money but the feeling of sufficiency — the sense that you are held by abundance already.", "howToWork": "Call on Lakshmi for abundance in any form — financial, creative, emotional. She responds to gratitude, cleanliness, and sincere effort. Friday is her day. Fresh flowers in the home, clean and tidy spaces. Lamps, golden colors. She appreciates beauty in the environment.", "offerings": ["lotus flowers", "gold and pink candles", "coins", "honey", "rice", "milk", "marigolds", "fresh flowers"], "notes": "Call on her with gratitude as the foundation — she does not respond to desperation, but to sincere appreciation."}, {"id": "deity_saraswati", "name": "Saraswati", "culture": "Hindu", "domains": ["knowledge", "learning", "music", "arts", "speech", "rivers", "wisdom", "creativity", "spring"], "symbols": ["veena", "white lotus", "swan", "white peacock", "books", "river"], "description": "Goddess of knowledge, music, art, and the flowing river of creative thought. She is pure white — the blank page, the clear stream, the mind before it is clouded. She governs all forms of learning and creative expression. Seekers of knowledge and artists invoke her before beginning any significant work.", "howToWork": "Call on Saraswati before writing, artistic work, studying, or any creative endeavor. She is honored by dedicating creative work to her, by maintaining mental clarity, and by genuinely seeking knowledge rather than status. White candles, music, white flowers. Her day is Wednesday.", "offerings": ["white flowers", "white candles", "music", "books", "instruments", "honey", "milk", "writing offered to her"], "notes": "Potent ally for writers, artists, and those in any learning process."}, {"id": "deity_durga", "name": "Durga", "culture": "Hindu", "domains": ["protection", "war", "victory", "divine feminine power", "overcoming evil", "courage", "sovereignty"], "symbols": ["lion", "ten arms each holding a weapon", "trident", "lotus", "sword", "fire"], "description": "The fierce mother goddess who destroys what threatens the cosmic order. She was created from the combined power of all the gods when none of them could defeat the demon Mahishasura. She rides a lion and carries ten weapons. She is the ultimate protector, the sovereignty of divine feminine power in full expression.", "howToWork": "Call on Durga for protection, when facing something larger than yourself, for courage in battle (literal or metaphoric), and when evil or deception must be confronted. Red flowers, incense, fire.", "offerings": ["red hibiscus", "red flowers", "incense", "lamps", "coconut", "rice", "red candles", "sweets"], "notes": "Call on her when you need fierce protection and the courage to fight what must be fought."}, {"id": "deity_oya", "name": "Oyá", "culture": "Yoruba / Ifá", "domains": ["change", "storms", "lightning", "wind", "the dead", "transformation", "market", "crossroads", "warrior"], "symbols": ["nine-colored fabric", "machete", "lightning", "wind", "rainbow", "masks", "the number 9"], "description": "Orisha of storms, wind, and radical change. She is the whirlwind that sweeps clean, the lightning before transformation. She guards the cemetery gate — she governs the transition from life to death and the radical changes that feel like death before they become rebirth. She does not allow stagnation.", "howToWork": "Call on Oyá when change is needed or when you are in the middle of transformation that feels violent. She brings the storm before the clearing. She is especially associated with those undergoing major life transitions. She works at the cemetery gate — she can be called on for work with the dead.", "offerings": ["eggplant", "dark wine", "nine pennies", "purple and dark red", "plums", "grapes", "masks"], "notes": "Deeply resonant for those in the middle of major transformation. She prepares the ground by tearing up what was."}, {"id": "deity_yemoja", "name": "Yemoja", "culture": "Yoruba / Ifá", "domains": ["ocean", "motherhood", "healing", "children", "dreams", "the unconscious", "water", "protection"], "symbols": ["ocean", "blue and white", "fish", "crescent moon", "seven cowrie shells", "flowing water", "the number 7"], "description": "Mother of Waters, mother of all Orishas. She governs the ocean, the unconscious, dreams, and the deep emotional waters. She is the original mother — vast, powerful, nurturing, and occasionally terrifying in her depth. She holds her children in the deep and will protect them fiercely.", "howToWork": "Call on Yemoja for emotional healing, dream work, working with the unconscious, matters of motherhood and children, and protection from emotional harm. She responds to offerings at the ocean or any body of water. Blue and white candles, watermelon, molasses, white flowers.", "offerings": ["watermelon", "white flowers", "blue and white candles", "fish", "sea glass", "shells", "molasses", "offering cast into water"], "notes": "Potent ally for dreamwork and working with the emotional unconscious. She appears in dreams as the ocean or a vast mother."}, {"id": "deity_oshun", "name": "Oshun", "culture": "Yoruba / Ifá", "domains": ["love", "sweetness", "rivers", "fertility", "beauty", "pleasure", "money", "healing", "honey"], "symbols": ["river", "honey", "peacock", "gold", "yellow and gold", "the number 5", "mirrors", "fans", "cowrie shells"], "description": "The orisha of fresh water, love, and sweetness. She is the divine feminine in her most joyful expression — dancer, lover, healer, the one who reminds you that sweetness is sacred. She saved humanity by dancing before the divine when all other attempts failed. She governs the flow of love, abundance, and pleasure.", "howToWork": "Call on Oshun for love (all kinds), sweetness, fertility, matters of the heart, money, beauty rituals, and healing emotional wounds. She loves honey, mirrors, and gold. Ask her with sweetness — she does not respond to bitterness or harshness.", "offerings": ["honey (taste it before offering — she was once tricked with bitter food)", "cinnamon", "oranges", "yellow candles", "gold", "sunflowers", "sweet drinks", "pumpkin"], "notes": "Always taste the honey before offering it — a respectful tradition. Deeply resonant for those healing their relationship with love and pleasure."}, {"id": "deity_inari", "name": "Inari Okami", "culture": "Japanese / Shinto", "domains": ["foxes", "rice", "agriculture", "industry", "worldly success", "fertility", "abundance"], "symbols": ["white fox (kitsune)", "torii gates", "sake barrels", "red and white", "rice", "swords", "key"], "description": "One of the most widely venerated kami of Japan, present in a third of all Shinto shrines. Inari is simultaneously male, female, and androgynous across different traditions. Their messengers are white foxes (kitsune). They govern abundance in its most expansive sense — agricultural, industrial, creative, and spiritual. They are shapeshifters and boundary-crossers.", "howToWork": "Call on Inari for abundance of any kind, for business and creative success, and for connection to shapeshifting and liminal energy. Inari responds to sincerity and gratitude. Fried tofu (aburaage) is the traditional offering because foxes are said to love it.", "offerings": ["fried tofu", "sake", "rice", "white candles", "fox imagery", "red offerings", "oil"], "notes": "Non-binary deity — naturally resonant for those working outside rigid categories. Fox sightings may be signs."}, {"id": "deity_amaterasu", "name": "Amaterasu", "culture": "Japanese / Shinto", "domains": ["sun", "heaven", "weaving", "creation", "light", "sovereignty", "divine order"], "symbols": ["sun", "mirror", "jewels", "weaving", "heavenly rock cave", "golden light"], "description": "The Great Deity of the Sun, sovereign of the heavens. Her absence plunged the world into darkness — she withdrew into a cave, and the gods had to coax her back with music, dance, and a mirror. She is the source of light that all things depend on. Her return is the return of hope.", "howToWork": "Call on Amaterasu for matters of sovereignty and visibility, when you have withdrawn from the world and need to return, and for the return of hope after a dark period. The mirror is sacred — use it for scrying and reflection. Sunrise rituals.", "offerings": ["mirror", "sunrise water", "white flowers", "gold", "silk", "rice", "light offerings"], "notes": "Call on her when you have hidden yourself and need to come back into the light."}, {"id": "deity_baba_yaga", "name": "Baba Yaga", "culture": "Slavic", "domains": ["wisdom", "wildness", "death", "transformation", "tests", "liminal spaces", "the forest", "prophecy"], "symbols": ["mortar and pestle", "iron teeth", "chicken-legged hut", "forest", "skulls", "bone fence", "north wind"], "description": "The wild old crone of the forest who flies in a mortar and lives in a house on chicken legs. She is simultaneously terrifying and helpful — she tests those who come to her, helps those who pass the test, and consumes those who are not ready. She is ancient wild wisdom, the transformer who stands at the edge of the known world.", "howToWork": "You don't call Baba Yaga — you go to her forest when you have run out of options and are willing to be tested. She responds to courage, honesty, and proper manners (especially the hospitality ritual). If she sets you a task, complete it without complaint.", "offerings": ["bread and salt", "forest offerings", "bones", "dark bread", "vodka or spirit", "leaving food at the forest edge"], "notes": "Approach only when you are genuinely ready to be changed. She is not interested in those seeking easy answers."}, {"id": "deity_inanna", "name": "Inanna", "culture": "Sumerian", "domains": ["love", "war", "justice", "the underworld", "sovereignty", "descent and ascent", "the morning and evening star", "sexual power"], "symbols": ["eight-pointed star", "lion", "lapis lazuli", "double-headed axe", "bundles of reeds", "Venus"], "description": "The first fully-characterized deity in human recorded history. Queen of Heaven and Earth, goddess of love AND war — she holds both simultaneously. Her most sacred myth is her descent into the Great Below — she stripped herself of every symbol of power at each of the seven gates and descended naked to face her shadow-sister Ereshkigal. She is the original descent and return.", "howToWork": "Call on Inanna for major descents (inner winter, shadow work, grief), for sovereignty reclamation, for love and desire in their full power, and for the return after descent. She is the archetype of the heroine's journey. Lapis lazuli, the evening/morning star.", "offerings": ["lapis lazuli", "gold", "dates", "beer", "grain", "lion imagery", "eight-pointed star", "the act of stripping something away"], "notes": "The original descent-and-return goddess. Profoundly resonant for any cycle-aware practice."}, {"id": "deity_horned_god", "name": "The Horned God", "culture": "Pagan / Wiccan", "domains": ["nature", "the wild", "cycles of life", "the hunt", "death and rebirth", "masculinity", "the sun", "inner seasons"], "symbols": ["antlers", "sun", "stag", "oak", "fire", "drum", "the wheel of the year"], "description": "The consort of the Triple Goddess in Wiccan and modern pagan traditions — the God of the wild and of cycles. He is born at Yule, grows through spring, reaches his peak at Midsummer, sacrifices himself at harvest, and is reborn again. He is the cycle itself: birth, growth, harvest, death, rebirth. He is often associated with Cernunnos, Pan, and the dying-and-rising gods of many traditions.", "howToWork": "Call on the Horned God for work with nature cycles, inner seasons, masculine energy, the wild self, and the turning of the Wheel of the Year. He is present in forests and open fields. Samhain is when he passes into the Underworld — an especially potent time to connect. Bonfires, oak, and drum.", "offerings": ["oak leaves", "antler", "bonfire offerings", "grain at harvest", "wine", "meat", "drum music", "first fruits"], "notes": "Deeply resonant for inner seasons work — he embodies the full cycle. Works naturally alongside the Triple Goddess."}, {"id": "deity_triple_goddess", "name": "The Triple Goddess", "culture": "Pagan / Wiccan", "domains": ["moon", "cycles", "maiden/mother/crone", "intuition", "magic", "the feminine", "birth/life/death", "the seasons"], "symbols": ["triple moon symbol", "crescent/full/dark moon", "silver", "white/red/black", "cauldron", "the number 3"], "description": "The great feminine triplicity of neo-pagan and Wiccan tradition: Maiden (waxing moon, spring, new beginnings, youth), Mother (full moon, summer, fullness, creation), and Crone (waning/dark moon, winter, wisdom, endings). She encompasses the complete arc of the feminine cycle and of life itself. She is the moon in all her phases, the year in all its turning.", "howToWork": "Call on the Triple Goddess at any moon phase — the Maiden at waxing, the Mother at full, the Crone at dark/waning. Work with her specifically for the aspect that matches your current inner season or phase of life. Her three faces can be approached separately or together. Silver candles, moonwater, and the triple moon symbol.", "offerings": ["moonwater", "silver candles", "white/red/black candles", "honey", "milk", "flowers for Maiden, grain for Mother, dark herbs for Crone", "cauldron work"], "notes": "For inner seasons practice: Maiden corresponds to Spring/Follicular, Mother to Summer/Ovulation, Crone to Autumn/Luteal and Winter/Menstruation."}, {"id": "deity_green_man", "name": "The Green Man", "culture": "Pagan / Wiccan", "domains": ["nature", "growth", "vegetation", "cycles", "wildness", "the living earth", "spring", "the forest"], "symbols": ["face surrounded by leaves", "oak", "ivy", "vine", "the forest", "green light", "sprouting branches"], "description": "The spirit of vegetation, growth, and the living green world — a face made of leaves, born anew each spring and dying back each autumn. He is carved into medieval church stonework across Europe, proof that the old wild green nature-spirit never quite left. He represents the irrepressible vitality of the natural world and the wildness that lives in all living things.", "howToWork": "Call on the Green Man for work with nature, growth of any kind, spring and summer energy, and connection to the living earth. He is best encountered outdoors, especially in forests or gardens. Beltane is his festival. Leave offerings at the base of trees.", "offerings": ["flowers", "leaves", "seeds", "garden offerings", "spring water", "fruit", "soil", "green candles"], "notes": "A gentler wild deity than Cernunnos — accessible and joyful. Excellent for garden magic and spring workings."}];
+
+const DEITY_CULTURES = ['All','Greek','Egyptian','Norse','Celtic (Irish)','Celtic (Welsh)','Celtic','Hindu','Yoruba / Ifá','Japanese / Shinto','Slavic','Sumerian','Pagan / Wiccan','Other'];
+
+function getDeities() {
+  try {
+    var stored = JSON.parse(localStorage.getItem('gt_deities') || 'null');
+    if (!stored) {
+      localStorage.setItem('gt_deities', JSON.stringify(DEITIES_SEED));
+      return DEITIES_SEED;
+    }
+    // Migration: add missing seeds
+    var storedIds = stored.map(function(d){ return d.id; });
+    var missing = DEITIES_SEED.filter(function(d){ return storedIds.indexOf(d.id) === -1; });
+    if (missing.length) {
+      var merged = stored.concat(missing);
+      localStorage.setItem('gt_deities', JSON.stringify(merged));
+      return merged;
+    }
+    return stored;
+  } catch(e) { return DEITIES_SEED; }
+}
+
+function saveDeities(entries) {
+  try { localStorage.setItem('gt_deities', JSON.stringify(entries)); } catch(e) {}
+}
+
+let _deityFilter = 'All';
+let _deitySearch = '';
+
+function renderDeities(dest) {
+  if (!dest) return;
+  const cultures = getDeities().reduce((acc, d) => { if (!acc.includes(d.culture)) acc.push(d.culture); return acc; }, []).sort();
+  const allCultures = ['All', ...cultures];
+  dest.innerHTML = `
+    <div style="max-width:740px;margin:0 auto;padding:24px 0 60px;">
+      <div style="font-family:'Space Mono',monospace;font-size:.55rem;letter-spacing:.12em;text-transform:uppercase;color:var(--moon);margin-bottom:6px;">✦ Deities</div>
+      <div style="font-family:'Cormorant Garamond',serif;font-size:.95rem;color:rgba(201,185,154,.45);font-style:italic;margin-bottom:24px;">Divine allies across cultures — their domains, symbols, and how to work with them.</div>
+
+      <!-- AI Finder -->
+      <div style="margin-bottom:24px;padding:16px 18px;background:rgba(107,79,138,.04);border:1px solid rgba(107,79,138,.15);">
+        <div style="font-family:'Space Mono',monospace;font-size:.5rem;letter-spacing:.1em;text-transform:uppercase;color:rgba(155,107,171,.6);margin-bottom:10px;">✦ Find a Deity</div>
+        <div style="font-family:'Cormorant Garamond',serif;font-size:.88rem;color:rgba(201,185,154,.45);font-style:italic;margin-bottom:10px;">Describe what you need — a situation, a feeling, something you're moving through — and the archive will suggest the most aligned deity and how to work with them.</div>
+        <div style="display:flex;gap:8px;">
+          <textarea id="deity-ai-input" rows="3" placeholder="e.g. I'm going through a major transformation that feels like falling apart… I need to connect with someone I've lost… I'm trying to reclaim my sovereignty after a hard year…"
+            style="flex:1;background:rgba(255,255,255,.04);border:1px solid rgba(107,79,138,.2);color:var(--parchment);font-family:'Cormorant Garamond',serif;font-size:.95rem;padding:9px 13px;outline:none;resize:none;line-height:1.6;"></textarea>
+          <button onclick="findDeity()" id="deity-ai-btn" class="astro-gen-btn" style="flex-shrink:0;align-self:stretch;">✦ Find</button>
+        </div>
+        <div id="deity-ai-result" style="display:none;margin-top:12px;"></div>
+      </div>
+
+      <!-- Search + Filter -->
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px;">
+        <div style="position:relative;flex:1;min-width:160px;">
+          <span style="position:absolute;left:11px;top:50%;transform:translateY(-50%);opacity:.4;font-size:.8rem;">⌕</span>
+          <input id="deity-search" type="text" placeholder="Search name, domain, symbol…" value="${_deitySearch}"
+            style="width:100%;background:rgba(255,255,255,.04);border:1px solid rgba(201,185,154,.22);color:var(--parchment);font-family:'Cormorant Garamond',serif;font-size:.95rem;padding:9px 13px 9px 34px;outline:none;box-sizing:border-box;"
+            oninput="_deitySearch=this.value;renderDeityList()">
+        </div>
+        <select id="deity-culture-filter" onchange="_deityFilter=this.value;renderDeityList()"
+          style="background:#1a1820;border:1px solid rgba(201,185,154,.22);color:var(--parchment);font-family:'Space Mono',monospace;font-size:.65rem;padding:9px 13px;outline:none;cursor:pointer;">
+          ${allCultures.map(c=>`<option value="${c}" ${c===_deityFilter?'selected':''}>${c}</option>`).join('')}
+        </select>
+        <button onclick="openDeityModal()" style="font-family:'Space Mono',monospace;font-size:.55rem;letter-spacing:.1em;text-transform:uppercase;padding:9px 16px;border:1px solid rgba(201,185,154,.3);background:transparent;color:rgba(201,185,154,.7);cursor:pointer;white-space:nowrap;">+ Add Deity</button>
+      </div>
+      <div id="deity-list"></div>
+    </div>`;
+  renderDeityList();
+}
+
+function renderDeityList() {
+  const list = document.getElementById('deity-list');
+  if (!list) return;
+  let entries = getDeities();
+  const q = _deitySearch.trim().toLowerCase();
+  if (_deityFilter !== 'All') entries = entries.filter(d => d.culture === _deityFilter);
+  if (q) entries = entries.filter(d =>
+    (d.name||'').toLowerCase().includes(q) ||
+    (d.culture||'').toLowerCase().includes(q) ||
+    (d.domains||[]).some(x => x.toLowerCase().includes(q)) ||
+    (d.symbols||[]).some(x => x.toLowerCase().includes(q)) ||
+    (d.description||'').toLowerCase().includes(q)
+  );
+
+  // Group by culture
+  const grouped = {};
+  entries.forEach(d => { if (!grouped[d.culture]) grouped[d.culture] = []; grouped[d.culture].push(d); });
+  const cultures = Object.keys(grouped).sort();
+
+  if (!entries.length) {
+    list.innerHTML = `<div style="font-family:'Cormorant Garamond',serif;font-size:1rem;color:rgba(201,185,154,.35);font-style:italic;padding:20px 0;">No deities found.</div>`;
+    return;
+  }
+
+  const cultureColor = {
+    'Greek':'rgba(107,155,201,.7)','Egyptian':'rgba(201,168,76,.8)','Norse':'rgba(107,155,155,.7)',
+    'Celtic (Irish)':'rgba(80,160,100,.8)','Celtic (Welsh)':'rgba(80,160,100,.7)','Celtic':'rgba(80,160,100,.6)',
+    'Hindu':'rgba(201,107,80,.8)','Yoruba / Ifá':'rgba(155,107,201,.7)','Japanese / Shinto':'rgba(201,155,107,.7)',
+    'Slavic':'rgba(107,107,155,.7)','Sumerian':'rgba(155,155,80,.7)','Other':'rgba(201,185,154,.5)'
+  };
+
+  list.innerHTML = cultures.map(culture => {
+    const col = cultureColor[culture] || 'rgba(201,185,154,.5)';
+    return `<div style="margin-bottom:28px;">
+      <div style="font-family:'Space Mono',monospace;font-size:.48rem;letter-spacing:.1em;text-transform:uppercase;color:${col};margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid rgba(201,185,154,.08);">${culture}</div>
+      ${grouped[culture].map(d => {
+        const hasLog = d.log && d.log.length;
+        return `<details style="margin-bottom:12px;">
+          <summary style="list-style:none;cursor:pointer;padding:14px 16px;background:rgba(255,255,255,.02);border:1px solid rgba(201,185,154,.1);border-left:3px solid ${col};display:flex;justify-content:space-between;align-items:flex-start;">
+            <div style="flex:1;">
+              <div style="font-family:'Cormorant Garamond',serif;font-size:1.15rem;color:var(--parchment);margin-bottom:3px;">${d.name}</div>
+              <div style="font-family:'Space Mono',monospace;font-size:.45rem;color:rgba(201,185,154,.35);line-height:1.6;">${(d.domains||[]).slice(0,5).join(' · ')}</div>
+            </div>
+            <div style="display:flex;gap:6px;align-items:center;flex-shrink:0;margin-left:10px;">
+              ${hasLog ? `<span style="font-family:'Space Mono',monospace;font-size:.42rem;color:${col};">${d.log.length} log</span>` : ''}
+              <span style="color:rgba(201,185,154,.3);font-size:.7rem;">▸</span>
+            </div>
+          </summary>
+          <div style="padding:16px;background:rgba(255,255,255,.015);border:1px solid rgba(201,185,154,.08);border-top:none;">
+            <div style="font-family:'Cormorant Garamond',serif;font-size:.95rem;color:rgba(240,235,224,.7);line-height:1.8;margin-bottom:14px;">${d.description}</div>
+
+            <div style="margin-bottom:12px;">
+              <div style="font-family:'Space Mono',monospace;font-size:.45rem;letter-spacing:.08em;text-transform:uppercase;color:rgba(201,185,154,.35);margin-bottom:5px;">Symbols</div>
+              <div style="display:flex;flex-wrap:wrap;gap:5px;">${(d.symbols||[]).map(s=>`<span style="font-family:'Space Mono',monospace;font-size:.45rem;padding:2px 7px;border:1px solid rgba(201,185,154,.12);color:rgba(201,185,154,.5);">${s}</span>`).join('')}</div>
+            </div>
+
+            <div style="margin-bottom:12px;">
+              <div style="font-family:'Space Mono',monospace;font-size:.45rem;letter-spacing:.08em;text-transform:uppercase;color:rgba(201,185,154,.35);margin-bottom:5px;">How to Work With Them</div>
+              <div style="font-family:'Cormorant Garamond',serif;font-size:.9rem;color:rgba(240,235,224,.65);line-height:1.75;">${d.howToWork}</div>
+            </div>
+
+            <div style="margin-bottom:14px;">
+              <div style="font-family:'Space Mono',monospace;font-size:.45rem;letter-spacing:.08em;text-transform:uppercase;color:rgba(201,185,154,.35);margin-bottom:5px;">Offerings</div>
+              <div style="display:flex;flex-wrap:wrap;gap:5px;">${(d.offerings||[]).map(o=>`<span style="font-family:'Cormorant Garamond',serif;font-size:.82rem;padding:2px 7px;border:1px solid rgba(201,185,154,.1);color:rgba(240,235,224,.5);">${o}</span>`).join('')}</div>
+            </div>
+
+            ${d.notes ? `<div style="margin-bottom:14px;padding:10px 13px;background:rgba(107,79,138,.04);border-left:2px solid rgba(107,79,138,.2);"><div style="font-family:'Cormorant Garamond',serif;font-size:.88rem;color:rgba(240,235,224,.55);font-style:italic;line-height:1.7;">${d.notes}</div></div>` : ''}
+
+            <!-- Log entries -->
+            ${hasLog ? `<div style="margin-bottom:12px;">
+              <div style="font-family:'Space Mono',monospace;font-size:.45rem;letter-spacing:.08em;text-transform:uppercase;color:rgba(201,185,154,.3);margin-bottom:8px;">Log</div>
+              ${d.log.slice().reverse().map(l=>`<div style="padding:8px 10px;background:rgba(255,255,255,.02);border-left:2px solid rgba(201,185,154,.12);margin-bottom:6px;">
+                <div style="font-family:'Space Mono',monospace;font-size:.43rem;color:rgba(201,185,154,.3);margin-bottom:3px;">${l.date}</div>
+                <div style="font-family:'Cormorant Garamond',serif;font-size:.88rem;color:rgba(240,235,224,.65);line-height:1.65;white-space:pre-wrap;">${l.note}</div>
+              </div>`).join('')}
+            </div>` : ''}
+
+            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px;">
+              <button onclick="openDeityLogModal('${d.id}')" class="astro-gen-btn" style="font-size:.48rem;padding:5px 12px;">+ Log Work</button>
+              <button onclick="openDeityModal('${d.id}')" style="font-family:'Space Mono',monospace;font-size:.45rem;padding:5px 10px;border:1px solid rgba(201,185,154,.2);background:transparent;color:rgba(201,185,154,.5);cursor:pointer;">Edit</button>
+            </div>
+          </div>
+        </details>`;
+      }).join('')}
+    </div>`;
+  }).join('');
+}
+
+async function findDeity() {
+  const apiKey = getApiKey();
+  if (!apiKey) { gtAlert('Add your API key in Settings first.'); return; }
+  const query = (document.getElementById('deity-ai-input')||{}).value||'';
+  if (!query.trim()) { gtAlert('Describe what you need first.'); return; }
+
+  const btn = document.getElementById('deity-ai-btn');
+  const result = document.getElementById('deity-ai-result');
+  if (btn) { btn.disabled = true; btn.textContent = '⟳ Searching…'; }
+  if (result) { result.style.display = 'block'; result.innerHTML = '<div style="font-family:\'Space Mono\',monospace;font-size:.52rem;color:rgba(201,185,154,.3);">Consulting the archive…</div>'; }
+
+  const allDeities = getDeities();
+  const digest = allDeities.map(d => `ID: ${d.id} | ${d.name} (${d.culture}) | Domains: ${(d.domains||[]).join(', ')} | ${d.description.slice(0,200)}`).join('\n');
+  const chartSummary = 'Libra Sun, Aries Moon, Capricorn Rising, Scorpio stellium, Pure Generator 4/6, claircognizant/clairsentient, active dreamworker and witch.';
+
+  const prompt = `You are a spiritual guide helping a practitioner named Tiff identify the most aligned deity for her current need. Based on her request, identify the 1-2 most resonant deities from her library and explain specifically why they fit and how she should approach working with them given her nature.
+
+TIFF'S NATURE: ${chartSummary}
+
+HER REQUEST: "${query}"
+
+ALL AVAILABLE DEITIES:
+${digest}
+
+Respond ONLY in this exact JSON format:
+[
+  {
+    "id": "exact deity id from the list",
+    "reason": "2-3 sentences explaining specifically why this deity aligns with her request and her nature",
+    "approach": "1-2 sentences on how she specifically should approach working with this deity right now"
+  }
+]
+
+Return only valid JSON. No preamble.`;
+
+  try {
+    const data = await claudeAPI(apiKey, { model:'claude-sonnet-4-6', max_tokens:600, messages:[{role:'user', content:prompt}] });
+    const text = data.content?.find(c=>c.type==='text')?.text||'';
+    const matches = JSON.parse(text.replace(/```json|```/g,'').trim());
+
+    if (!matches.length) {
+      result.innerHTML = '<div style="font-family:\'Cormorant Garamond\',serif;font-size:.95rem;color:rgba(201,185,154,.4);font-style:italic;">No close matches found. Try describing what you are moving through differently, or add a deity that fits.</div>';
+      return;
+    }
+
+    const allDeities2 = getDeities();
+    const cultureColor = {'Greek':'rgba(107,155,201,.7)','Egyptian':'rgba(201,168,76,.8)','Norse':'rgba(107,155,155,.7)','Celtic (Irish)':'rgba(80,160,100,.8)','Celtic (Welsh)':'rgba(80,160,100,.7)','Celtic':'rgba(80,160,100,.6)','Hindu':'rgba(201,107,80,.8)','Yoruba / Ifá':'rgba(155,107,201,.7)','Japanese / Shinto':'rgba(201,155,107,.7)','Slavic':'rgba(107,107,155,.7)','Sumerian':'rgba(155,155,80,.7)','Other':'rgba(201,185,154,.5)'};
+
+    result.innerHTML = '<div style="font-family:\'Space Mono\',monospace;font-size:.48rem;letter-spacing:.08em;text-transform:uppercase;color:rgba(155,107,171,.5);margin-bottom:12px;">✦ Your Aligned Allies</div>' +
+      matches.map(m => {
+        const d = allDeities2.find(x => x.id === m.id);
+        if (!d) return '';
+        const col = cultureColor[d.culture] || 'rgba(201,185,154,.5)';
+        return `<div style="padding:14px 16px;background:rgba(255,255,255,.025);border-left:3px solid ${col};margin-bottom:12px;">
+          <div style="font-family:'Space Mono',monospace;font-size:.44rem;color:${col};margin-bottom:3px;">${d.culture}</div>
+          <div style="font-family:'Cormorant Garamond',serif;font-size:1.1rem;color:var(--parchment);margin-bottom:6px;">${d.name}</div>
+          <div style="font-family:'Space Mono',monospace;font-size:.43rem;color:rgba(201,185,154,.3);margin-bottom:8px;">${(d.domains||[]).slice(0,4).join(' · ')}</div>
+          <div style="font-family:'Cormorant Garamond',serif;font-size:.9rem;color:rgba(240,235,224,.65);line-height:1.75;margin-bottom:8px;font-style:italic;">${m.reason}</div>
+          <div style="font-family:'Cormorant Garamond',serif;font-size:.88rem;color:rgba(240,235,224,.55);line-height:1.7;margin-bottom:10px;padding:8px 11px;background:rgba(107,79,138,.04);border:1px solid rgba(107,79,138,.1);">How to approach: ${m.approach}</div>
+          <button onclick="openDeityLogModal('${d.id}')" class="astro-gen-btn" style="font-size:.45rem;padding:4px 10px;">+ Log this Work</button>
+        </div>`;
+      }).join('');
+  } catch(err) {
+    if (result) result.innerHTML = `<div style="font-family:'Space Mono',monospace;font-size:.52rem;color:rgba(201,185,154,.3);">Error: ${err.message}</div>`;
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = '✦ Find'; }
+  }
+}
+
+function openDeityLogModal(deityId) {
+  const all = getDeities();
+  const d = all.find(x => x.id === deityId);
+  if (!d) return;
+  const wrap = document.createElement('div');
+  wrap.id = 'deity-log-modal-wrap';
+  wrap.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.85);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px;';
+  wrap.innerHTML = `
+    <div style="background:#1a1820;border:1px solid rgba(201,185,154,.2);padding:24px;max-width:500px;width:100%;">
+      <div style="font-family:'Space Mono',monospace;font-size:.52rem;letter-spacing:.1em;text-transform:uppercase;color:var(--moon);margin-bottom:6px;">✦ Log Work With</div>
+      <div style="font-family:'Cormorant Garamond',serif;font-size:1.2rem;color:var(--parchment);margin-bottom:16px;">${d.name}</div>
+      <label style="font-family:'Space Mono',monospace;font-size:.5rem;letter-spacing:.08em;text-transform:uppercase;color:rgba(201,185,154,.5);display:block;margin-bottom:6px;">Notes on this session</label>
+      <textarea id="deity-log-note" rows="5" placeholder="What did you do? What offerings did you make? What came through? Any signs or responses…" style="width:100%;background:rgba(255,255,255,.04);border:1px solid rgba(201,185,154,.22);color:var(--parchment);font-family:'Cormorant Garamond',serif;font-size:.98rem;padding:9px 12px;outline:none;resize:vertical;line-height:1.7;box-sizing:border-box;margin-bottom:16px;"></textarea>
+      <div style="display:flex;gap:10px;">
+        <button onclick="saveDeityLog('${deityId}')" style="font-family:'Space Mono',monospace;font-size:.55rem;letter-spacing:.1em;text-transform:uppercase;padding:10px 20px;border:1px solid rgba(201,185,154,.4);background:transparent;color:rgba(201,185,154,.8);cursor:pointer;">Save</button>
+        <button onclick="document.getElementById('deity-log-modal-wrap').remove()" style="font-family:'Space Mono',monospace;font-size:.55rem;letter-spacing:.1em;text-transform:uppercase;padding:10px 20px;border:1px solid rgba(201,185,154,.15);background:transparent;color:rgba(201,185,154,.4);cursor:pointer;">Cancel</button>
+      </div>
+    </div>`;
+  document.body.appendChild(wrap);
+  setTimeout(() => document.getElementById('deity-log-note')?.focus(), 50);
+}
+
+function saveDeityLog(deityId) {
+  const note = (document.getElementById('deity-log-note')||{}).value||'';
+  if (!note.trim()) { gtAlert('Add a note before saving.'); return; }
+  const all = getDeities();
+  const idx = all.findIndex(x => x.id === deityId);
+  if (idx === -1) return;
+  if (!all[idx].log) all[idx].log = [];
+  all[idx].log.push({ date: localDateStr(), note: note.trim() });
+  saveDeities(all);
+  const wrap = document.getElementById('deity-log-modal-wrap');
+  if (wrap) wrap.remove();
+  renderDeityList();
+}
+
+function openDeityModal(deityId) {
+  const all = getDeities();
+  const d = deityId ? all.find(x => x.id === deityId) : null;
+  const wrap = document.createElement('div');
+  wrap.id = 'deity-modal-wrap';
+  wrap.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.85);z-index:9999;display:flex;align-items:flex-start;justify-content:center;padding:16px;overflow-y:auto;';
+  const cultures = ['Greek','Egyptian','Norse','Celtic (Irish)','Celtic (Welsh)','Celtic','Hindu','Yoruba / Ifá','Japanese / Shinto','Slavic','Sumerian','Pagan / Wiccan','Other'];
+  const cultureOpts = cultures.map(c => `<option value="${c}" ${d&&d.culture===c?'selected':''}>${c}</option>`).join('');
+  const inp = (id, val, ph, type='text') => `<input id="${id}" type="${type}" value="${(val||'').replace(/"/g,'&quot;')}" placeholder="${ph}" style="width:100%;background:rgba(255,255,255,.04);border:1px solid rgba(201,185,154,.22);color:var(--parchment);font-family:'Cormorant Garamond',serif;font-size:.98rem;padding:8px 11px;outline:none;box-sizing:border-box;">`;
+  const ta = (id, val, rows, ph) => `<textarea id="${id}" rows="${rows}" placeholder="${ph}" style="width:100%;background:rgba(255,255,255,.04);border:1px solid rgba(201,185,154,.22);color:var(--parchment);font-family:'Cormorant Garamond',serif;font-size:.98rem;padding:8px 11px;outline:none;resize:vertical;line-height:1.7;box-sizing:border-box;">${val||''}</textarea>`;
+  wrap.innerHTML = `
+    <div style="background:#1a1820;border:1px solid rgba(201,185,154,.2);padding:24px;max-width:640px;width:100%;margin-top:16px;">
+      <div style="font-family:'Space Mono',monospace;font-size:.52rem;letter-spacing:.1em;text-transform:uppercase;color:var(--moon);margin-bottom:18px;">✦ ${d?'Edit':'New'} Deity</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:13px;">
+        <div><label style="font-family:'Space Mono',monospace;font-size:.5rem;letter-spacing:.08em;text-transform:uppercase;color:rgba(201,185,154,.5);display:block;margin-bottom:5px;">Name</label>${inp('dty-name',d?.name,'e.g. Hecate')}</div>
+        <div><label style="font-family:'Space Mono',monospace;font-size:.5rem;letter-spacing:.08em;text-transform:uppercase;color:rgba(201,185,154,.5);display:block;margin-bottom:5px;">Culture</label><select id="dty-culture" style="width:100%;background:#1a1820;border:1px solid rgba(201,185,154,.22);color:var(--parchment);font-family:'Space Mono',monospace;font-size:.7rem;padding:8px 11px;outline:none;">${cultureOpts}</select></div>
+      </div>
+      <div style="margin-bottom:13px;"><label style="font-family:'Space Mono',monospace;font-size:.5rem;letter-spacing:.08em;text-transform:uppercase;color:rgba(201,185,154,.5);display:block;margin-bottom:5px;">Domains (comma-separated)</label>${inp('dty-domains',d?.domains?.join(', '),'e.g. magic, crossroads, moon')}</div>
+      <div style="margin-bottom:13px;"><label style="font-family:'Space Mono',monospace;font-size:.5rem;letter-spacing:.08em;text-transform:uppercase;color:rgba(201,185,154,.5);display:block;margin-bottom:5px;">Symbols (comma-separated)</label>${inp('dty-symbols',d?.symbols?.join(', '),'e.g. torch, key, serpent')}</div>
+      <div style="margin-bottom:13px;"><label style="font-family:'Space Mono',monospace;font-size:.5rem;letter-spacing:.08em;text-transform:uppercase;color:rgba(201,185,154,.5);display:block;margin-bottom:5px;">Description</label>${ta('dty-desc',d?.description,5,'Who they are and what they govern…')}</div>
+      <div style="margin-bottom:13px;"><label style="font-family:'Space Mono',monospace;font-size:.5rem;letter-spacing:.08em;text-transform:uppercase;color:rgba(201,185,154,.5);display:block;margin-bottom:5px;">How to Work With Them</label>${ta('dty-how',d?.howToWork,4,'Rituals, invocations, timing, approach…')}</div>
+      <div style="margin-bottom:13px;"><label style="font-family:'Space Mono',monospace;font-size:.5rem;letter-spacing:.08em;text-transform:uppercase;color:rgba(201,185,154,.5);display:block;margin-bottom:5px;">Offerings (comma-separated)</label>${inp('dty-offerings',d?.offerings?.join(', '),'e.g. candles, honey, flowers')}</div>
+      <div style="margin-bottom:18px;"><label style="font-family:'Space Mono',monospace;font-size:.5rem;letter-spacing:.08em;text-transform:uppercase;color:rgba(201,185,154,.5);display:block;margin-bottom:5px;">Notes (optional)</label>${ta('dty-notes',d?.notes,3,'Personal notes, warnings, practice observations…')}</div>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;">
+        <button onclick="saveDeity('${d?.id||''}')" style="font-family:'Space Mono',monospace;font-size:.55rem;letter-spacing:.1em;text-transform:uppercase;padding:10px 22px;border:1px solid rgba(201,185,154,.4);background:transparent;color:rgba(201,185,154,.8);cursor:pointer;">Save</button>
+        <button onclick="document.getElementById('deity-modal-wrap').remove()" style="font-family:'Space Mono',monospace;font-size:.55rem;letter-spacing:.1em;text-transform:uppercase;padding:10px 22px;border:1px solid rgba(201,185,154,.15);background:transparent;color:rgba(201,185,154,.4);cursor:pointer;">Cancel</button>
+        ${d && !d.id.startsWith('deity_') ? `<button onclick="deleteDeity('${d.id}')" style="font-family:'Space Mono',monospace;font-size:.55rem;letter-spacing:.1em;text-transform:uppercase;padding:10px 22px;border:1px solid rgba(180,80,80,.3);background:transparent;color:rgba(180,80,80,.6);cursor:pointer;margin-left:auto;">Delete</button>` : ''}
+      </div>
+    </div>`;
+  document.body.appendChild(wrap);
+}
+
+function saveDeity(existingId) {
+  const name = (document.getElementById('dty-name')||{}).value?.trim()||'';
+  const culture = (document.getElementById('dty-culture')||{}).value||'Other';
+  const domains = (document.getElementById('dty-domains')||{}).value?.split(',').map(s=>s.trim()).filter(Boolean)||[];
+  const symbols = (document.getElementById('dty-symbols')||{}).value?.split(',').map(s=>s.trim()).filter(Boolean)||[];
+  const description = (document.getElementById('dty-desc')||{}).value?.trim()||'';
+  const howToWork = (document.getElementById('dty-how')||{}).value?.trim()||'';
+  const offerings = (document.getElementById('dty-offerings')||{}).value?.split(',').map(s=>s.trim()).filter(Boolean)||[];
+  const notes = (document.getElementById('dty-notes')||{}).value?.trim()||'';
+  if (!name) { gtAlert('Name is required.'); return; }
+  const all = getDeities();
+  if (existingId) {
+    const idx = all.findIndex(x => x.id === existingId);
+    if (idx > -1) all[idx] = { ...all[idx], name, culture, domains, symbols, description, howToWork, offerings, notes };
+  } else {
+    all.push({ id: 'deity_custom_'+Date.now(), name, culture, domains, symbols, description, howToWork, offerings, notes, log:[] });
+  }
+  saveDeities(all);
+  const wrap = document.getElementById('deity-modal-wrap');
+  if (wrap) wrap.remove();
+  renderDeityList();
+}
+
+function deleteDeity(deityId) {
+  if (!confirm('Delete this deity entry?')) return;
+  saveDeities(getDeities().filter(x => x.id !== deityId));
+  const wrap = document.getElementById('deity-modal-wrap');
+  if (wrap) wrap.remove();
+  renderDeityList();
+}
+
 function runGlobalSearch(raw) {
   const q = (raw || '').trim().toLowerCase();
   const meta = document.getElementById('global-search-meta');
@@ -9064,7 +9395,8 @@ function runGlobalSearch(raw) {
     dreammagic: { label: 'Dream Magic', color: 'rgba(155,107,171,.9)', icon: '✦', open: e => { switchTab('dreams', document.getElementById('tab-btn-dreams')); setTimeout(()=>switchDreams('magic'), 100); } },
     within: { label: 'Within', color: 'rgba(201,168,76,.8)', icon: '◈', open: e => { switchTab('practice', document.getElementById('tab-btn-practice')); setTimeout(()=>switchPractice('within'), 100); } },
     code: { label: 'Code', color: 'rgba(107,185,201,.8)', icon: '⌗', open: e => { switchTab('tools', document.getElementById('tab-btn-tools')); setTimeout(()=>switchTools('codes'), 100); } },
-    meditation: { label: 'Meditation', color: 'rgba(155,107,171,.8)', icon: '◎', open: e => { switchTab('tools', document.getElementById('tab-btn-tools')); setTimeout(()=>switchTools('meditation'), 100); } }
+    meditation: { label: 'Meditation', color: 'rgba(155,107,171,.8)', icon: '◎', open: e => { switchTab('tools', document.getElementById('tab-btn-tools')); setTimeout(()=>switchTools('meditation'), 100); } },
+    deity: { label: 'Deity', color: 'rgba(201,168,76,.8)', icon: '✦', open: e => { switchTab('tools', document.getElementById('tab-btn-tools')); setTimeout(()=>switchTools('deities'), 100); } }
   };
 
   function matchGeneral(e) {
@@ -9242,6 +9574,9 @@ function switchTools(type, btn) {
   } else if (type === 'meditation') {
     dest.innerHTML = '';
     renderMeditation(dest);
+  } else if (type === 'deities') {
+    dest.innerHTML = '';
+    renderDeities(dest);
   }
 }
 
@@ -9796,8 +10131,15 @@ function openEditDream(dreamId) {
   customPplBtn.onclick = function() {
     var rawName = customPplInput.value.trim();
     if (!rawName) return;
-    var pid = 'custom_' + rawName.toLowerCase().replace(/\s+/g,'_').replace(/[^a-z0-9_]/g,'');
-    if (document.querySelector('.pchip-check[data-pid="'+pid+'"]')) { customPplInput.value=''; return; }
+    // Check if already in the chips
+    var alreadyChip = Array.from(pplChips.querySelectorAll('.pchip-check'))
+      .find(function(c){ return c.textContent.trim().toLowerCase() === rawName.toLowerCase(); });
+    if (alreadyChip) { customPplInput.value=''; return; }
+    // Save to PEOPLE + localStorage first
+    addNewBeingFromScan(rawName, 'Person in dreams', 'Added from dream edit.');
+    var savedBeing = PEOPLE[PEOPLE.length - 1];
+    var pid = savedBeing ? savedBeing.id : 'custom_' + rawName.toLowerCase().replace(/\s+/g,'_').replace(/[^a-z0-9_]/g,'') + '_' + Date.now();
+    // Create the chip in the edit panel (addNewBeingFromScan adds to #f-people-chips, not here)
     var chip2 = document.createElement('span');
     chip2.className = 'pchip-check selected';
     chip2.dataset.pid = pid;
@@ -13662,7 +14004,7 @@ try { renderInsights(); } catch(e) { console.error('renderInsights crashed:', e)
       'shadow':'practice','readings':'practice','gateway':'practice','moonintent':'practice','manifesting':'practice','within':'practice',
       'charts':'grimoire','people':'grimoire','elixirs':'grimoire','songs':'grimoire','comms':'grimoire',
       'ancestors':'grimoire','places':'grimoire','rituals':'grimoire','visitations':'grimoire','channel':'grimoire',
-      'herbalism':'tools','hblends':'tools','seasons':'tools','sacredDates':'tools','wheel':'tools','codes':'tools','meditation':'tools',
+      'herbalism':'tools','hblends':'tools','seasons':'tools','sacredDates':'tools','wheel':'tools','codes':'tools','meditation':'tools','deities':'tools',
       'incubation':'dreams','search':'insight',
       'patterns':'insight','prophecy':'insight','threads':'insight','dreamtimeline':'insight','symbols':'insight'};
     const resolvedTab = tabMap[lastTab] || lastTab;
@@ -18659,25 +19001,13 @@ function buildPeopleChips(selectedIds) {
     btn2.style.cssText = "font-family:'Space Mono',monospace;font-size:.5rem;letter-spacing:.06em;padding:5px 12px;border:1px solid rgba(107,79,138,.3);background:rgba(107,79,138,.08);color:rgba(155,107,171,.8);cursor:pointer;white-space:nowrap;";
     btn2.onclick = function() {
       var rawName = inp2.value.trim(); if (!rawName) return;
-      var pid2 = 'custom_' + rawName.toLowerCase().replace(/\s+/g,'_').replace(/[^a-z0-9_]/g,'') + '_' + Date.now();
-      if (document.querySelector('#f-people-chips .pchip-check[data-pid="'+pid2+'"]')) { inp2.value=''; return; }
-      // Save to PEOPLE and localStorage immediately
+      // Check if already added
+      var existing2 = Array.from(document.querySelectorAll('#f-people-chips .pchip-check'))
+        .find(function(c){ return (c.dataset.customName||'').toLowerCase() === rawName.toLowerCase() || c.textContent.trim().toLowerCase() === rawName.toLowerCase(); });
+      if (existing2) { inp2.value=''; return; }
+      // addNewBeingFromScan saves to PEOPLE + localStorage AND creates the chip in #f-people-chips
       addNewBeingFromScan(rawName, 'Person in dreams', 'Added manually from dream entry.');
-      // Use the ID that was just created (last item in PEOPLE)
-      var savedBeing = PEOPLE[PEOPLE.length - 1];
-      var actualPid = savedBeing ? savedBeing.id : pid2;
-      var chip2 = document.createElement('span');
-      chip2.className = 'pchip-check selected';
-      chip2.dataset.pid = actualPid; chip2.dataset.customName = rawName;
-      chip2.style.cssText = "font-family:'Space Mono',monospace;font-size:.52rem;letter-spacing:.05em;padding:3px 10px;cursor:pointer;transition:all .15s;user-select:none;border:1px solid rgba(155,107,171,.7);background:rgba(107,79,138,.2);color:rgba(200,160,220,.9);";
-      chip2.textContent = rawName;
-      chip2.onclick = function() {
-        var s2 = this.classList.toggle('selected');
-        this.style.borderColor = s2 ? 'rgba(155,107,171,.7)' : 'rgba(201,185,154,.18)';
-        this.style.background = s2 ? 'rgba(107,79,138,.2)' : 'transparent';
-        this.style.color = s2 ? 'rgba(200,160,220,.9)' : 'rgba(201,185,154,.5)';
-      };
-      container.appendChild(chip2); inp2.value = '';
+      inp2.value = '';
     };
     inp2.addEventListener('keydown', function(e){ if(e.key==='Enter'){e.preventDefault();btn2.click();} });
     row2.appendChild(inp2); row2.appendChild(btn2);
@@ -18824,7 +19154,7 @@ async function scanDreamPeople() {
 
 function addNewBeingFromScan(name, role, context) {
   // Create a new custom being and add it to PEOPLE
-  var id = 'custom_' + name.toLowerCase().replace(/\s+/g,'_') + '_' + Date.now();
+  var id = 'custom_' + name.toLowerCase().replace(/\s+/g,'_').replace(/[^a-z0-9_]/g,'') + '_' + Date.now();
   var newBeing = {
     id: id,
     name: name,
@@ -18842,7 +19172,7 @@ function addNewBeingFromScan(name, role, context) {
     localStorage.setItem('gt_custom_beings', JSON.stringify(custom));
   } catch(e) {}
 
-  // Add a proper chip for the new being (replacing the dashed add chip already done by caller)
+  // Only add a chip to #f-people-chips (the add-dream form), not to edit panels
   var container = document.getElementById('f-people-chips');
   if (container) {
     var chip = document.createElement('span');
@@ -18858,6 +19188,8 @@ function addNewBeingFromScan(name, role, context) {
     };
     container.appendChild(chip);
   }
+
+  return id;
 }
 
 // ── Pattern alert replay ──────────────────────────────────────────────
@@ -18872,11 +19204,12 @@ function replayLastPatternAlert() {
 
 
 function openEditDreamBeings(dreamId) {
-  var d = dreams.find(function(x){ return x.id == dreamId; });
-  if (!d) return;
+  try {
+  var d = dreams.find(function(x){ return String(x.id) === String(dreamId); });
+  if (!d) { gtAlert('Dream not found (id: '+dreamId+')'); return; }
 
   var inner = document.getElementById('view-inner');
-  if (!inner) return;
+  if (!inner) { gtAlert('Modal not found — try reopening the dream.'); return; }
 
   // Build overlay panel inline at the bottom of the dream modal
   var existing = document.getElementById('beings-edit-panel');
@@ -18921,6 +19254,35 @@ function openEditDreamBeings(dreamId) {
   var btns = document.createElement('div');
   btns.style.cssText = 'display:flex;gap:10px;';
 
+  // Add new being input row
+  var newRow = document.createElement('div');
+  newRow.style.cssText = 'display:flex;gap:6px;margin-bottom:14px;';
+  var newInp = document.createElement('input');
+  newInp.type = 'text'; newInp.placeholder = 'Add unlisted being…';
+  newInp.style.cssText = "flex:1;background:rgba(255,255,255,.04);border:1px solid rgba(107,79,138,.2);color:var(--parchment);font-family:'Space Mono',monospace;font-size:.55rem;padding:5px 10px;outline:none;";
+  var newBtn = document.createElement('button');
+  newBtn.type='button'; newBtn.textContent='+ Add';
+  newBtn.style.cssText = "font-family:'Space Mono',monospace;font-size:.5rem;letter-spacing:.06em;padding:5px 12px;border:1px solid rgba(107,79,138,.3);background:rgba(107,79,138,.08);color:rgba(155,107,171,.8);cursor:pointer;white-space:nowrap;";
+  newBtn.onclick = function() {
+    var n = newInp.value.trim(); if (!n) return;
+    var already = Array.from(chipsWrap.querySelectorAll('.pchip-check')).find(function(c){ return c.textContent.trim().toLowerCase() === n.toLowerCase(); });
+    if (already) { newInp.value=''; return; }
+    addNewBeingFromScan(n, 'Person in dreams', 'Added from dream beings editor.');
+    var saved = PEOPLE[PEOPLE.length - 1];
+    var pid2 = saved ? saved.id : 'custom_'+Date.now();
+    var c2 = document.createElement('span');
+    c2.className = 'pchip-check selected';
+    c2.dataset.pid = pid2;
+    c2.style.cssText = "font-family:'Space Mono',monospace;font-size:.52rem;letter-spacing:.05em;padding:3px 10px;cursor:pointer;transition:all .15s;user-select:none;border:1px solid rgba(155,107,171,.7);background:rgba(107,79,138,.2);color:rgba(200,160,220,.9);";
+    c2.textContent = n;
+    c2.onclick = function(){ var s=this.classList.toggle('selected'); this.style.borderColor=s?'rgba(155,107,171,.7)':'rgba(201,185,154,.18)'; this.style.background=s?'rgba(107,79,138,.2)':'transparent'; this.style.color=s?'rgba(200,160,220,.9)':'rgba(201,185,154,.5)'; };
+    chipsWrap.appendChild(c2);
+    newInp.value='';
+  };
+  newInp.addEventListener('keydown', function(e){ if(e.key==='Enter'){e.preventDefault();newBtn.click();} });
+  newRow.appendChild(newInp); newRow.appendChild(newBtn);
+  panel.appendChild(newRow);
+
   var saveBtn = document.createElement('button');
   saveBtn.className = 'sub-btn';
   saveBtn.style.marginTop = '0';
@@ -18936,6 +19298,7 @@ function openEditDreamBeings(dreamId) {
 
   panel.appendChild(btns);
   inner.appendChild(panel);
+  } catch(err) { gtAlert('Error opening beings editor: ' + err.message); }
 }
 
 function saveDreamBeings(dreamId) {
