@@ -437,6 +437,7 @@ h1 em { display:block; font-style:italic; font-weight:300; font-size:.42em; lett
     <button class="sub-tab-btn" id="sub-btn-seasons-t" onclick="switchTools('seasons',this)">🌿 Seasons</button>
     <button class="sub-tab-btn" id="sub-btn-sacredDates-t" onclick="switchTools('sacredDates',this)">◎ Sacred Dates</button>
     <button class="sub-tab-btn" id="sub-btn-wheel-t" onclick="switchTools('wheel',this)">☽ Wheel</button>
+    <button class="sub-tab-btn" id="sub-btn-codes-t" onclick="switchTools('codes',this)">⌗ Codes</button>
   </div>
   <!-- Grimoire sub-bar -->
   <div id="sub-bar-grimoire" style="display:none;white-space:nowrap;">
@@ -6523,7 +6524,15 @@ function buildFullArchiveContext(opts) {
       +(e.homework?'\n  Homework ('+e.homeworkStatus+'): '+e.homework.slice(0,150):'');
   }).join('\n\n') : '';
 
-  return {dreamDigest:dreamDigest, spiritDigest:spiritDigest, commDigest:commDigest, visitDigest:visitDigest, moonDigest:moonDigest, prophecyDigest:prophecyDigest, manifestDigest:manifestDigest, threadDigest:threadDigest, peopleDigest:peopleDigest, patternDigest:patternDigest, chartSummary:chartSummary, dreamCount:dreams.length, ancestorDigest:ancestorDigest, incubationDigest:incubationDigest, sigConfsDigest:sigConfsDigest, elixirDigest:elixirDigest, songDigest:songDigest, sacredDateDigest:sacredDateDigest, herbDigest:herbDigest, beingsDigest:beingsDigest, channelDigest:channelDigest, dreamMagicDigest:dreamMagicDigest, withinDigest:withinDigest};
+  // CODES
+  var codesData = (typeof getCodesData==='function') ? getCodesData() : [];
+  var codesUsed = codesData.filter(function(c){ return c.log && c.log.length; });
+  var codesDigest = codesUsed.length ? codesUsed.map(function(c){
+    return '"'+c.title+'" ('+c.modality+', code: '+c.code+'): used '+c.log.length+' time(s). '+
+      c.log.slice(-2).map(function(l){ return '['+l.date+'] '+l.note.slice(0,100); }).join(' | ');
+  }).join('\n') : '';
+
+  return {dreamDigest:dreamDigest, spiritDigest:spiritDigest, commDigest:commDigest, visitDigest:visitDigest, moonDigest:moonDigest, prophecyDigest:prophecyDigest, manifestDigest:manifestDigest, threadDigest:threadDigest, peopleDigest:peopleDigest, patternDigest:patternDigest, chartSummary:chartSummary, dreamCount:dreams.length, ancestorDigest:ancestorDigest, incubationDigest:incubationDigest, sigConfsDigest:sigConfsDigest, elixirDigest:elixirDigest, songDigest:songDigest, sacredDateDigest:sacredDateDigest, herbDigest:herbDigest, beingsDigest:beingsDigest, channelDigest:channelDigest, dreamMagicDigest:dreamMagicDigest, withinDigest:withinDigest, codesDigest:codesDigest};
 }
 
 async function askArchive() {
@@ -7909,6 +7918,384 @@ Write a reading that: honors the intention and craft of this working, reads what
   }
 }
 
+
+// ═══════════════════════════════════════════════════════════
+// CODES TAB
+// ═══════════════════════════════════════════════════════════
+const CODES_SEED_DATA = [{"id": "code_gateway_1", "modality": "Gateway / Monroe Institute", "title": "Pain Reduction", "code": "55515", "use": "Reducing physical pain signals anywhere in the body", "instructions": "Enter a relaxed state. Close your eyes and look with your inner vision at the part of your body that is the source of pain signals. While holding your attention there, repeat the number 55515 in your mind. The pain signals will slowly reduce until they are no longer important. Continue until relief is felt.", "source": "CIA Declassified Gateway Intermediate Workbook (Monroe Institute, 1977)", "log": []}, {"id": "code_gateway_2", "modality": "Gateway / Monroe Institute", "title": "Restful Sleep Induction", "code": "1–20 count", "use": "Falling into natural, restful sleep", "instructions": "Lie down in a comfortable position. Breathe deeply 5 times. Then begin counting slowly from 1 to 20. Before you reach the count of 20, you will drift into normal, restful sleep.", "source": "CIA Declassified Gateway Intermediate Workbook (Monroe Institute, 1977)", "log": []}, {"id": "code_gateway_3", "modality": "Gateway / Monroe Institute", "title": "Memory Recall", "code": "Right hand to forehead", "use": "Recalling any specific memory, experience, or desired information", "instructions": "Close your eyes. Softly touch the fingers of your right hand to the center of your forehead. Hold them there and consciously name what you wish to remember. The memory will return immediately to your awareness.", "source": "CIA Declassified Gateway Intermediate Workbook (Monroe Institute, 1977)", "log": []}, {"id": "code_gateway_4", "modality": "Gateway / Monroe Institute", "title": "Reduce Emotional Charge", "code": "Green energy exhale", "use": "Clearing excess or harmful emotional charge from the body", "instructions": "Close your eyes. Inhale deeply and hold your breath for a moment. Think of the calming, cleansing color green. As you exhale slowly, allow the green energy to push all excess and harmful emotional charges down through your physical system and out through the soles of your feet.", "source": "CIA Declassified Gateway Intermediate Workbook (Monroe Institute, 1977)", "log": []}, {"id": "code_gateway_5", "modality": "Gateway / Monroe Institute", "title": "Charge Body for Strength & Speed", "code": "Red energy inhale", "use": "Charging the body with power, vitality, and readiness for physical action", "instructions": "Close your eyes. Inhale deeply and think of the physical act you want to perform and the strong energy of red. As you exhale, open your eyes and perform the act you wish to accomplish.", "source": "CIA Declassified Gateway Intermediate Workbook (Monroe Institute, 1977)", "log": []}, {"id": "code_gateway_6", "modality": "Gateway / Monroe Institute", "title": "Receive Fresh Energy / Suppress Hunger", "code": "White energy palms", "use": "Refreshing and rejuvenating the entire system; also suppresses physical hunger", "instructions": "Close your eyes. Extend your physical hands outward, palms facing up. Inhale deeply and hold for a moment. Think of radiant, pure white energy focused from above, centering down upon the palms of your hands, then flowing up through your arms and spreading throughout your total self. Exhale. You will feel refreshed and rejuvenated. Physical hunger will also be satisfied.", "source": "CIA Declassified Gateway Intermediate Workbook (Monroe Institute, 1977)", "log": []}, {"id": "code_gateway_7", "modality": "Gateway / Monroe Institute", "title": "Heal and Balance a Body Part", "code": "Purple energy — Heal, Balance", "use": "Targeting healing and rebalancing to any specific part of the body", "instructions": "Close your eyes. Inhale deeply and hold your breath for a moment. Think of the healing, cool energy of purple. Look with your closed eyes at the part of your body that requires help. Send the flow of purple energy to it, saying in your mind to that part: 'Heal. Balance.' Then exhale and open your eyes. That part of the body will begin to restore and rebalance immediately.", "source": "CIA Declassified Gateway Intermediate Workbook (Monroe Institute, 1977)", "log": []}, {"id": "code_gateway_8", "modality": "Gateway / Monroe Institute", "title": "Energy Balance (Full System)", "code": "EBT + green then purple", "use": "Full-body energy cleansing, recharging, and balancing", "instructions": "Enter Focus 10. Using your Energy Bar Tool, apply bright green energy to your Living Body Map to cleanse away harmful emotional charge from any problem areas — push it down and out. Then apply bright purple healing energy to recharge and strengthen. Look for dim or flickering areas and charge them with purple until the whole field is evenly bright, calm, and serene.", "source": "CIA Declassified Gateway Intermediate Workbook (Monroe Institute, 1977)", "log": []}, {"id": "code_grabovoi_1", "modality": "Grabovoi", "title": "General Body Healing", "code": "9187948181", "use": "General healing and restoration of the physical body", "instructions": "Focus clearly on your intention for bodily healing. Visualize, write, or mentally repeat the number sequence 9187948181. Hold the intention that your body is being restored to its natural healthy state. Repeat for several minutes or until you feel complete.", "source": "Grigori Grabovoi radionic sequences", "log": []}, {"id": "code_grabovoi_2", "modality": "Grabovoi", "title": "Financial Abundance", "code": "318 798", "use": "Attracting financial abundance and prosperity", "instructions": "Focus on the feeling of abundance already present. Visualize, write, or mentally repeat 318 798. Combine with gratitude for what you already have. Repeat 28 times or until the code feels integrated.", "source": "Grigori Grabovoi radionic sequences", "log": []}, {"id": "code_grabovoi_3", "modality": "Grabovoi", "title": "Unexpected Money", "code": "520 741 8", "use": "Attracting unexpected financial inflow", "instructions": "Hold a relaxed, open expectation. Write, visualize, or mentally repeat 520 741 8. Remain unattached to the specific form money arrives in.", "source": "Grigori Grabovoi radionic sequences", "log": []}, {"id": "code_grabovoi_4", "modality": "Grabovoi", "title": "Love and Relationships", "code": "888 412 1289018", "use": "Manifesting love, deepening relationships, attracting compatible connection", "instructions": "Focus on the felt sense of love already within you. Write, visualize, or mentally repeat 888 412 1289018. Do not attach to a specific person. Repeat with genuine openheartedness.", "source": "Grigori Grabovoi radionic sequences", "log": []}, {"id": "code_grabovoi_5", "modality": "Grabovoi", "title": "Depression", "code": "519 514 319 91", "use": "Lifting depression, restoring emotional vitality", "instructions": "In a still, quiet moment, write or mentally repeat 519 514 319 91. Pair with an intention for emotional restoration. Use alongside appropriate support — this is a complement, not a replacement for care.", "source": "Grigori Grabovoi radionic sequences", "log": []}, {"id": "code_grabovoi_6", "modality": "Grabovoi", "title": "Weight Loss / Body Alignment", "code": "481 24 12", "use": "Supporting body weight normalization and healthy physical alignment", "instructions": "Write or repeat 481 24 12 while holding the intention of your body finding its natural healthy state. Combine with self-compassion and care for the body.", "source": "Grigori Grabovoi radionic sequences", "log": []}, {"id": "code_grabovoi_7", "modality": "Grabovoi", "title": "Turn Negative to Positive", "code": "188 8 948", "use": "Transforming negative energy, situations, or thought patterns into positive", "instructions": "When encountering a situation or thought pattern you wish to shift, write or mentally repeat 188 8 948 while consciously releasing the negative and inviting its opposite.", "source": "Grigori Grabovoi radionic sequences", "log": []}, {"id": "code_grabovoi_8", "modality": "Grabovoi", "title": "Ideal Future / Optimal Timeline", "code": "813 791", "use": "Aligning with your ideal future and highest timeline", "instructions": "Visualize your ideal future clearly and with feeling. Write or mentally repeat 813 791 while anchored in that vision. Use regularly as a timeline alignment practice.", "source": "Grigori Grabovoi radionic sequences", "log": []}, {"id": "code_grabovoi_9", "modality": "Grabovoi", "title": "Sleep Quality", "code": "10 42 7896", "use": "Improving general sleep quality and depth", "instructions": "Before bed, write or quietly repeat 10 42 7896 while relaxing the body. Pair with the intention of deep, restorative sleep.", "source": "Grigori Grabovoi radionic sequences", "log": []}, {"id": "code_grabovoi_10", "modality": "Grabovoi", "title": "Insomnia (Long-Standing)", "code": "11 21 495", "use": "Addressing chronic insomnia and difficulty initiating sleep", "instructions": "Write or repeat 11 21 495 before bed while releasing tension from the body. Use consistently over several nights.", "source": "Grigori Grabovoi / Divine Healing Codes", "log": []}, {"id": "code_grabovoi_11", "modality": "Grabovoi", "title": "Stop Smoking", "code": "14 14 551", "use": "Supporting cessation of smoking habit", "instructions": "When the urge arises, silently repeat or visualize 14 14 551 while breathing slowly and deeply. Pair with intention to be free.", "source": "Grigori Grabovoi radionic sequences", "log": []}, {"id": "code_divine_1", "modality": "Divine Healing Codes", "title": "Grief and Loss", "code": "116 116 1998", "use": "Support through grief, loss, and bereavement", "instructions": "Write, speak, or silently hold the code 116 116 1998 with the intention of receiving support through grief. Let it act as a container for what is too heavy to carry alone.", "source": "Divine Healing Codes (channeled healing number system)", "log": []}, {"id": "code_divine_2", "modality": "Divine Healing Codes", "title": "Overwhelming Grief", "code": "43 85 103", "use": "Softening and beginning to heal overwhelming grief", "instructions": "Sit quietly with the code 43 85 103. Write it, repeat it, or simply hold it in awareness while breathing. No forcing — just allowing the grief to be met.", "source": "Divine Healing Codes", "log": []}, {"id": "code_divine_3", "modality": "Divine Healing Codes", "title": "PTSD / Painful Memories", "code": "25 37 536", "use": "Healing painful memories — both conscious and subconscious (PTSD)", "instructions": "Hold the code 25 37 536 with the intention of healing the memory rather than reliving it. Write it or silently repeat it during a grounded, safe moment.", "source": "Divine Healing Codes", "log": []}, {"id": "code_divine_4", "modality": "Divine Healing Codes", "title": "Nightmares", "code": "57 11 936", "use": "Reducing nightmares and fear-based dream content", "instructions": "Before sleep, write or silently hold 57 11 936 with the intention of peaceful, protected dreaming. Can also be used after waking from a nightmare to neutralize lingering energy.", "source": "Divine Healing Codes", "log": []}, {"id": "code_divine_5", "modality": "Divine Healing Codes", "title": "Anxiety / Stopping Rumination", "code": "21 35 619", "use": "Releasing attachment to frightening or obsessive thoughts; stopping rumination", "instructions": "When caught in an anxious loop, write or repeat 21 35 619 while consciously choosing to let go of the thought pattern. Pair with slow breathing.", "source": "Divine Healing Codes", "log": []}, {"id": "code_divine_6", "modality": "Divine Healing Codes", "title": "Public Speaking Anxiety", "code": "19 66 551", "use": "Calming anxiety around public speaking or being seen", "instructions": "Before speaking or performing, write or repeat 19 66 551. Combine with grounding breaths and the intention to speak from your authentic center.", "source": "Divine Healing Codes", "log": []}, {"id": "code_divine_7", "modality": "Divine Healing Codes", "title": "Spiritual Protection", "code": "55 16 987", "use": "Protection from psychic or energetic interference; spiritual shielding", "instructions": "Write, visualize, or speak 55 16 987 while setting a clear intention for protection. Can be written on the body, a piece of paper, or held in the mind before entering challenging environments.", "source": "Divine Healing Codes", "log": []}, {"id": "code_divine_8", "modality": "Divine Healing Codes", "title": "Chronic Disorganization / Procrastination", "code": "29 37 651", "use": "Addressing procrastination, chronic disorganization, difficulty starting", "instructions": "Write or repeat 29 37 651 while setting a clear, small first step. Use as a bridge between paralysis and action.", "source": "Divine Healing Codes", "log": []}, {"id": "code_divine_9", "modality": "Divine Healing Codes", "title": "Toothache", "code": "35 41 553", "use": "Relief from toothache and dental pain", "instructions": "Focus your attention on the tooth or area of pain. Write or repeat 35 41 553 while holding healing intention toward that area. Use alongside appropriate dental care.", "source": "Divine Healing Codes", "log": []}, {"id": "code_divine_10", "modality": "Divine Healing Codes", "title": "Obsessive / Intrusive Thoughts", "code": "92 367 9342", "use": "Interrupting obsessive or intrusive thought loops", "instructions": "When an intrusive thought arises, silently or aloud repeat 92 367 9342 as an interruption pattern. Follow with grounding breath and a conscious redirect of attention.", "source": "Divine Healing Codes", "log": []}, {"id": "code_divine_11", "modality": "Divine Healing Codes", "title": "Separation Anxiety / Homesickness", "code": "33 49 586", "use": "Soothing anxiety from separation, homesickness, or missing loved ones", "instructions": "Hold 33 49 586 with a warm intention toward reunion or comfort. Write it or repeat it while allowing the feeling of longing to be held rather than suppressed.", "source": "Divine Healing Codes", "log": []}, {"id": "code_divine_12", "modality": "Divine Healing Codes", "title": "Support After Job Loss", "code": "99 61 546", "use": "Healing and recovery from job loss; supporting career transition", "instructions": "Write or repeat 99 61 546 with an open intention for new opportunity and healing from the experience of loss.", "source": "Divine Healing Codes", "log": []}, {"id": "code_quantum_1", "modality": "Quantum Healing Codes", "title": "Root Chakra Balance", "code": "13 23 251", "use": "Optimizing and balancing the root/base chakra (red)", "instructions": "Write, trace in the air, or mentally hold 13 23 251. Place your awareness at the base of the spine. Set intention for groundedness, safety, and root energy restoration. Spaces between numbers are important — use them exactly as written.", "source": "Quantum/Divine Healing Codes (channeled, public domain)", "log": []}, {"id": "code_quantum_2", "modality": "Quantum Healing Codes", "title": "Sacral Chakra Balance", "code": "54 28 131", "use": "Optimizing and balancing the sacral chakra (orange) — creativity, flow, pleasure, emotion", "instructions": "Write, trace, or mentally hold 54 28 131 with awareness at the lower abdomen below the navel. Intention: creative flow, emotional fluidity, healthy boundaries.", "source": "Quantum/Divine Healing Codes", "log": []}, {"id": "code_quantum_3", "modality": "Quantum Healing Codes", "title": "Solar Plexus Chakra Balance", "code": "80 03 011", "use": "Optimizing and balancing the solar plexus chakra (yellow) — personal power, confidence, will", "instructions": "Write, trace, or mentally hold 80 03 011 with awareness in the upper abdomen. Intention: personal power, agency, self-trust.", "source": "Quantum/Divine Healing Codes", "log": []}, {"id": "code_quantum_4", "modality": "Quantum Healing Codes", "title": "Heart Chakra Balance", "code": "54 56 821", "use": "Optimizing and balancing the heart chakra (green) — love, compassion, connection", "instructions": "Write, trace, or mentally hold 54 56 821 with awareness at the center of the chest. Intention: open heart, self-love, connection to others.", "source": "Quantum/Divine Healing Codes", "log": []}, {"id": "code_quantum_5", "modality": "Quantum Healing Codes", "title": "Throat Chakra Balance", "code": "77 74 089", "use": "Optimizing and balancing the throat chakra (blue) — authentic expression, communication", "instructions": "Write, trace, or mentally hold 77 74 089 with awareness at the throat. Intention: clear, truthful, authentic communication.", "source": "Quantum/Divine Healing Codes", "log": []}, {"id": "code_quantum_6", "modality": "Quantum Healing Codes", "title": "Third Eye Chakra Balance", "code": "82 88 133", "use": "Optimizing and balancing the third eye chakra (indigo) — intuition, inner vision, psychic perception", "instructions": "Write, trace, or mentally hold 82 88 133 with awareness between the brows. Intention: clear inner vision, heightened intuition, clarity of perception.", "source": "Quantum/Divine Healing Codes", "log": []}, {"id": "code_quantum_7", "modality": "Quantum Healing Codes", "title": "Crown Chakra Balance", "code": "10 01 688", "use": "Optimizing and balancing the crown chakra (white/violet) — divine connection, higher consciousness", "instructions": "Write, trace, or mentally hold 10 01 688 with awareness at the top of the head. Intention: open channel to higher guidance, divine alignment.", "source": "Quantum/Divine Healing Codes", "log": []}, {"id": "code_quantum_8", "modality": "Quantum Healing Codes", "title": "All Chakras / Master Chakra", "code": "34 50 824", "use": "Optimizing and balancing all chakras simultaneously", "instructions": "Write, trace, or mentally hold 34 50 824 with the intention of full chakra system alignment. Good for general energetic maintenance or before meditation/spiritual practice.", "source": "Quantum/Divine Healing Codes", "log": []}, {"id": "code_quantum_9", "modality": "Quantum Healing Codes", "title": "Third Eye Opening", "code": "88 44 242", "use": "Opening and activating the third eye — use only if permitted in your current life path", "instructions": "Write or hold 88 44 242 with clear intention and only after checking in with your Higher Self. This is a high-frequency code — approach with respect and openness rather than force.", "source": "Quantum/Divine Healing Codes", "log": []}, {"id": "code_quantum_10", "modality": "Quantum Healing Codes", "title": "Spiritual Intuition Growth", "code": "55 76 781", "use": "Growing and developing spiritual intuition", "instructions": "Write, repeat, or hold 55 76 781 with intention to deepen your intuitive knowing. Use regularly as part of spiritual practice.", "source": "Quantum/Divine Healing Codes", "log": []}, {"id": "code_quantum_11", "modality": "Quantum Healing Codes", "title": "Spirit Self-Healing", "code": "88 27 465", "use": "Quantum healing of the spirit body — accelerating spiritual healing processes", "instructions": "Write or hold 88 27 465 with the intention of your spirit body being healed and restored. Consult your Higher Self for appropriateness. This code is said to quicken processes that might otherwise take much longer.", "source": "Quantum/Divine Healing Codes", "log": []}, {"id": "code_quantum_12", "modality": "Quantum Healing Codes", "title": "Spiritual Sovereignty / Freedom from Darkness", "code": "43 33 551", "use": "Freedom from negative forces; claiming spiritual sovereignty and protection", "instructions": "Write or hold 43 33 551 with a clear declaration of your spiritual sovereignty. Use when you feel energetically compromised, after negative encounters, or as a regular protective practice.", "source": "Quantum/Divine Healing Codes", "log": []}, {"id": "code_quantum_13", "modality": "Quantum Healing Codes", "title": "Communication with Those in Heaven", "code": "996 812 551", "use": "Facilitating communication with loved ones who have passed; thinning the veil", "instructions": "Write or hold 996 812 551 with an open, loving intention to connect. Best used in a quiet, meditative state before sleep or during a dedicated communication session. Pair with an intentional request to a specific person.", "source": "Quantum/Divine Healing Codes", "log": []}, {"id": "code_quantum_14", "modality": "Quantum Healing Codes", "title": "Present Moment Focus", "code": "458 874 6996 8528", "use": "Focusing all energy fully in the Now moment", "instructions": "Write or hold 458 874 6996 8528 when you feel scattered, anxious about past or future, or want to anchor deeply into the present. This is particularly useful before meditation or dreamwork.", "source": "Quantum/Divine Healing Codes", "log": []}, {"id": "code_quantum_15", "modality": "Quantum Healing Codes", "title": "Karmic Debt Absolution", "code": "1123 4561 8729 11 11 72654", "use": "Releasing and clearing karmic debt", "instructions": "Write or hold 1123 4561 8729 11 11 72654 with genuine intention to release karmic patterns. This is a longer code — write it carefully. Use with humility and willingness to change.", "source": "Quantum/Divine Healing Codes", "log": []}, {"id": "code_quantum_16", "modality": "Quantum Healing Codes", "title": "Manifesting Help", "code": "11 67 692", "use": "Receiving assistance and support in the process of manifesting desires", "instructions": "Write or hold 11 67 692 while holding your intention clearly. This code invites help from higher forces in the manifestation process — pair with gratitude and clear specificity of desire.", "source": "Quantum/Divine Healing Codes", "log": []}, {"id": "code_dream_1", "modality": "Dream Work", "title": "OBE / Exploration Sleep (Gateway)", "code": "Count 11–20 + roll technique", "use": "Initiating out-of-body exploration during sleep and lucid dreaming", "instructions": "Enter a relaxed state in bed. Visualize yourself floating upward, then turn and slowly roll over like a log floating in water. Float up, remaining calm and serene. Float down, turn and roll back. Then move into natural sleep by counting slowly from 11 to 20. Repeat and intend to remember this process in the sleep state.", "source": "Monroe Institute Gateway Experience — Discovery #5: Exploration Sleep", "log": []}, {"id": "code_dream_2", "modality": "Dream Work", "title": "Vivid Dream Enhancement", "code": "Grabovoi: 8714 5688 0", "use": "Enhancing dream vividness, clarity, and recall", "instructions": "Before sleep, write or hold 8714 5688 0 with the intention of experiencing vivid, clear, memorable dreams. Pair with setting a clear dream intention for the night.", "source": "Grabovoi / Dream Work codes", "log": []}, {"id": "code_dream_3", "modality": "Dream Work", "title": "Dream Communication with Passed Loved Ones", "code": "996 812 551 + Gateway sleep", "use": "Opening the channel for receiving visits or communications from those who have passed, through dreams", "instructions": "Before sleep, write or hold 996 812 551 (communication with those in Heaven). Then use the Gateway sleep induction (count 1-20, breathe deeply 5 times). Set a clear spoken or written intention naming the person you wish to connect with. Stay open rather than expectant.", "source": "Quantum Healing Codes + Monroe Institute Gateway", "log": []}, {"id": "code_dream_4", "modality": "Dream Work", "title": "Dream Incubation / Receiving Guidance", "code": "Grabovoi: 519 718 5", "use": "Setting an intention to receive specific guidance, answers, or messages through dreams", "instructions": "Before sleep, write or hold 519 718 5 while clearly stating your question or request for guidance. Speak it aloud or write it down. Keep a journal at your bedside. Upon waking, write immediately — even fragments — before moving or looking at screens.", "source": "Grabovoi / Dream Work", "log": []}, {"id": "code_dream_5", "modality": "Dream Work", "title": "Lucid Dreaming Activation", "code": "Grabovoi: 4838 7081", "use": "Activating consciousness during the dream state for lucid dreaming", "instructions": "Before sleep, write or hold 4838 7081 with the clear intention to become aware within your dreams. During the day, ask yourself repeatedly: 'Am I dreaming?' — this primes the habit to carry into sleep. Upon noticing dream signs in a dream, remember the code and allow awareness to expand.", "source": "Grabovoi / Dream Work", "log": []}, {"id": "code_dream_6", "modality": "Dream Work", "title": "Dream Recall Enhancement", "code": "Gateway: right hand to forehead", "use": "Improving memory of dreams upon waking", "instructions": "Upon waking, before moving, close your eyes and softly touch the fingers of your right hand to the center of your forehead (Gateway memory recall technique). Hold the intention to remember your dream. Then remain still for a few moments before writing. Even a single image, emotion, or word is enough to unravel the full dream.", "source": "Monroe Institute Gateway Intermediate Workbook", "log": []}, {"id": "code_dream_7", "modality": "Dream Work", "title": "Healing the Dream Body", "code": "Quantum: 88 27 465 + purple energy", "use": "Healing wounds, trauma, or energy patterns encountered in the dream state", "instructions": "After a difficult or healing dream, enter a quiet state. Hold 88 27 465 (spirit self-healing) while simultaneously using the Gateway purple energy technique: inhale deeply, think of cool purple healing energy, look inwardly at the dream material that needs healing, and send purple energy to it saying 'Heal. Balance.' Exhale.", "source": "Quantum Healing Codes + Monroe Institute Gateway", "log": []}];
+const CODES_MODALITIES_DEFAULT = ['Gateway / Monroe Institute','Grabovoi','Divine Healing Codes','Quantum Healing Codes','Dream Work'];
+
+function getCodesModalities() {
+  try {
+    var custom = JSON.parse(localStorage.getItem('gt_codes_modalities') || 'null');
+    if (custom) return ['All'].concat(custom);
+  } catch(e) {}
+  return ['All'].concat(CODES_MODALITIES_DEFAULT);
+}
+
+function addCodesModality(name) {
+  try {
+    var custom = JSON.parse(localStorage.getItem('gt_codes_modalities') || 'null') || CODES_MODALITIES_DEFAULT.slice();
+    if (!custom.includes(name)) {
+      custom.push(name);
+      localStorage.setItem('gt_codes_modalities', JSON.stringify(custom));
+    }
+  } catch(e) {}
+}
+
+const CODES_MODALITIES = getCodesModalities();
+
+function getCodesData() {
+  try {
+    var stored = JSON.parse(localStorage.getItem('gt_codes') || 'null');
+    if (!stored) {
+      localStorage.setItem('gt_codes', JSON.stringify(CODES_SEED_DATA));
+      return CODES_SEED_DATA;
+    }
+    // Migration: add any seed entries missing from stored
+    var storedIds = stored.map(function(e){ return e.id; });
+    var missing = CODES_SEED_DATA.filter(function(e){ return storedIds.indexOf(e.id) === -1; });
+    if (missing.length) {
+      var merged = stored.concat(missing);
+      localStorage.setItem('gt_codes', JSON.stringify(merged));
+      return merged;
+    }
+    return stored;
+  } catch(e) { return CODES_SEED_DATA; }
+}
+
+function saveCodesData(entries) {
+  try { localStorage.setItem('gt_codes', JSON.stringify(entries)); } catch(e) {}
+}
+
+let _codesModalityFilter = 'All';
+let _codesSearchQ = '';
+
+function renderCodes(dest) {
+  if (!dest) return;
+  dest.innerHTML = `
+    <div style="max-width:740px;margin:0 auto;padding:24px 0 60px;">
+      <div style="font-family:'Space Mono',monospace;font-size:.55rem;letter-spacing:.12em;text-transform:uppercase;color:var(--moon);margin-bottom:6px;">⌗ Codes</div>
+      <div style="font-family:'Cormorant Garamond',serif;font-size:.95rem;color:rgba(201,185,154,.45);font-style:italic;margin-bottom:24px;">Vibrational sequences, numerical codes, and techniques for healing, manifestation, and consciousness work.</div>
+
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;">
+        <div style="position:relative;flex:1;min-width:180px;">
+          <span style="position:absolute;left:11px;top:50%;transform:translateY(-50%);opacity:.4;font-size:.8rem;">⌕</span>
+          <input id="codes-search" type="text" placeholder="Search codes, uses, instructions…" value="${_codesSearchQ}"
+            style="width:100%;background:rgba(255,255,255,.04);border:1px solid rgba(201,185,154,.22);color:var(--parchment);font-family:'Cormorant Garamond',serif;font-size:.95rem;padding:9px 13px 9px 34px;outline:none;box-sizing:border-box;"
+            oninput="_codesSearchQ=this.value;renderCodesList()">
+        </div>
+        <select id="codes-modality-filter" onchange="_codesModalityFilter=this.value;renderCodesList()"
+          style="background:#1a1820;border:1px solid rgba(201,185,154,.22);color:var(--parchment);font-family:'Space Mono',monospace;font-size:.65rem;padding:9px 13px;outline:none;cursor:pointer;">
+          ${getCodesModalities().map(m=>`<option value="${m}" ${m===_codesModalityFilter?'selected':''}>${m}</option>`).join('')}
+        </select>
+        <button onclick="openCodeModal()" style="font-family:'Space Mono',monospace;font-size:.55rem;letter-spacing:.1em;text-transform:uppercase;padding:9px 18px;border:1px solid rgba(201,185,154,.3);background:transparent;color:rgba(201,185,154,.7);cursor:pointer;white-space:nowrap;">+ Add Code</button>
+        <button onclick="openAddModalityModal()" style="font-family:'Space Mono',monospace;font-size:.55rem;letter-spacing:.1em;text-transform:uppercase;padding:9px 14px;border:1px solid rgba(201,185,154,.2);background:transparent;color:rgba(201,185,154,.5);cursor:pointer;white-space:nowrap;" title="Add a new modality category">⊕</button>
+      </div>
+      <div style="margin-bottom:24px;padding:16px 18px;background:rgba(107,79,138,.04);border:1px solid rgba(107,79,138,.15);">
+        <div style="font-family:'Space Mono',monospace;font-size:.5rem;letter-spacing:.1em;text-transform:uppercase;color:rgba(155,107,171,.6);margin-bottom:10px;">✦ Find a Code</div>
+        <div style="display:flex;gap:8px;">
+          <input id="codes-ai-input" type="text" placeholder="Describe what you need… e.g. anxiety, connecting with Mariam, lucid dreaming…"
+            style="flex:1;background:rgba(255,255,255,.04);border:1px solid rgba(107,79,138,.2);color:var(--parchment);font-family:'Cormorant Garamond',serif;font-size:.95rem;padding:9px 13px;outline:none;"
+            onkeydown="if(event.key==='Enter')findRelevantCodes()">
+          <button onclick="findRelevantCodes()" id="codes-ai-btn" class="astro-gen-btn" style="flex-shrink:0;">✦ Find</button>
+        </div>
+        <div id="codes-ai-result" style="display:none;margin-top:12px;"></div>
+      </div>
+      <div id="codes-list"></div>
+    </div>`;
+  renderCodesList();
+}
+
+function renderCodesList() {
+  const list = document.getElementById('codes-list');
+  if (!list) return;
+  let entries = getCodesData();
+  const q = _codesSearchQ.trim().toLowerCase();
+  if (_codesModalityFilter !== 'All') {
+    entries = entries.filter(e => e.modality === _codesModalityFilter);
+  }
+  if (q) {
+    entries = entries.filter(e =>
+      (e.title||'').toLowerCase().includes(q) ||
+      (e.code||'').toLowerCase().includes(q) ||
+      (e.use||'').toLowerCase().includes(q) ||
+      (e.instructions||'').toLowerCase().includes(q) ||
+      (e.modality||'').toLowerCase().includes(q) ||
+      (e.log||[]).some(l => (l.note||'').toLowerCase().includes(q))
+    );
+  }
+
+  const modalityColor = {
+    'Gateway / Monroe Institute': '#c9a84c',
+    'Grabovoi': 'rgba(155,107,171,.8)',
+    'Divine Healing Codes': 'rgba(107,185,201,.8)'
+  };
+
+  if (!entries.length) {
+    list.innerHTML = `<div style="font-family:'Cormorant Garamond',serif;font-size:1rem;color:rgba(201,185,154,.35);font-style:italic;padding:20px 0;">No codes found.</div>`;
+    return;
+  }
+
+  list.innerHTML = entries.map(e => {
+    const col = modalityColor[e.modality] || 'rgba(201,185,154,.5)';
+    const logCount = (e.log||[]).length;
+    return `<div style="margin-bottom:16px;padding:18px 20px;background:rgba(255,255,255,.02);border:1px solid rgba(201,185,154,.1);border-left:3px solid ${col};">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px;">
+        <div style="flex:1;">
+          <div style="font-family:'Space Mono',monospace;font-size:.45rem;letter-spacing:.1em;text-transform:uppercase;color:${col};margin-bottom:3px;">${e.modality}</div>
+          <div style="font-family:'Cormorant Garamond',serif;font-size:1.15rem;color:var(--parchment);margin-bottom:2px;">${e.title}</div>
+          <div style="font-family:'Space Mono',monospace;font-size:.7rem;color:${col};letter-spacing:.05em;">${e.code}</div>
+        </div>
+        <div style="display:flex;gap:6px;flex-shrink:0;margin-left:12px;">
+          <button onclick="openCodeLogModal('${e.id}')" class="astro-gen-btn" style="font-size:.48rem;padding:5px 10px;">+ Log</button>
+          <button onclick="openCodeModal('${e.id}')" style="font-family:'Space Mono',monospace;font-size:.45rem;padding:5px 10px;border:1px solid rgba(201,185,154,.2);background:transparent;color:rgba(201,185,154,.5);cursor:pointer;">Edit</button>
+        </div>
+      </div>
+      <div style="font-family:'Cormorant Garamond',serif;font-size:.9rem;color:rgba(240,235,224,.55);line-height:1.7;margin-bottom:8px;font-style:italic;">${e.use}</div>
+      <details style="margin-bottom:8px;">
+        <summary style="font-family:'Space Mono',monospace;font-size:.48rem;letter-spacing:.08em;text-transform:uppercase;color:rgba(201,185,154,.4);cursor:pointer;list-style:none;">▸ Instructions</summary>
+        <div style="font-family:'Cormorant Garamond',serif;font-size:.92rem;color:rgba(240,235,224,.7);line-height:1.8;padding:10px 0 4px;">${e.instructions}</div>
+        ${e.source ? `<div style="font-family:'Space Mono',monospace;font-size:.42rem;color:rgba(201,185,154,.3);margin-top:4px;">Source: ${e.source}</div>` : ''}
+      </details>
+      ${logCount ? `<details>
+        <summary style="font-family:'Space Mono',monospace;font-size:.48rem;letter-spacing:.08em;text-transform:uppercase;color:rgba(201,185,154,.4);cursor:pointer;list-style:none;">▸ Log (${logCount} ${logCount===1?'entry':'entries'})</summary>
+        <div style="padding:8px 0;">
+          ${e.log.slice().reverse().map(l => `<div style="padding:8px 10px;background:rgba(255,255,255,.025);border-left:2px solid rgba(201,185,154,.15);margin-bottom:6px;">
+            <div style="font-family:'Space Mono',monospace;font-size:.43rem;color:rgba(201,185,154,.35);margin-bottom:3px;">${l.date}</div>
+            <div style="font-family:'Cormorant Garamond',serif;font-size:.9rem;color:rgba(240,235,224,.7);line-height:1.7;white-space:pre-wrap;">${l.note}</div>
+          </div>`).join('')}
+        </div>
+      </details>` : ''}
+    </div>`;
+  }).join('');
+}
+
+function openCodeLogModal(codeId) {
+  const entries = getCodesData();
+  const e = entries.find(x => x.id === codeId);
+  if (!e) return;
+  const wrap = document.createElement('div');
+  wrap.id = 'code-log-modal-wrap';
+  wrap.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.85);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px;';
+  wrap.innerHTML = `
+    <div style="background:#1a1820;border:1px solid rgba(201,185,154,.2);padding:24px;max-width:500px;width:100%;">
+      <div style="font-family:'Space Mono',monospace;font-size:.52rem;letter-spacing:.1em;text-transform:uppercase;color:var(--moon);margin-bottom:6px;">⌗ Log Usage</div>
+      <div style="font-family:'Cormorant Garamond',serif;font-size:1.1rem;color:var(--parchment);margin-bottom:16px;">${e.title}</div>
+      <label style="font-family:'Space Mono',monospace;font-size:.5rem;letter-spacing:.08em;text-transform:uppercase;color:rgba(201,185,154,.5);display:block;margin-bottom:6px;">Notes on this session</label>
+      <textarea id="code-log-note" rows="5" placeholder="When did you use it? What was the context? What did you experience?" style="width:100%;background:rgba(255,255,255,.04);border:1px solid rgba(201,185,154,.22);color:var(--parchment);font-family:'Cormorant Garamond',serif;font-size:.98rem;padding:9px 12px;outline:none;resize:vertical;line-height:1.7;box-sizing:border-box;margin-bottom:16px;"></textarea>
+      <div style="display:flex;gap:10px;">
+        <button onclick="saveCodeLog('${codeId}')" style="font-family:'Space Mono',monospace;font-size:.55rem;letter-spacing:.1em;text-transform:uppercase;padding:10px 20px;border:1px solid rgba(201,185,154,.4);background:transparent;color:rgba(201,185,154,.8);cursor:pointer;">Save</button>
+        <button onclick="document.getElementById('code-log-modal-wrap').remove()" style="font-family:'Space Mono',monospace;font-size:.55rem;letter-spacing:.1em;text-transform:uppercase;padding:10px 20px;border:1px solid rgba(201,185,154,.15);background:transparent;color:rgba(201,185,154,.4);cursor:pointer;">Cancel</button>
+      </div>
+    </div>`;
+  document.body.appendChild(wrap);
+  setTimeout(() => document.getElementById('code-log-note')?.focus(), 50);
+}
+
+function saveCodeLog(codeId) {
+  const note = (document.getElementById('code-log-note')||{}).value||'';
+  if (!note.trim()) { gtAlert('Add a note before saving.'); return; }
+  const entries = getCodesData();
+  const idx = entries.findIndex(x => x.id === codeId);
+  if (idx === -1) return;
+  if (!entries[idx].log) entries[idx].log = [];
+  entries[idx].log.push({ date: localDateStr(), note: note.trim() });
+  saveCodesData(entries);
+  const wrap = document.getElementById('code-log-modal-wrap');
+  if (wrap) wrap.remove();
+  renderCodesList();
+}
+
+function openCodeModal(codeId) {
+  const entries = getCodesData();
+  const e = codeId ? entries.find(x => x.id === codeId) : null;
+  const wrap = document.createElement('div');
+  wrap.id = 'code-modal-wrap';
+  wrap.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.85);z-index:9999;display:flex;align-items:flex-start;justify-content:center;padding:16px;overflow-y:auto;';
+  const modalityOpts = ['Gateway / Monroe Institute','Grabovoi','Divine Healing Codes','Other'].map(m =>
+    `<option value="${m}" ${e&&e.modality===m?'selected':''}>${m}</option>`).join('');
+  wrap.innerHTML = `
+    <div style="background:#1a1820;border:1px solid rgba(201,185,154,.2);padding:24px;max-width:620px;width:100%;margin-top:16px;">
+      <div style="font-family:'Space Mono',monospace;font-size:.52rem;letter-spacing:.1em;text-transform:uppercase;color:var(--moon);margin-bottom:18px;">⌗ ${e?'Edit':'New'} Code</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;">
+        <div><label style="font-family:'Space Mono',monospace;font-size:.5rem;letter-spacing:.08em;text-transform:uppercase;color:rgba(201,185,154,.5);display:block;margin-bottom:5px;">Title</label>
+          <input id="cd-title" value="${e?e.title.replace(/"/g,'&quot;'):''}" style="width:100%;background:rgba(255,255,255,.04);border:1px solid rgba(201,185,154,.22);color:var(--parchment);font-family:'Cormorant Garamond',serif;font-size:1rem;padding:8px 11px;outline:none;box-sizing:border-box;"></div>
+        <div><label style="font-family:'Space Mono',monospace;font-size:.5rem;letter-spacing:.08em;text-transform:uppercase;color:rgba(201,185,154,.5);display:block;margin-bottom:5px;">Code / Sequence</label>
+          <input id="cd-code" value="${e?e.code:''}" style="width:100%;background:rgba(255,255,255,.04);border:1px solid rgba(201,185,154,.22);color:var(--parchment);font-family:'Space Mono',monospace;font-size:.85rem;padding:8px 11px;outline:none;box-sizing:border-box;"></div>
+      </div>
+      <div style="margin-bottom:14px;"><label style="font-family:'Space Mono',monospace;font-size:.5rem;letter-spacing:.08em;text-transform:uppercase;color:rgba(201,185,154,.5);display:block;margin-bottom:5px;">Modality</label>
+        <select id="cd-modality" style="width:100%;background:#1a1820;border:1px solid rgba(201,185,154,.22);color:var(--parchment);font-family:'Space Mono',monospace;font-size:.72rem;padding:8px 11px;outline:none;">${modalityOpts}</select></div>
+      <div style="margin-bottom:14px;"><label style="font-family:'Space Mono',monospace;font-size:.5rem;letter-spacing:.08em;text-transform:uppercase;color:rgba(201,185,154,.5);display:block;margin-bottom:5px;">What it's used for</label>
+        <input id="cd-use" value="${e?e.use.replace(/"/g,'&quot;'):''}" style="width:100%;background:rgba(255,255,255,.04);border:1px solid rgba(201,185,154,.22);color:var(--parchment);font-family:'Cormorant Garamond',serif;font-size:.98rem;padding:8px 11px;outline:none;box-sizing:border-box;"></div>
+      <div style="margin-bottom:14px;"><label style="font-family:'Space Mono',monospace;font-size:.5rem;letter-spacing:.08em;text-transform:uppercase;color:rgba(201,185,154,.5);display:block;margin-bottom:5px;">Instructions</label>
+        <textarea id="cd-instructions" rows="5" style="width:100%;background:rgba(255,255,255,.04);border:1px solid rgba(201,185,154,.22);color:var(--parchment);font-family:'Cormorant Garamond',serif;font-size:.98rem;padding:8px 11px;outline:none;resize:vertical;line-height:1.7;box-sizing:border-box;">${e?e.instructions:''}</textarea></div>
+      <div style="margin-bottom:18px;"><label style="font-family:'Space Mono',monospace;font-size:.5rem;letter-spacing:.08em;text-transform:uppercase;color:rgba(201,185,154,.5);display:block;margin-bottom:5px;">Source (optional)</label>
+        <input id="cd-source" value="${e?e.source||'':''}" style="width:100%;background:rgba(255,255,255,.04);border:1px solid rgba(201,185,154,.22);color:var(--parchment);font-family:'Space Mono',monospace;font-size:.72rem;padding:8px 11px;outline:none;box-sizing:border-box;"></div>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;">
+        <button onclick="saveCode('${e?e.id:''}')" style="font-family:'Space Mono',monospace;font-size:.55rem;letter-spacing:.1em;text-transform:uppercase;padding:10px 22px;border:1px solid rgba(201,185,154,.4);background:transparent;color:rgba(201,185,154,.8);cursor:pointer;">Save</button>
+        <button onclick="document.getElementById('code-modal-wrap').remove()" style="font-family:'Space Mono',monospace;font-size:.55rem;letter-spacing:.1em;text-transform:uppercase;padding:10px 22px;border:1px solid rgba(201,185,154,.15);background:transparent;color:rgba(201,185,154,.4);cursor:pointer;">Cancel</button>
+        ${e && !e.id.startsWith('code_gateway_') && !e.id.startsWith('code_grabovoi_') && !e.id.startsWith('code_divine_') ? `<button onclick="deleteCode('${e.id}')" style="font-family:'Space Mono',monospace;font-size:.55rem;letter-spacing:.1em;text-transform:uppercase;padding:10px 22px;border:1px solid rgba(180,80,80,.3);background:transparent;color:rgba(180,80,80,.6);cursor:pointer;margin-left:auto;">Delete</button>` : ''}
+      </div>
+    </div>`;
+  document.body.appendChild(wrap);
+}
+
+function saveCode(existingId) {
+  const title = (document.getElementById('cd-title')||{}).value||'';
+  const code = (document.getElementById('cd-code')||{}).value||'';
+  const modality = (document.getElementById('cd-modality')||{}).value||'Other';
+  const use = (document.getElementById('cd-use')||{}).value||'';
+  const instructions = (document.getElementById('cd-instructions')||{}).value||'';
+  const source = (document.getElementById('cd-source')||{}).value||'';
+  if (!title.trim() || !code.trim()) { gtAlert('Title and code are required.'); return; }
+  const entries = getCodesData();
+  if (existingId) {
+    const idx = entries.findIndex(x => x.id === existingId);
+    if (idx > -1) entries[idx] = { ...entries[idx], title:title.trim(), code:code.trim(), modality, use, instructions, source };
+  } else {
+    entries.push({ id:'code_'+Date.now(), title:title.trim(), code:code.trim(), modality, use, instructions, source, log:[] });
+  }
+  saveCodesData(entries);
+  const wrap = document.getElementById('code-modal-wrap');
+  if (wrap) wrap.remove();
+  renderCodesList();
+}
+
+function deleteCode(codeId) {
+  if (!confirm('Delete this code?')) return;
+  const entries = getCodesData().filter(x => x.id !== codeId);
+  saveCodesData(entries);
+  const wrap = document.getElementById('code-modal-wrap');
+  if (wrap) wrap.remove();
+  renderCodesList();
+}
+
+
+async function findRelevantCodes() {
+  const apiKey = getApiKey();
+  if (!apiKey) { gtAlert('Add your API key in Settings first.'); return; }
+  const query = (document.getElementById('codes-ai-input')||{}).value||'';
+  if (!query.trim()) { gtAlert('Describe what you need first.'); return; }
+
+  const btn = document.getElementById('codes-ai-btn');
+  const result = document.getElementById('codes-ai-result');
+  if (btn) { btn.disabled = true; btn.textContent = '⟳ Searching…'; }
+  if (result) { result.style.display = 'block'; result.innerHTML = '<div style="font-family:\'Space Mono\',monospace;font-size:.55rem;color:rgba(201,185,154,.35);">Searching the codes…</div>'; }
+
+  const allCodes = getCodesData();
+  const digest = allCodes.map(c => `ID: ${c.id} | [${c.modality}] "${c.title}" | Code: ${c.code} | Use: ${c.use}`).join('\n');
+
+  const chartSummary = 'Libra Sun, Aries Moon, Capricorn Rising, Scorpio stellium, Pure Generator 4/6. Active dreamworker, Reiki practitioner, claircognizant/clairsentient.';
+
+  const prompt = `You are a code librarian for a spiritual practitioner named Tiff. She has a library of healing and consciousness codes across multiple modalities. Given her request, identify the 1-4 most relevant codes from her library and explain briefly why each is relevant.
+
+TIFF'S NATURE: ${chartSummary}
+
+HER REQUEST: "${query}"
+
+ALL AVAILABLE CODES:
+${digest}
+
+Respond in this exact JSON format:
+[
+  {
+    "id": "exact code id from the list",
+    "reason": "1-2 sentences on why this code fits her request"
+  }
+]
+
+Return ONLY valid JSON. No preamble. If nothing is relevant, return [].`;
+
+  try {
+    const data = await claudeAPI(apiKey, { model:'claude-sonnet-4-6', max_tokens:800, messages:[{role:'user', content:prompt}] });
+    const text = data.content?.find(c=>c.type==='text')?.text||'';
+    const clean = text.replace(/```json|```/g,'').trim();
+    const matches = JSON.parse(clean);
+
+    if (!matches.length) {
+      result.innerHTML = '<div style="font-family:\'Cormorant Garamond\',serif;font-size:.95rem;color:rgba(201,185,154,.4);font-style:italic;">No close matches found — try different wording, or add a new code for this purpose.</div>';
+      return;
+    }
+
+    const allCodes2 = getCodesData();
+    const modalityColor = {
+      'Gateway / Monroe Institute': '#c9a84c',
+      'Grabovoi': 'rgba(155,107,171,.8)',
+      'Divine Healing Codes': 'rgba(107,185,201,.8)',
+      'Quantum Healing Codes': 'rgba(107,201,155,.8)',
+      'Dream Work': 'rgba(171,107,155,.8)'
+    };
+
+    result.innerHTML = '<div style="font-family:\'Space Mono\',monospace;font-size:.48rem;letter-spacing:.08em;text-transform:uppercase;color:rgba(155,107,171,.5);margin-bottom:12px;">✦ Recommended Codes</div>' +
+      matches.map(m => {
+        const c = allCodes2.find(x => x.id === m.id);
+        if (!c) return '';
+        const col = modalityColor[c.modality] || 'rgba(201,185,154,.5)';
+        return `<div style="padding:12px 14px;background:rgba(255,255,255,.025);border-left:2px solid ${col};margin-bottom:10px;">
+          <div style="font-family:'Space Mono',monospace;font-size:.44rem;color:${col};margin-bottom:3px;">${c.modality}</div>
+          <div style="font-family:'Cormorant Garamond',serif;font-size:1.05rem;color:var(--parchment);margin-bottom:2px;">${c.title}</div>
+          <div style="font-family:'Space Mono',monospace;font-size:.68rem;color:${col};margin-bottom:6px;">${c.code}</div>
+          <div style="font-family:'Cormorant Garamond',serif;font-size:.88rem;color:rgba(240,235,224,.6);line-height:1.7;font-style:italic;">${m.reason}</div>
+          <button onclick="openCodeLogModal('${c.id}')" class="astro-gen-btn" style="font-size:.45rem;padding:4px 10px;margin-top:8px;">+ Log Use</button>
+        </div>`;
+      }).join('');
+  } catch(err) {
+    if (result) result.innerHTML = `<div style="font-family:'Space Mono',monospace;font-size:.55rem;color:rgba(201,185,154,.35);">Error: ${err.message}</div>`;
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = '✦ Find'; }
+  }
+}
+
+function openAddModalityModal() {
+  const wrap = document.createElement('div');
+  wrap.id = 'add-modality-wrap';
+  wrap.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.85);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px;';
+  const current = getCodesModalities().filter(m => m !== 'All');
+  wrap.innerHTML = `
+    <div style="background:#1a1820;border:1px solid rgba(201,185,154,.2);padding:24px;max-width:440px;width:100%;">
+      <div style="font-family:'Space Mono',monospace;font-size:.52rem;letter-spacing:.1em;text-transform:uppercase;color:var(--moon);margin-bottom:16px;">⊕ Manage Modalities</div>
+      <div style="margin-bottom:14px;">
+        <div style="font-family:'Space Mono',monospace;font-size:.48rem;letter-spacing:.07em;text-transform:uppercase;color:rgba(201,185,154,.4);margin-bottom:8px;">Current modalities</div>
+        <div id="modality-list" style="display:flex;flex-wrap:wrap;gap:6px;">
+          ${current.map(m => `<span style="font-family:'Space Mono',monospace;font-size:.55rem;padding:4px 10px;border:1px solid rgba(201,185,154,.2);color:rgba(201,185,154,.6);">${m}</span>`).join('')}
+        </div>
+      </div>
+      <div style="margin-bottom:18px;">
+        <label style="font-family:'Space Mono',monospace;font-size:.5rem;letter-spacing:.08em;text-transform:uppercase;color:rgba(201,185,154,.5);display:block;margin-bottom:6px;">Add new modality</label>
+        <div style="display:flex;gap:8px;">
+          <input id="new-modality-input" type="text" placeholder="e.g. Switchwords, Angel Numbers, Agesta…"
+            style="flex:1;background:rgba(255,255,255,.04);border:1px solid rgba(201,185,154,.22);color:var(--parchment);font-family:'Space Mono',monospace;font-size:.72rem;padding:8px 11px;outline:none;"
+            onkeydown="if(event.key==='Enter')saveNewModality()">
+          <button onclick="saveNewModality()" style="font-family:'Space Mono',monospace;font-size:.55rem;letter-spacing:.08em;text-transform:uppercase;padding:8px 14px;border:1px solid rgba(201,185,154,.35);background:transparent;color:rgba(201,185,154,.7);cursor:pointer;white-space:nowrap;">Add</button>
+        </div>
+      </div>
+      <button onclick="document.getElementById('add-modality-wrap').remove()" style="font-family:'Space Mono',monospace;font-size:.52rem;letter-spacing:.08em;text-transform:uppercase;padding:8px 18px;border:1px solid rgba(201,185,154,.15);background:transparent;color:rgba(201,185,154,.4);cursor:pointer;">Done</button>
+    </div>`;
+  document.body.appendChild(wrap);
+  setTimeout(() => document.getElementById('new-modality-input')?.focus(), 50);
+}
+
+function saveNewModality() {
+  const input = document.getElementById('new-modality-input');
+  const name = (input||{}).value||'';
+  if (!name.trim()) return;
+  addCodesModality(name.trim());
+  if (input) input.value = '';
+  // Refresh the list in the modal
+  const listEl = document.getElementById('modality-list');
+  if (listEl) {
+    const current = getCodesModalities().filter(m => m !== 'All');
+    listEl.innerHTML = current.map(m => `<span style="font-family:'Space Mono',monospace;font-size:.55rem;padding:4px 10px;border:1px solid rgba(201,185,154,.2);color:rgba(201,185,154,.6);">${m}</span>`).join('');
+  }
+  // Refresh the filter dropdown if visible
+  const filterSel = document.getElementById('codes-modality-filter');
+  if (filterSel) {
+    const mods = getCodesModalities();
+    filterSel.innerHTML = mods.map(m => `<option value="${m}" ${m===_codesModalityFilter?'selected':''}>${m}</option>`).join('');
+  }
+}
+
 function runGlobalSearch(raw) {
   const q = (raw || '').trim().toLowerCase();
   const meta = document.getElementById('global-search-meta');
@@ -7953,7 +8340,8 @@ function runGlobalSearch(raw) {
     dream: { label: 'Dream', color: 'rgba(155,107,171,.9)', icon: '🌙', open: e => openDream(e) },
     channel: { label: 'The Channel', color: 'rgba(201,185,154,.8)', icon: '◈', open: e => { switchTab('grimoire', document.getElementById('tab-btn-grimoire')); setTimeout(()=>switchGrimoire('channel'), 100); } },
     dreammagic: { label: 'Dream Magic', color: 'rgba(155,107,171,.9)', icon: '✦', open: e => { switchTab('dreams', document.getElementById('tab-btn-dreams')); setTimeout(()=>switchDreams('magic'), 100); } },
-    within: { label: 'Within', color: 'rgba(201,168,76,.8)', icon: '◈', open: e => { switchTab('practice', document.getElementById('tab-btn-practice')); setTimeout(()=>switchPractice('within'), 100); } }
+    within: { label: 'Within', color: 'rgba(201,168,76,.8)', icon: '◈', open: e => { switchTab('practice', document.getElementById('tab-btn-practice')); setTimeout(()=>switchPractice('within'), 100); } },
+    code: { label: 'Code', color: 'rgba(107,185,201,.8)', icon: '⌗', open: e => { switchTab('tools', document.getElementById('tab-btn-tools')); setTimeout(()=>switchTools('codes'), 100); } }
   };
 
   function matchGeneral(e) {
@@ -8001,7 +8389,19 @@ function runGlobalSearch(raw) {
   }
   const withinHits = withinSearchEntries.filter(e => matchWithin(e)).map(e => ({ ...e, body: e.summary||'', _type: 'within' }));
 
-  const allHits = [...dreamHits, ...spiritHits, ...preloadedHits, ...channelHits, ...dreamMagicHits, ...withinHits]
+  // Codes
+  const codeEntries = (typeof getCodesData==='function') ? getCodesData() : [];
+  function matchCode(e) {
+    return (e.title||'').toLowerCase().includes(q)
+      || (e.code||'').toLowerCase().includes(q)
+      || (e.use||'').toLowerCase().includes(q)
+      || (e.instructions||'').toLowerCase().includes(q)
+      || (e.modality||'').toLowerCase().includes(q)
+      || (e.log||[]).some(l => (l.note||'').toLowerCase().includes(q));
+  }
+  const codeHits = codeEntries.filter(e => matchCode(e)).map(e => ({ ...e, body: e.use||e.instructions||'', _type: 'code' }));
+
+  const allHits = [...dreamHits, ...spiritHits, ...preloadedHits, ...channelHits, ...dreamMagicHits, ...withinHits, ...codeHits]
     .sort((a, b) => (b.date || '').localeCompare(a.date || ''));
 
   if (meta) meta.textContent = allHits.length
@@ -8104,6 +8504,9 @@ function switchTools(type, btn) {
   } else if (type === 'wheel') {
     dest.innerHTML = '';
     renderWheelOfYear();
+  } else if (type === 'codes') {
+    dest.innerHTML = '';
+    renderCodes(dest);
   }
 }
 
@@ -12506,7 +12909,7 @@ try { renderInsights(); } catch(e) { console.error('renderInsights crashed:', e)
       'shadow':'practice','readings':'practice','gateway':'practice','moonintent':'practice','manifesting':'practice','within':'practice',
       'charts':'grimoire','people':'grimoire','elixirs':'grimoire','songs':'grimoire','comms':'grimoire',
       'ancestors':'grimoire','places':'grimoire','rituals':'grimoire','visitations':'grimoire','channel':'grimoire',
-      'herbalism':'tools','hblends':'tools','seasons':'tools','sacredDates':'tools','wheel':'tools',
+      'herbalism':'tools','hblends':'tools','seasons':'tools','sacredDates':'tools','wheel':'tools','codes':'tools',
       'incubation':'dreams','search':'insight',
       'patterns':'insight','prophecy':'insight','threads':'insight','dreamtimeline':'insight','symbols':'insight'};
     const resolvedTab = tabMap[lastTab] || lastTab;
