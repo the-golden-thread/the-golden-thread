@@ -435,6 +435,7 @@ h1 em { display:block; font-style:italic; font-weight:300; font-size:.42em; lett
     <button class="sub-tab-btn active" id="sub-btn-herbalism-t" onclick="switchTools('herbalism',this)">🌱 Herbs</button>
     <button class="sub-tab-btn" id="sub-btn-hblends-t" onclick="switchTools('hblends',this)">🫖 Blends</button>
     <button class="sub-tab-btn" id="sub-btn-seasons-t" onclick="switchTools('seasons',this)">🌿 Seasons</button>
+    <button class="sub-tab-btn" id="sub-btn-meditation-t" onclick="switchTools('meditation',this)">◎ Meditation</button>
     <button class="sub-tab-btn" id="sub-btn-sacredDates-t" onclick="switchTools('sacredDates',this)">◎ Sacred Dates</button>
     <button class="sub-tab-btn" id="sub-btn-wheel-t" onclick="switchTools('wheel',this)">☽ Wheel</button>
     <button class="sub-tab-btn" id="sub-btn-codes-t" onclick="switchTools('codes',this)">⌗ Codes</button>
@@ -564,6 +565,15 @@ h1 em { display:block; font-style:italic; font-weight:300; font-size:.42em; lett
     <div id="custom-trackers-grid" style="display:flex;flex-direction:column;gap:20px;"></div>
     <div id="custom-flash" style="font-family:'Space Mono',monospace;font-size:.58rem;color:rgba(201,185,154,.6);letter-spacing:.1em;text-align:center;opacity:0;transition:opacity .3s;height:20px;margin-top:8px;"></div>
   </div>
+
+  <!-- ✦ DREAM WEATHER ✦ -->
+  <div id="dream-weather-widget" style="max-width:720px;margin:0 auto 28px;"></div>
+
+  <!-- ✦ THIS DAY IN YOUR ARCHIVE ✦ -->
+  <div id="this-day-widget" style="max-width:720px;margin:0 auto 28px;"></div>
+
+  <!-- ✦ PROPHECY WATCH ✦ -->
+  <div id="prophecy-watch-widget" style="max-width:720px;margin:0 auto 40px;"></div>
 
   <div style="max-width:720px;margin:0 auto 48px;">
     <div style="text-align:center;margin-bottom:32px;">
@@ -6532,7 +6542,14 @@ function buildFullArchiveContext(opts) {
       c.log.slice(-2).map(function(l){ return '['+l.date+'] '+l.note.slice(0,100); }).join(' | ');
   }).join('\n') : '';
 
-  return {dreamDigest:dreamDigest, spiritDigest:spiritDigest, commDigest:commDigest, visitDigest:visitDigest, moonDigest:moonDigest, prophecyDigest:prophecyDigest, manifestDigest:manifestDigest, threadDigest:threadDigest, peopleDigest:peopleDigest, patternDigest:patternDigest, chartSummary:chartSummary, dreamCount:dreams.length, ancestorDigest:ancestorDigest, incubationDigest:incubationDigest, sigConfsDigest:sigConfsDigest, elixirDigest:elixirDigest, songDigest:songDigest, sacredDateDigest:sacredDateDigest, herbDigest:herbDigest, beingsDigest:beingsDigest, channelDigest:channelDigest, dreamMagicDigest:dreamMagicDigest, withinDigest:withinDigest, codesDigest:codesDigest};
+  // MEDITATION SESSIONS
+  var meditationSessions = [];
+  try { meditationSessions = JSON.parse(localStorage.getItem('gt_meditation_sessions') || '[]'); } catch(e) {}
+  var meditationDigest = meditationSessions.length ? meditationSessions.slice(-10).map(function(s) {
+    return '['+s.date+'] '+s.duration+'min | '+s.frequency+' | Intent: '+s.intention+(s.notes?' | Notes: '+s.notes.slice(0,100):'');
+  }).join('\n') : '';
+
+  return {dreamDigest:dreamDigest, spiritDigest:spiritDigest, commDigest:commDigest, visitDigest:visitDigest, moonDigest:moonDigest, prophecyDigest:prophecyDigest, manifestDigest:manifestDigest, threadDigest:threadDigest, peopleDigest:peopleDigest, patternDigest:patternDigest, chartSummary:chartSummary, dreamCount:dreams.length, ancestorDigest:ancestorDigest, incubationDigest:incubationDigest, sigConfsDigest:sigConfsDigest, elixirDigest:elixirDigest, songDigest:songDigest, sacredDateDigest:sacredDateDigest, herbDigest:herbDigest, beingsDigest:beingsDigest, channelDigest:channelDigest, dreamMagicDigest:dreamMagicDigest, withinDigest:withinDigest, codesDigest:codesDigest, meditationDigest:meditationDigest};
 }
 
 async function askArchive() {
@@ -6689,6 +6706,9 @@ ${ctx.dreamMagicDigest || 'No dream magic workings yet.'}
 
 WITHIN GROUP CALLS & HOMEWORK:
 ${ctx.withinDigest || 'No Within entries yet.'}
+
+RECENT MEDITATION SESSIONS:
+${ctx.meditationDigest || 'No sessions logged yet.'}
 
 NAMED PATTERNS: ${ctx.patternDigest}
 
@@ -8365,6 +8385,586 @@ function saveNewModality() {
   }
 }
 
+
+// ═══════════════════════════════════════════════════════════
+// MEDITATION
+// ═══════════════════════════════════════════════════════════
+
+const SOLFEGGIO = [
+  { hz: '174 Hz', name: 'Foundation & Safety', use: 'grounding, pain relief, sense of security', conditions: ['winter','shadow','grief','trauma'], spotify: '174 hz solfeggio frequency' },
+  { hz: '285 Hz', name: 'Tissue & Field Repair', use: 'healing physical body, energetic repair', conditions: ['healing','body','illness'], spotify: '285 hz solfeggio frequency' },
+  { hz: '396 Hz', name: 'Liberation from Fear', use: 'releasing guilt, fear, and grief', conditions: ['fear','guilt','grief','shadow'], spotify: '396 hz solfeggio frequency' },
+  { hz: '417 Hz', name: 'Clearing & Change', use: 'clearing negative energy, facilitating change', conditions: ['clearing','protection','change','autumn'], spotify: '417 hz solfeggio frequency' },
+  { hz: '432 Hz', name: 'Heart & Nature Alignment', use: 'heart opening, emotional balance, love', conditions: ['heart','love','spring','summer'], spotify: '432 hz solfeggio frequency' },
+  { hz: '528 Hz', name: 'Transformation & DNA', use: 'deep transformation, manifestation, miracles', conditions: ['transform','manifest','dream','summer'], spotify: '528 hz solfeggio miracle tone' },
+  { hz: '639 Hz', name: 'Connection & Relationships', use: 'harmonizing relationships, communication', conditions: ['relationship','connection','communication'], spotify: '639 hz solfeggio frequency' },
+  { hz: '741 Hz', name: 'Intuition & Expression', use: 'awakening intuition, self-expression, problem solving', conditions: ['intuition','expression','spring'], spotify: '741 hz solfeggio frequency' },
+  { hz: '852 Hz', name: 'Spiritual Order', use: 'returning to spiritual order, awakening inner strength', conditions: ['spiritual','awakening','inner'], spotify: '852 hz solfeggio frequency' },
+  { hz: '963 Hz', name: 'Crown & Divine Connection', use: 'pineal activation, divine connection, higher consciousness', conditions: ['divine','crown','channel','gateway'], spotify: '963 hz solfeggio pineal' },
+  { hz: '40 Hz Gamma', name: 'Gamma — Downloads & Clarity', use: 'enhanced perception, downloads, heightened consciousness', conditions: ['gamma','download','clarity','channel','gateway'], spotify: '40 hz gamma binaural beats' },
+  { hz: 'Theta 4-8 Hz', name: 'Theta — Dreamwork & Trance', use: 'lucid dreaming, deep meditation, trance states', conditions: ['dream','lucid','trance','theta','incubation'], spotify: 'theta binaural beats dreamwork' },
+];
+
+const GATEWAY_TAPES = [
+  { name: 'Wave I — Discovery #1: Orientation', use: 'first Focus 10 states, mind awake body asleep', spotify: 'Monroe Institute Wave 1 Discovery' },
+  { name: 'Wave I — Discovery #2: Introduction to Focus 10', use: 'deepening Focus 10', spotify: 'Monroe Institute Focus 10' },
+  { name: 'Wave I — Discovery #5: Exploration Sleep', use: 'OBE induction, exploration during sleep', spotify: 'Monroe Institute Exploration Sleep' },
+  { name: 'Wave II — Threshold', use: 'Focus 12, expanded awareness', spotify: 'Monroe Institute Wave 2 Threshold' },
+  { name: 'Wave III — Freedom', use: 'Focus 15, no time state, deeper exploration', spotify: 'Monroe Institute Wave 3 Freedom' },
+  { name: 'Wave IV — Adventure', use: 'Focus 21, bridge between physical and non-physical', spotify: 'Monroe Institute Wave 4 Adventure' },
+  { name: 'Wave V — Exploring Focus 27', use: 'Focus 27, reception area, contact with guides', spotify: 'Monroe Institute Wave 5' },
+];
+
+function getMeditationSessions() {
+  try { return JSON.parse(localStorage.getItem('gt_meditation_sessions') || '[]'); } catch(e) { return []; }
+}
+function saveMeditationSessions(sessions) {
+  try { localStorage.setItem('gt_meditation_sessions', JSON.stringify(sessions)); } catch(e) {}
+}
+
+let _meditationState = 'setup'; // 'setup', 'ready', 'logging'
+let _meditationSession = {};
+
+function renderMeditation(dest) {
+  if (!dest) return;
+  _meditationState = 'setup';
+  _meditationSession = {};
+  dest.innerHTML = `
+    <div style="max-width:680px;margin:0 auto;padding:24px 0 60px;">
+      <div style="font-family:'Space Mono',monospace;font-size:.55rem;letter-spacing:.12em;text-transform:uppercase;color:var(--moon);margin-bottom:6px;">◎ Meditation</div>
+      <div style="font-family:'Cormorant Garamond',serif;font-size:.95rem;color:rgba(201,185,154,.45);font-style:italic;margin-bottom:28px;">Prepare, align, and log your practice.</div>
+      <div id="med-setup-panel"></div>
+      <div id="med-log-panel" style="display:none;"></div>
+      <div style="margin-top:48px;border-top:1px solid rgba(201,185,154,.08);padding-top:28px;">
+        <div style="font-family:'Space Mono',monospace;font-size:.5rem;letter-spacing:.1em;text-transform:uppercase;color:rgba(201,185,154,.35);margin-bottom:16px;">Session History</div>
+        <div id="med-history"></div>
+      </div>
+    </div>`;
+  renderMeditationSetup();
+  renderMeditationHistory();
+}
+
+async function renderMeditationSetup() {
+  const panel = document.getElementById('med-setup-panel');
+  if (!panel) return;
+
+  panel.innerHTML = `<div style="font-family:'Space Mono',monospace;font-size:.55rem;color:rgba(201,185,154,.35);letter-spacing:.08em;">✦ Preparing your session…</div>`;
+
+  const apiKey = getApiKey();
+  if (!apiKey) {
+    renderMeditationForm(null);
+    return;
+  }
+
+  // Build context for recommendation
+  const ctx = buildFullArchiveContext({ maxDreams: 10, maxSpirit: 5, bodyLen: 200 });
+  const recentDream = (typeof dreams !== 'undefined' ? dreams : []).slice().sort((a,b) => b.date.localeCompare(a.date))[0];
+  const todayStr = new Date().toLocaleDateString('en-CA');
+  const todayReadable = new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
+
+  const prompt = `You are a meditation guide for Tiff, a spiritual practitioner. Based on her current state, recommend a solfeggio frequency and a session intention.
+
+TODAY: ${todayReadable}
+INNER SEASON: ${ctx.moonDigest ? 'see moon context' : 'unknown'}
+MOON: ${ctx.moonDigest || 'unknown'}
+CHART: ${ctx.chartSummary}
+RECENT DREAM: ${recentDream ? '"' + recentDream.title + '" (' + recentDream.date + '): ' + (recentDream.body||'').slice(0,300) : 'none'}
+RECENT JOURNAL/PRACTICE: ${ctx.spiritDigest ? ctx.spiritDigest.slice(0,400) : 'none'}
+ACTIVE WITHIN HOMEWORK: ${ctx.withinDigest ? ctx.withinDigest.slice(0,300) : 'none'}
+ACTIVE PROPHECIES: ${ctx.prophecyDigest ? ctx.prophecyDigest.slice(0,200) : 'none'}
+
+Available frequencies: 174 Hz (safety/grounding), 285 Hz (tissue repair), 396 Hz (fear/guilt release), 417 Hz (clearing/change), 432 Hz (heart/nature), 528 Hz (transformation/DNA), 639 Hz (connection), 741 Hz (intuition), 852 Hz (spiritual order), 963 Hz (crown/divine), 40 Hz Gamma (downloads/clarity), Theta 4-8 Hz (dreamwork/trance)
+
+Respond ONLY in this exact JSON format:
+{
+  "frequency": "528 Hz",
+  "frequency_name": "Transformation & DNA",
+  "frequency_reason": "one sentence why this fits right now",
+  "intention": "A single clear session intention of 1-2 sentences drawn from what is actually moving in her practice right now",
+  "gateway_suggestion": "Wave I — Discovery #5: Exploration Sleep",
+  "gateway_reason": "one sentence why this tape fits"
+}`;
+
+  try {
+    const data = await claudeAPI(apiKey, { model:'claude-sonnet-4-6', max_tokens:400, messages:[{role:'user', content:prompt}] });
+    const text = data.content?.find(c=>c.type==='text')?.text||'';
+    const clean = text.replace(/```json|```/g,'').trim();
+    const rec = JSON.parse(clean);
+    renderMeditationForm(rec);
+  } catch(e) {
+    renderMeditationForm(null);
+  }
+}
+
+function renderMeditationForm(rec) {
+  const panel = document.getElementById('med-setup-panel');
+  if (!panel) return;
+
+  const freqOptions = SOLFEGGIO.map(f => `<option value="${f.hz}" ${rec&&rec.frequency===f.hz?'selected':''}>${f.hz} — ${f.name}</option>`).join('');
+  const gatewayOptions = '<option value="">— No Gateway tape —</option>' + GATEWAY_TAPES.map(t => `<option value="${t.name}" ${rec&&rec.gateway_suggestion===t.name?'selected':''}>${t.name}</option>`).join('');
+
+  panel.innerHTML = `
+    ${rec ? `<div style="padding:14px 16px;background:rgba(107,79,138,.04);border:1px solid rgba(107,79,138,.15);margin-bottom:24px;">
+      <div style="font-family:'Space Mono',monospace;font-size:.48rem;letter-spacing:.1em;text-transform:uppercase;color:rgba(155,107,171,.5);margin-bottom:10px;">✦ Recommended for you now</div>
+      <div style="font-family:'Cormorant Garamond',serif;font-size:.95rem;color:rgba(240,235,224,.6);line-height:1.7;margin-bottom:6px;font-style:italic;">${rec.frequency_reason}</div>
+      ${rec.gateway_reason ? `<div style="font-family:'Cormorant Garamond',serif;font-size:.9rem;color:rgba(240,235,224,.5);line-height:1.7;font-style:italic;">Gateway: ${rec.gateway_reason}</div>` : ''}
+    </div>` : ''}
+
+    <div style="margin-bottom:16px;">
+      <label style="font-family:'Space Mono',monospace;font-size:.5rem;letter-spacing:.08em;text-transform:uppercase;color:rgba(201,185,154,.5);display:block;margin-bottom:6px;">Frequency</label>
+      <select id="med-freq" onchange="updateMeditationSpotifyLink()" style="width:100%;background:#1a1820;border:1px solid rgba(201,185,154,.22);color:var(--parchment);font-family:'Space Mono',monospace;font-size:.68rem;padding:9px 12px;outline:none;">${freqOptions}</select>
+      <div id="med-spotify-link" style="margin-top:8px;"></div>
+    </div>
+
+    <div style="margin-bottom:16px;">
+      <label style="font-family:'Space Mono',monospace;font-size:.5rem;letter-spacing:.08em;text-transform:uppercase;color:rgba(201,185,154,.5);display:block;margin-bottom:6px;">Gateway Tape (optional)</label>
+      <select id="med-gateway" style="width:100%;background:#1a1820;border:1px solid rgba(201,185,154,.22);color:var(--parchment);font-family:'Space Mono',monospace;font-size:.68rem;padding:9px 12px;outline:none;">${gatewayOptions}</select>
+      <div id="med-gateway-link" style="margin-top:6px;"></div>
+    </div>
+
+    <div style="margin-bottom:16px;">
+      <label style="font-family:'Space Mono',monospace;font-size:.5rem;letter-spacing:.08em;text-transform:uppercase;color:rgba(201,185,154,.5);display:block;margin-bottom:6px;">Session Intention</label>
+      <textarea id="med-intention" rows="3" style="width:100%;background:rgba(255,255,255,.04);border:1px solid rgba(201,185,154,.22);color:var(--parchment);font-family:'Cormorant Garamond',serif;font-size:1rem;padding:9px 12px;outline:none;resize:vertical;line-height:1.7;box-sizing:border-box;">${rec ? rec.intention : ''}</textarea>
+    </div>
+
+    <div style="margin-bottom:24px;">
+      <label style="font-family:'Space Mono',monospace;font-size:.5rem;letter-spacing:.08em;text-transform:uppercase;color:rgba(201,185,154,.5);display:block;margin-bottom:6px;">Duration</label>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <input id="med-duration" type="number" value="60" min="1" max="180" style="width:80px;background:rgba(255,255,255,.04);border:1px solid rgba(201,185,154,.22);color:var(--parchment);font-family:'Space Mono',monospace;font-size:.8rem;padding:8px 12px;outline:none;text-align:center;">
+        <span style="font-family:'Space Mono',monospace;font-size:.55rem;color:rgba(201,185,154,.4);">minutes</span>
+        <div style="display:flex;gap:6px;margin-left:8px;">
+          ${[15,30,45,60].map(n => `<button onclick="document.getElementById('med-duration').value=${n}" style="font-family:'Space Mono',monospace;font-size:.48rem;padding:5px 9px;border:1px solid rgba(201,185,154,.2);background:transparent;color:rgba(201,185,154,.5);cursor:pointer;">${n}</button>`).join('')}
+        </div>
+      </div>
+    </div>
+
+    <button onclick="beginMeditation()" style="font-family:'Space Mono',monospace;font-size:.58rem;letter-spacing:.1em;text-transform:uppercase;padding:12px 28px;border:1px solid rgba(201,185,154,.5);background:transparent;color:rgba(201,185,154,.9);cursor:pointer;width:100%;">✦ Begin Session</button>`;
+
+  updateMeditationSpotifyLink();
+  updateMeditationGatewayLink();
+  document.getElementById('med-gateway')?.addEventListener('change', updateMeditationGatewayLink);
+}
+
+function updateMeditationSpotifyLink() {
+  const sel = document.getElementById('med-freq');
+  const linkDiv = document.getElementById('med-spotify-link');
+  if (!sel || !linkDiv) return;
+  const freq = SOLFEGGIO.find(f => f.hz === sel.value);
+  if (freq) {
+    const query = encodeURIComponent(freq.spotify);
+    linkDiv.innerHTML = `<a href="https://open.spotify.com/search/${query}" target="_blank" style="font-family:'Space Mono',monospace;font-size:.5rem;letter-spacing:.07em;text-transform:uppercase;color:rgba(107,185,107,.7);text-decoration:none;border:1px solid rgba(107,185,107,.3);padding:4px 10px;display:inline-block;">↗ Open ${freq.hz} on Spotify</a>`;
+  }
+}
+
+function updateMeditationGatewayLink() {
+  const sel = document.getElementById('med-gateway');
+  const linkDiv = document.getElementById('med-gateway-link');
+  if (!sel || !linkDiv) return;
+  const tape = GATEWAY_TAPES.find(t => t.name === sel.value);
+  if (tape) {
+    const query = encodeURIComponent(tape.spotify);
+    linkDiv.innerHTML = `<a href="https://open.spotify.com/search/${query}" target="_blank" style="font-family:'Space Mono',monospace;font-size:.5rem;letter-spacing:.07em;text-transform:uppercase;color:rgba(107,185,107,.7);text-decoration:none;border:1px solid rgba(107,185,107,.3);padding:4px 10px;display:inline-block;">↗ Search "${tape.name}" on Spotify</a>`;
+  } else {
+    linkDiv.innerHTML = '';
+  }
+}
+
+function beginMeditation() {
+  const freq = document.getElementById('med-freq')?.value || '';
+  const gateway = document.getElementById('med-gateway')?.value || '';
+  const intention = document.getElementById('med-intention')?.value || '';
+  const duration = parseInt(document.getElementById('med-duration')?.value || '60');
+
+  if (!intention.trim()) { gtAlert('Set an intention before beginning.'); return; }
+
+  _meditationSession = { freq, gateway, intention, duration, date: localDateStr() };
+
+  // Show log panel
+  const setup = document.getElementById('med-setup-panel');
+  const log = document.getElementById('med-log-panel');
+  if (setup) setup.style.display = 'none';
+  if (log) {
+    log.style.display = 'block';
+    log.innerHTML = `
+      <div style="text-align:center;padding:32px 0 24px;">
+        <div style="font-family:'Space Mono',monospace;font-size:.48rem;letter-spacing:.12em;text-transform:uppercase;color:rgba(201,185,154,.35);margin-bottom:8px;">Session in progress</div>
+        <div style="font-family:'Cormorant Garamond',serif;font-size:1.6rem;color:var(--parchment);margin-bottom:6px;">${duration} min</div>
+        <div style="font-family:'Cormorant Garamond',serif;font-size:.95rem;color:var(--moon);margin-bottom:6px;">${freq}</div>
+        ${gateway ? `<div style="font-family:'Cormorant Garamond',serif;font-size:.85rem;color:rgba(201,185,154,.45);margin-bottom:6px;">${gateway}</div>` : ''}
+        <div style="font-family:'Cormorant Garamond',serif;font-size:.95rem;color:rgba(240,235,224,.6);font-style:italic;max-width:480px;margin:0 auto 24px;line-height:1.7;">${intention}</div>
+        <div style="font-family:'Space Mono',monospace;font-size:.48rem;color:rgba(201,185,154,.3);letter-spacing:.08em;">An alarm has been set for ${duration} minutes from now.</div>
+      </div>
+      <div style="margin-top:16px;">
+        <label style="font-family:'Space Mono',monospace;font-size:.5rem;letter-spacing:.08em;text-transform:uppercase;color:rgba(201,185,154,.5);display:block;margin-bottom:6px;">Session Notes — Downloads, Observations, What Came Through</label>
+        <textarea id="med-notes" rows="6" placeholder="Record anything that arose — images, knowings, emotions, messages, physical sensations…" style="width:100%;background:rgba(255,255,255,.04);border:1px solid rgba(201,185,154,.22);color:var(--parchment);font-family:'Cormorant Garamond',serif;font-size:1rem;padding:9px 12px;outline:none;resize:vertical;line-height:1.7;box-sizing:border-box;margin-bottom:16px;"></textarea>
+        <button onclick="logMeditationSession()" style="font-family:'Space Mono',monospace;font-size:.58rem;letter-spacing:.1em;text-transform:uppercase;padding:12px 28px;border:1px solid rgba(201,185,154,.5);background:transparent;color:rgba(201,185,154,.9);cursor:pointer;width:100%;">✦ Log Session</button>
+      </div>`;
+  }
+}
+
+function logMeditationSession() {
+  const notes = document.getElementById('med-notes')?.value || '';
+  const session = {
+    ..._meditationSession,
+    frequency: _meditationSession.freq,
+    notes: notes.trim()
+  };
+  const sessions = getMeditationSessions();
+  sessions.push(session);
+  saveMeditationSessions(sessions);
+
+  // Reset
+  const setup = document.getElementById('med-setup-panel');
+  const log = document.getElementById('med-log-panel');
+  if (log) log.style.display = 'none';
+  if (setup) { setup.style.display = 'block'; renderMeditationSetup(); }
+  renderMeditationHistory();
+}
+
+function renderMeditationHistory() {
+  const hist = document.getElementById('med-history');
+  if (!hist) return;
+  const sessions = getMeditationSessions().slice().reverse();
+  if (!sessions.length) {
+    hist.innerHTML = '<div style="font-family:\'Cormorant Garamond\',serif;font-size:.9rem;color:rgba(201,185,154,.3);font-style:italic;">No sessions logged yet.</div>';
+    return;
+  }
+  hist.innerHTML = sessions.map((s,i) => `
+    <div style="margin-bottom:14px;padding:14px 16px;background:rgba(255,255,255,.02);border:1px solid rgba(201,185,154,.08);border-left:2px solid rgba(201,185,154,.2);">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px;">
+        <div>
+          <span style="font-family:'Space Mono',monospace;font-size:.45rem;color:rgba(201,185,154,.4);">${s.date} · ${s.duration||'?'} min · ${s.frequency||s.freq||''}</span>
+          ${s.gateway ? `<span style="font-family:'Space Mono',monospace;font-size:.42rem;color:rgba(201,185,154,.3);margin-left:8px;">${s.gateway}</span>` : ''}
+        </div>
+      </div>
+      ${s.intention ? `<div style="font-family:'Cormorant Garamond',serif;font-size:.9rem;color:rgba(240,235,224,.6);font-style:italic;line-height:1.6;margin-bottom:4px;">${s.intention}</div>` : ''}
+      ${s.notes ? `<div style="font-family:'Cormorant Garamond',serif;font-size:.88rem;color:rgba(240,235,224,.5);line-height:1.7;margin-top:4px;white-space:pre-wrap;">${s.notes}</div>` : ''}
+    </div>`).join('');
+}
+
+
+// ═══════════════════════════════════════════════════════════
+// DREAM WEATHER WIDGET
+// ═══════════════════════════════════════════════════════════
+async function renderDreamWeather() {
+  const el = document.getElementById('dream-weather-widget');
+  if (!el) return;
+
+  // Get last 7 days of dreams
+  const today = new Date();
+  const sevenDaysAgo = new Date(today - 7 * 86400000).toLocaleDateString('en-CA');
+  const recentDreams = (typeof dreams !== 'undefined' ? dreams : [])
+    .filter(d => d.date >= sevenDaysAgo)
+    .sort((a,b) => b.date.localeCompare(a.date));
+
+  if (!recentDreams.length) {
+    el.innerHTML = `
+      <div style="padding:14px 18px;background:rgba(255,255,255,.02);border:1px solid rgba(201,185,154,.08);">
+        <div style="font-family:'Space Mono',monospace;font-size:.5rem;letter-spacing:.1em;text-transform:uppercase;color:rgba(201,185,154,.3);">☁ Dream Weather</div>
+        <div style="font-family:'Cormorant Garamond',serif;font-size:.9rem;color:rgba(201,185,154,.3);font-style:italic;margin-top:6px;">No dreams in the last 7 days.</div>
+      </div>`;
+    return;
+  }
+
+  // Show placeholder while loading
+  el.innerHTML = `
+    <div style="padding:14px 18px;background:rgba(255,255,255,.02);border:1px solid rgba(201,185,154,.08);">
+      <div style="font-family:'Space Mono',monospace;font-size:.5rem;letter-spacing:.1em;text-transform:uppercase;color:rgba(201,185,154,.3);">☁ Dream Weather</div>
+      <div style="font-family:'Space Mono',monospace;font-size:.5rem;color:rgba(201,185,154,.2);margin-top:8px;">Reading the field…</div>
+    </div>`;
+
+  const apiKey = getApiKey();
+  if (!apiKey) {
+    el.innerHTML = `
+      <div style="padding:14px 18px;background:rgba(255,255,255,.02);border:1px solid rgba(201,185,154,.08);">
+        <div style="font-family:'Space Mono',monospace;font-size:.5rem;letter-spacing:.1em;text-transform:uppercase;color:rgba(201,185,154,.3);">☁ Dream Weather</div>
+        <div style="font-family:'Cormorant Garamond',serif;font-size:.9rem;color:rgba(201,185,154,.3);font-style:italic;margin-top:6px;">Add your API key to see dream weather.</div>
+      </div>`;
+    return;
+  }
+
+  const dreamDigest = recentDreams.map(d =>
+    '[' + d.date + '] "' + d.title + '": ' + (d.body||'').slice(0,200)
+  ).join('\n\n');
+
+  const prompt = `You are a spiritual dream analyst. Based on the last 7 days of dreams, write a one-line "dream weather forecast" — a poetic, specific sentence that captures what is moving through this dreamer's field right now. Like a weather report but for the inner world. Then write 2-3 sentences of elaboration.
+
+RECENT DREAMS (${recentDreams.length} in last 7 days):
+${dreamDigest}
+
+Respond ONLY in this JSON:
+{"forecast": "one evocative line — the dream weather right now", "elaboration": "2-3 sentences expanding on what the dreams collectively show"}`;
+
+  try {
+    const data = await claudeAPI(apiKey, { model:'claude-sonnet-4-6', max_tokens:300, messages:[{role:'user', content:prompt}] });
+    const text = data.content?.find(c=>c.type==='text')?.text||'';
+    const clean = text.replace(/```json|```/g,'').trim();
+    const wx = JSON.parse(clean);
+
+    el.innerHTML = `
+      <div style="padding:16px 20px;background:rgba(255,255,255,.02);border:1px solid rgba(201,185,154,.1);border-left:2px solid rgba(201,185,154,.2);">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+          <div style="font-family:'Space Mono',monospace;font-size:.5rem;letter-spacing:.1em;text-transform:uppercase;color:rgba(201,185,154,.35);">☁ Dream Weather · Last 7 Days</div>
+          <div style="font-family:'Space Mono',monospace;font-size:.45rem;color:rgba(201,185,154,.25);">${recentDreams.length} dream${recentDreams.length!==1?'s':''}</div>
+        </div>
+        <div style="font-family:'Cormorant Garamond',serif;font-size:1.1rem;color:var(--parchment);line-height:1.6;margin-bottom:8px;font-style:italic;">${wx.forecast}</div>
+        <div style="font-family:'Cormorant Garamond',serif;font-size:.88rem;color:rgba(240,235,224,.55);line-height:1.75;">${wx.elaboration}</div>
+        <button onclick="renderDreamWeather()" style="margin-top:10px;font-family:'Space Mono',monospace;font-size:.44rem;letter-spacing:.07em;text-transform:uppercase;background:transparent;border:none;color:rgba(201,185,154,.25);cursor:pointer;padding:0;">↻ refresh</button>
+      </div>`;
+  } catch(e) {
+    el.innerHTML = '';
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+// THIS DAY IN YOUR ARCHIVE
+// ═══════════════════════════════════════════════════════════
+function renderThisDayWidget() {
+  const el = document.getElementById('this-day-widget');
+  if (!el) return;
+
+  const today = new Date();
+  const mm = String(today.getMonth()+1).padStart(2,'0');
+  const dd = String(today.getDate()).padStart(2,'0');
+  const todayMD = mm + '-' + dd;
+  const thisYear = today.getFullYear();
+
+  // Collect all entries matching this month-day from past years
+  const allEntries = [];
+
+  // Dreams
+  (typeof dreams !== 'undefined' ? dreams : []).forEach(d => {
+    if (!d.date) return;
+    const parts = d.date.split('-');
+    if (parts.length !== 3) return;
+    const year = parseInt(parts[0]);
+    if (year >= thisYear) return;
+    if (parts[1] + '-' + parts[2] === todayMD) {
+      allEntries.push({ year, date: d.date, type: 'dream', title: d.title, body: (d.body||'').slice(0,120), id: d.id });
+    }
+  });
+
+  // Spirit entries
+  (typeof SPIRIT_ENTRIES !== 'undefined' ? SPIRIT_ENTRIES : []).forEach(e => {
+    if (!e || !e.date) return;
+    const parts = e.date.split('-');
+    if (parts.length !== 3) return;
+    const year = parseInt(parts[0]);
+    if (year >= thisYear) return;
+    if (parts[1] + '-' + parts[2] === todayMD) {
+      allEntries.push({ year, date: e.date, type: e.type||'journal', title: e.title, body: (e.body||'').slice(0,120) });
+    }
+  });
+
+  // Within entries
+  const withinEntries = (typeof getWithinEntries==='function') ? getWithinEntries() : [];
+  withinEntries.forEach(e => {
+    if (!e.date) return;
+    const parts = e.date.split('-');
+    if (parts.length !== 3) return;
+    const year = parseInt(parts[0]);
+    if (year >= thisYear) return;
+    if (parts[1] + '-' + parts[2] === todayMD) {
+      allEntries.push({ year, date: e.date, type: 'within', title: e.title, body: (e.summary||'').slice(0,120) });
+    }
+  });
+
+  if (!allEntries.length) {
+    el.innerHTML = `
+      <div style="padding:14px 18px;background:rgba(255,255,255,.02);border:1px solid rgba(201,185,154,.08);">
+        <div style="font-family:'Space Mono',monospace;font-size:.5rem;letter-spacing:.1em;text-transform:uppercase;color:rgba(201,185,154,.3);">◎ This Day in Your Archive</div>
+        <div style="font-family:'Cormorant Garamond',serif;font-size:.9rem;color:rgba(201,185,154,.3);font-style:italic;margin-top:6px;">Nothing in the archive for this date yet.</div>
+      </div>`;
+    return;
+  }
+
+  // Group by year, sort descending
+  const byYear = {};
+  allEntries.forEach(e => {
+    if (!byYear[e.year]) byYear[e.year] = [];
+    byYear[e.year].push(e);
+  });
+  const years = Object.keys(byYear).map(Number).sort((a,b) => b - a);
+
+  const typeLabel = { dream: '🌙', journal: '📓', workings: '🕯', shadow: '🜃', readings: '🔮', gateway: '◈', within: '◈' };
+  const typeColor = { dream: 'rgba(155,107,171,.7)', journal: 'var(--gold)', workings: 'var(--teal)', shadow: 'var(--purple)', readings: 'var(--rose)', gateway: 'rgba(201,185,154,.5)', within: 'rgba(201,168,76,.7)' };
+
+  const monthName = today.toLocaleDateString('en-US', { month: 'long', day: 'numeric' });
+
+  el.innerHTML = `
+    <div style="padding:16px 20px;background:rgba(255,255,255,.02);border:1px solid rgba(201,185,154,.1);border-left:2px solid rgba(201,185,154,.15);">
+      <div style="font-family:'Space Mono',monospace;font-size:.5rem;letter-spacing:.1em;text-transform:uppercase;color:rgba(201,185,154,.35);margin-bottom:12px;">◎ This Day in Your Archive · ${monthName}</div>
+      ${years.map(year => {
+        const entries = byYear[year];
+        const yearsAgo = thisYear - year;
+        return `<div style="margin-bottom:14px;">
+          <div style="font-family:'Space Mono',monospace;font-size:.48rem;letter-spacing:.08em;text-transform:uppercase;color:rgba(201,185,154,.3);margin-bottom:6px;">${year} · ${yearsAgo} year${yearsAgo!==1?'s':''} ago</div>
+          ${entries.map(e => {
+            const col = typeColor[e.type] || 'rgba(201,185,154,.5)';
+            const icon = typeLabel[e.type] || '✦';
+            const openFn = e.type === 'dream' && e.id
+              ? `switchTab('dreams');setTimeout(()=>{ switchDreams('archive'); setTimeout(()=>openDream({id:${e.id}}),100); },100);`
+              : e.type === 'within'
+              ? `switchTab('practice');setTimeout(()=>switchPractice('within'),100);`
+              : `switchTab('practice');setTimeout(()=>switchPractice('${e.type}'),100);`;
+            return `<div style="display:flex;gap:10px;align-items:flex-start;margin-bottom:8px;cursor:pointer;" onclick="${openFn}">
+              <span style="color:${col};font-size:.8rem;flex-shrink:0;margin-top:1px;">${icon}</span>
+              <div>
+                <div style="font-family:'Cormorant Garamond',serif;font-size:.98rem;color:var(--parchment);line-height:1.4;">${e.title}</div>
+                ${e.body ? `<div style="font-family:'Cormorant Garamond',serif;font-size:.83rem;color:rgba(240,235,224,.45);line-height:1.6;font-style:italic;margin-top:2px;">${e.body}${e.body.length>=120?'…':''}</div>` : ''}
+              </div>
+            </div>`;
+          }).join('')}
+        </div>`;
+      }).join('')}
+    </div>`;
+}
+
+// ═══════════════════════════════════════════════════════════
+// PROPHECY WATCH WIDGET + DATE BANNER
+// ═══════════════════════════════════════════════════════════
+function renderProphecyWatch() {
+  const el = document.getElementById('prophecy-watch-widget');
+  if (!el) return;
+
+  const allProphecies = getProphecies();
+  const today = new Date().toLocaleDateString('en-CA');
+
+  // Active = pending/watching, or has a future watch date
+  const active = allProphecies.filter(p => p.status === 'pending' || p.status === 'unclear');
+  // Also include any with a watchDate in the future from SACRED_DATES style prophecy entries
+  const sacredWatches = (typeof SACRED_DATES !== 'undefined' ? SACRED_DATES : [])
+    .filter(s => s.type === 'prophecy' && s.date >= today);
+
+  if (!active.length && !sacredWatches.length) {
+    el.innerHTML = `
+      <div style="padding:14px 18px;background:rgba(255,255,255,.02);border:1px solid rgba(201,185,154,.08);">
+        <div style="font-family:'Space Mono',monospace;font-size:.5rem;letter-spacing:.1em;text-transform:uppercase;color:rgba(201,185,154,.3);">★ Prophecy Watch</div>
+        <div style="font-family:'Cormorant Garamond',serif;font-size:.9rem;color:rgba(201,185,154,.3);font-style:italic;margin-top:6px;">No active prophecies being watched.</div>
+      </div>`;
+    return;
+  }
+
+  function daysUntil(dateStr) {
+    if (!dateStr) return null;
+    const diff = new Date(dateStr + 'T12:00:00') - new Date(today + 'T12:00:00');
+    return Math.round(diff / 86400000);
+  }
+
+  function daysLabel(d) {
+    if (d === null) return '';
+    if (d < 0) return Math.abs(d) + 'd ago';
+    if (d === 0) return 'TODAY';
+    if (d === 1) return 'Tomorrow';
+    if (d < 7) return 'In ' + d + ' days';
+    if (d < 30) return 'In ' + Math.round(d/7) + 'w';
+    if (d < 365) return 'In ' + Math.round(d/30) + ' mo';
+    const yrs = (d/365).toFixed(1);
+    return 'In ' + yrs + ' yr' + (parseFloat(yrs)!==1?'s':'');
+  }
+
+  // Gather all watchable prophecies with dates
+  const dated = active
+    .filter(p => p.watchDate || p.expectedDate)
+    .map(p => ({ ...p, _days: daysUntil(p.watchDate || p.expectedDate), _date: p.watchDate || p.expectedDate }))
+    .sort((a,b) => a._days - b._days);
+
+  const undated = active.filter(p => !p.watchDate && !p.expectedDate);
+
+  // Sacred date prophecy watches
+  const sacredDated = sacredWatches.map(s => ({
+    _sacred: true, title: s.title, _date: s.date, _days: daysUntil(s.date), notes: s.notes
+  })).sort((a,b) => a._days - b._days);
+
+  const allDated = [...dated, ...sacredDated].sort((a,b) => a._days - b._days);
+
+  el.innerHTML = `
+    <div style="padding:16px 20px;background:rgba(107,79,138,.04);border:1px solid rgba(107,79,138,.15);border-left:2px solid rgba(107,79,138,.3);">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+        <div style="font-family:'Space Mono',monospace;font-size:.5rem;letter-spacing:.1em;text-transform:uppercase;color:rgba(155,107,171,.5);">★ Prophecy Watch</div>
+        <button onclick="switchTab('insight');setTimeout(()=>switchInsight('prophecy'),100);" style="font-family:'Space Mono',monospace;font-size:.44rem;letter-spacing:.06em;text-transform:uppercase;background:transparent;border:1px solid rgba(107,79,138,.3);color:rgba(155,107,171,.5);cursor:pointer;padding:3px 8px;">View All →</button>
+      </div>
+      ${allDated.map(p => {
+        const urgency = p._days !== null && p._days <= 30 ? 'rgba(201,168,76,.8)' : p._days !== null && p._days <= 90 ? 'rgba(155,107,171,.7)' : 'rgba(201,185,154,.4)';
+        return `<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;gap:12px;">
+          <div style="flex:1;">
+            <div style="font-family:'Cormorant Garamond',serif;font-size:1rem;color:var(--parchment);line-height:1.4;">${p.title}</div>
+            ${p.notes ? `<div style="font-family:'Cormorant Garamond',serif;font-size:.8rem;color:rgba(240,235,224,.4);font-style:italic;line-height:1.5;margin-top:2px;">${p.notes.slice(0,100)}${p.notes.length>100?'…':''}</div>` : ''}
+          </div>
+          <div style="flex-shrink:0;text-align:right;">
+            <div style="font-family:'Space Mono',monospace;font-size:.55rem;color:${urgency};white-space:nowrap;">${daysLabel(p._days)}</div>
+            ${p._date ? `<div style="font-family:'Space Mono',monospace;font-size:.42rem;color:rgba(201,185,154,.25);margin-top:2px;">${p._date}</div>` : ''}
+          </div>
+        </div>`;
+      }).join('')}
+      ${undated.length ? `
+        <div style="border-top:1px solid rgba(201,185,154,.06);margin-top:8px;padding-top:8px;">
+          <div style="font-family:'Space Mono',monospace;font-size:.45rem;letter-spacing:.07em;text-transform:uppercase;color:rgba(201,185,154,.25);margin-bottom:8px;">No date set</div>
+          ${undated.map(p => `<div style="font-family:'Cormorant Garamond',serif;font-size:.95rem;color:rgba(240,235,224,.5);margin-bottom:6px;">○ ${p.title}</div>`).join('')}
+        </div>` : ''}
+    </div>`;
+}
+
+function renderProphecyDateBanner() {
+  // Show a banner if any prophecy watch date is within 30 days
+  const allProphecies = getProphecies();
+  const today = new Date().toLocaleDateString('en-CA');
+
+  const upcoming = allProphecies
+    .filter(p => (p.status === 'pending' || p.status === 'unclear') && (p.watchDate || p.expectedDate))
+    .map(p => {
+      const d = p.watchDate || p.expectedDate;
+      const days = Math.round((new Date(d+'T12:00:00') - new Date(today+'T12:00:00')) / 86400000);
+      return { ...p, _days: days, _date: d };
+    })
+    .filter(p => p._days >= 0 && p._days <= 30)
+    .sort((a,b) => a._days - b._days);
+
+  // Also check sacred dates prophecy watches
+  const sacredUpcoming = (typeof SACRED_DATES !== 'undefined' ? SACRED_DATES : [])
+    .filter(s => s.type === 'prophecy')
+    .map(s => {
+      const days = Math.round((new Date(s.date+'T12:00:00') - new Date(today+'T12:00:00')) / 86400000);
+      return { title: s.title, _days: days, _date: s.date };
+    })
+    .filter(s => s._days >= 0 && s._days <= 30);
+
+  const all = [...upcoming, ...sacredUpcoming].sort((a,b) => a._days - b._days);
+  if (!all.length) return;
+
+  const p = all[0];
+  const isToday = p._days === 0;
+  const isTomorrow = p._days === 1;
+  const label = isToday ? 'TODAY' : isTomorrow ? 'Tomorrow' : 'In ' + p._days + ' days';
+  const bgColor = isToday ? 'rgba(155,107,171,.15)' : 'rgba(107,79,138,.08)';
+  const borderColor = isToday ? 'rgba(155,107,171,.5)' : 'rgba(107,79,138,.3)';
+
+  // Find or create banner slot — insert before moon window banner area
+  const dest = document.getElementById('gt-content');
+  if (!dest) return;
+  const existing = document.getElementById('prophecy-date-banner');
+  if (existing) existing.remove();
+
+  const banner = document.createElement('div');
+  banner.id = 'prophecy-date-banner';
+  banner.style.cssText = `max-width:720px;margin:0 auto 14px;padding:11px 18px;background:${bgColor};border:1px solid ${borderColor};display:flex;justify-content:space-between;align-items:center;`;
+  banner.innerHTML = `
+    <div style="display:flex;align-items:center;gap:10px;">
+      <span style="color:rgba(155,107,171,.8);">★</span>
+      <div>
+        <div style="font-family:'Space Mono',monospace;font-size:.48rem;letter-spacing:.08em;text-transform:uppercase;color:rgba(155,107,171,.6);">Prophecy Watch Date Approaching</div>
+        <div style="font-family:'Cormorant Garamond',serif;font-size:.95rem;color:var(--parchment);margin-top:2px;">${p.title}</div>
+      </div>
+    </div>
+    <div style="font-family:'Space Mono',monospace;font-size:.55rem;color:rgba(201,168,76,.8);text-align:right;flex-shrink:0;margin-left:12px;">
+      ${label}<br><span style="font-size:.42rem;color:rgba(201,185,154,.3);">${p._date}</span>
+    </div>`;
+
+  // Insert at top of sanctum content
+  const skyEl = document.getElementById('sanctum-sky');
+  if (skyEl) skyEl.parentNode.insertBefore(banner, skyEl);
+}
+
 function runGlobalSearch(raw) {
   const q = (raw || '').trim().toLowerCase();
   const meta = document.getElementById('global-search-meta');
@@ -8410,7 +9010,8 @@ function runGlobalSearch(raw) {
     channel: { label: 'The Channel', color: 'rgba(201,185,154,.8)', icon: '◈', open: e => { switchTab('grimoire', document.getElementById('tab-btn-grimoire')); setTimeout(()=>switchGrimoire('channel'), 100); } },
     dreammagic: { label: 'Dream Magic', color: 'rgba(155,107,171,.9)', icon: '✦', open: e => { switchTab('dreams', document.getElementById('tab-btn-dreams')); setTimeout(()=>switchDreams('magic'), 100); } },
     within: { label: 'Within', color: 'rgba(201,168,76,.8)', icon: '◈', open: e => { switchTab('practice', document.getElementById('tab-btn-practice')); setTimeout(()=>switchPractice('within'), 100); } },
-    code: { label: 'Code', color: 'rgba(107,185,201,.8)', icon: '⌗', open: e => { switchTab('tools', document.getElementById('tab-btn-tools')); setTimeout(()=>switchTools('codes'), 100); } }
+    code: { label: 'Code', color: 'rgba(107,185,201,.8)', icon: '⌗', open: e => { switchTab('tools', document.getElementById('tab-btn-tools')); setTimeout(()=>switchTools('codes'), 100); } },
+    meditation: { label: 'Meditation', color: 'rgba(155,107,171,.8)', icon: '◎', open: e => { switchTab('tools', document.getElementById('tab-btn-tools')); setTimeout(()=>switchTools('meditation'), 100); } }
   };
 
   function matchGeneral(e) {
@@ -8470,7 +9071,16 @@ function runGlobalSearch(raw) {
   }
   const codeHits = codeEntries.filter(e => matchCode(e)).map(e => ({ ...e, body: e.use||e.instructions||'', _type: 'code' }));
 
-  const allHits = [...dreamHits, ...spiritHits, ...preloadedHits, ...channelHits, ...dreamMagicHits, ...withinHits, ...codeHits]
+  // Meditation sessions
+  const meditationSessions = getMeditationSessions ? getMeditationSessions() : [];
+  function matchMeditation(e) {
+    return (e.intention||'').toLowerCase().includes(q)
+      || (e.notes||'').toLowerCase().includes(q)
+      || (e.frequency||e.freq||'').toLowerCase().includes(q);
+  }
+  const meditationHits = meditationSessions.filter(e => matchMeditation(e)).map(e => ({ ...e, title: e.date + ' — ' + (e.frequency||e.freq||''), body: e.intention||'', _type: 'meditation' }));
+
+  const allHits = [...dreamHits, ...spiritHits, ...preloadedHits, ...channelHits, ...dreamMagicHits, ...withinHits, ...codeHits, ...meditationHits]
     .sort((a, b) => (b.date || '').localeCompare(a.date || ''));
 
   if (meta) meta.textContent = allHits.length
@@ -8576,6 +9186,9 @@ function switchTools(type, btn) {
   } else if (type === 'codes') {
     dest.innerHTML = '';
     renderCodes(dest);
+  } else if (type === 'meditation') {
+    dest.innerHTML = '';
+    renderMeditation(dest);
   }
 }
 
@@ -10040,6 +10653,9 @@ function tapSync() {
   taps.push(new Date().toISOString());
   saveSyncTaps(taps);
   renderSyncSpotter();
+  renderDreamWeather();
+  renderThisDayWidget();
+  renderProphecyWatch();
   // Flash animation
   const btn = document.getElementById('sync-tap-btn');
   const flash = document.getElementById('sync-flash');
@@ -10819,6 +11435,7 @@ async function initSanctum() {
   renderMoonWindowBanner();
   renderSacredDatesBanner();
   render1010Banner();
+  renderProphecyDateBanner();
   renderSyncSpotter();
   // Set today's date display
   const dateEl = document.getElementById('sanctum-date');
@@ -12978,7 +13595,7 @@ try { renderInsights(); } catch(e) { console.error('renderInsights crashed:', e)
       'shadow':'practice','readings':'practice','gateway':'practice','moonintent':'practice','manifesting':'practice','within':'practice',
       'charts':'grimoire','people':'grimoire','elixirs':'grimoire','songs':'grimoire','comms':'grimoire',
       'ancestors':'grimoire','places':'grimoire','rituals':'grimoire','visitations':'grimoire','channel':'grimoire',
-      'herbalism':'tools','hblends':'tools','seasons':'tools','sacredDates':'tools','wheel':'tools','codes':'tools',
+      'herbalism':'tools','hblends':'tools','seasons':'tools','sacredDates':'tools','wheel':'tools','codes':'tools','meditation':'tools',
       'incubation':'dreams','search':'insight',
       'patterns':'insight','prophecy':'insight','threads':'insight','dreamtimeline':'insight','symbols':'insight'};
     const resolvedTab = tabMap[lastTab] || lastTab;
