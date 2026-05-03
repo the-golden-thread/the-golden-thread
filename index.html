@@ -411,6 +411,12 @@ h1 em { display:block; font-style:italic; font-weight:300; font-size:.42em; lett
 
 <!-- ══ SUB-TAB BAR — appears under main tabs for dreams/practice/tools/grimoire/insight ══ -->
 <div id="sub-bar-slot" style="display:none;background:var(--ink);border-bottom:1px solid rgba(201,185,154,.1);overflow-x:auto;overflow-y:hidden;scrollbar-width:none;">
+  <!-- Sanctum sub-bar -->
+  <div id="sub-bar-sanctum" style="display:none;white-space:nowrap;">
+    <button class="sub-tab-btn active" id="sanctum-stab-today" onclick="switchSanctumTab('today',this)">✦ Today</button>
+    <button class="sub-tab-btn" id="sanctum-stab-sync" onclick="switchSanctumTab('sync',this)">◉ Synchronicities</button>
+    <button class="sub-tab-btn" id="sanctum-stab-arc" onclick="switchSanctumTab('arc',this)">∞ The Arc</button>
+  </div>
   <!-- Dreams sub-bar -->
   <div id="sub-bar-dreams" style="display:none;white-space:nowrap;">
     <button class="sub-tab-btn active" id="sub-btn-archive" onclick="switchDreams('archive',this)">◎ Archive</button>
@@ -479,13 +485,6 @@ h1 em { display:block; font-style:italic; font-weight:300; font-size:.42em; lett
   <div id="moon-window-banner" style="display:none;max-width:720px;margin:0 auto 12px;"></div>
   <!-- ✦ SACRED DATES BANNER ✦ -->
   <div id="sacred-dates-banner" style="display:none;max-width:720px;margin:0 auto 20px;"></div>
-
-  <!-- ✦ SANCTUM SUB-TABS ✦ -->
-  <div id="sanctum-subtab-bar" style="max-width:720px;margin:0 auto 24px;display:flex;gap:0;border-bottom:1px solid rgba(201,185,154,.1);">
-    <button id="sanctum-stab-today" onclick="switchSanctumTab('today',this)" style="font-family:'Space Mono',monospace;font-size:.52rem;letter-spacing:.1em;text-transform:uppercase;padding:10px 18px;background:transparent;border:none;border-bottom:2px solid var(--moon);color:var(--moon);cursor:pointer;">✦ Today</button>
-    <button id="sanctum-stab-sync" onclick="switchSanctumTab('sync',this)" style="font-family:'Space Mono',monospace;font-size:.52rem;letter-spacing:.1em;text-transform:uppercase;padding:10px 18px;background:transparent;border:none;border-bottom:2px solid transparent;color:rgba(201,185,154,.4);cursor:pointer;">◉ Synchronicities</button>
-    <button id="sanctum-stab-arc" onclick="switchSanctumTab('arc',this)" style="font-family:'Space Mono',monospace;font-size:.52rem;letter-spacing:.1em;text-transform:uppercase;padding:10px 18px;background:transparent;border:none;border-bottom:2px solid transparent;color:rgba(201,185,154,.4);cursor:pointer;">∞ The Arc</button>
-  </div>
 
   <!-- ══ TODAY PANEL ══ -->
   <div id="sanctum-panel-today" style="max-width:720px;margin:0 auto;">
@@ -7129,11 +7128,11 @@ function switchTab(id, btn) {
 
   // Sub-bar slot: show/hide and switch inner bar
   const slot = document.getElementById('sub-bar-slot');
-  ['dreams','practice','tools','grimoire','insight'].forEach(g => {
+  ['sanctum','dreams','practice','tools','grimoire','insight'].forEach(g => {
     const bar = document.getElementById('sub-bar-' + g);
     if (bar) bar.style.display = 'none';
   });
-  if (['dreams','practice','tools','grimoire','insight'].includes(id) && slot) {
+  if (['sanctum','dreams','practice','tools','grimoire','insight'].includes(id) && slot) {
     slot.style.display = 'block';
     const bar = document.getElementById('sub-bar-' + id);
     if (bar) bar.style.display = 'block';
@@ -8948,8 +8947,10 @@ function switchSanctumTab(tab, btnEl) {
     const btn = document.getElementById('sanctum-stab-' + t);
     if (panel) panel.style.display = t === tab ? 'block' : 'none';
     if (btn) {
-      btn.style.color = t === tab ? 'var(--moon)' : 'rgba(201,185,154,.4)';
-      btn.style.borderBottom = t === tab ? '2px solid var(--moon)' : '2px solid transparent';
+      btn.classList.toggle('active', t === tab);
+      setTimeout(function() {
+        try { btn.scrollIntoView({behavior:'smooth', block:'nearest', inline:'center'}); } catch(e) {}
+      }, 50);
     }
   });
   try { localStorage.setItem('gt_sanctum_tab', tab); } catch(e) {}
