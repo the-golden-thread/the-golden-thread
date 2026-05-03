@@ -712,8 +712,11 @@ h1 em { display:block; font-style:italic; font-weight:300; font-size:.42em; lett
       <input type="text" id="search" placeholder="search any word, name, symbol, place..." oninput="renderDreams()">
     </div>
     <div style="display:flex;gap:7px;align-items:center;flex-wrap:wrap;width:100%;">
-      <div class="filter-scroll" id="filter-tags"></div>
+      <button id="cat-filter-toggle" onclick="toggleCatFilters()" style="font-family:'Space Mono',monospace;font-size:.58rem;letter-spacing:.07em;text-transform:uppercase;padding:6px 12px;border:1px solid rgba(201,185,154,.2);background:transparent;color:rgba(201,185,154,.65);cursor:pointer;transition:all .2s;white-space:nowrap;">◈ Categories</button>
       <button id="notable-toggle-btn" onclick="toggleNotableFilter()" style="font-family:'Space Mono',monospace;font-size:.58rem;letter-spacing:.07em;text-transform:uppercase;padding:6px 12px;border:1px solid rgba(201,185,154,.2);background:transparent;color:rgba(201,185,154,.65);cursor:pointer;transition:all .2s;white-space:nowrap;">★ Notable</button>
+    </div>
+    <div id="filter-tags-panel" style="display:none;width:100%;margin-top:4px;">
+      <div class="filter-scroll" id="filter-tags"></div>
     </div>
     <div id="notable-flag-filters" style="display:none;width:100%;gap:6px;flex-wrap:wrap;margin-top:4px;">
       <button onclick="setActiveFlagFilter(null)" id="flag-all-btn" style="font-family:'Space Mono',monospace;font-size:.55rem;letter-spacing:.06em;padding:5px 11px;border:1px solid rgba(201,185,154,.35);background:rgba(201,185,154,.1);color:var(--moon);cursor:pointer;">All Notable</button>
@@ -8222,21 +8225,54 @@ function switchGrimoire(type, btn) {
 
 
 
+function toggleCatFilters() {
+  const panel = document.getElementById('filter-tags-panel');
+  const btn = document.getElementById('cat-filter-toggle');
+  if (!panel) return;
+  const open = panel.style.display !== 'none';
+  panel.style.display = open ? 'none' : 'block';
+  if (btn) {
+    const label = activeFilter === 'all' ? '◈ Categories' : '◈ ' + (CATS.find(c=>c.id===activeFilter)||{lbl:'Category'}).lbl;
+    btn.textContent = open ? label : '✕ Categories';
+    btn.style.borderColor = open ? 'rgba(201,185,154,.2)' : 'var(--moon)';
+    btn.style.color = open ? 'rgba(201,185,154,.65)' : 'var(--moon)';
+  }
+}
+
 function buildFilters(){
   const w=document.getElementById('filter-tags');
   w.innerHTML='';
   const a=document.createElement('button');
   a.className='tag-btn'+(activeFilter==='all'?' active':'');
   a.textContent='All';
-  a.onclick=()=>{activeFilter='all';buildFilters();renderDreams();};
+  a.onclick=()=>{activeFilter='all';buildFilters();renderDreams();updateCatFilterBtn();};
   w.appendChild(a);
   CATS.forEach(c=>{
     const b=document.createElement('button');
     b.className='tag-btn'+(activeFilter===c.id?' active':'')+(c.id==='mariam'?' tag-mariam':'');
     b.textContent=c.lbl;
-    b.onclick=()=>{activeFilter=c.id;buildFilters();renderDreams();};
+    b.onclick=()=>{activeFilter=c.id;buildFilters();renderDreams();updateCatFilterBtn();};
     w.appendChild(b);
   });
+}
+
+function updateCatFilterBtn() {
+  const btn = document.getElementById('cat-filter-toggle');
+  const panel = document.getElementById('filter-tags-panel');
+  if (!btn) return;
+  const isOpen = panel && panel.style.display !== 'none';
+  if (activeFilter === 'all') {
+    btn.textContent = isOpen ? '✕ Categories' : '◈ Categories';
+    btn.style.borderColor = isOpen ? 'var(--moon)' : 'rgba(201,185,154,.2)';
+    btn.style.color = isOpen ? 'var(--moon)' : 'rgba(201,185,154,.65)';
+    btn.style.background = 'transparent';
+  } else {
+    const cat = CATS.find(c=>c.id===activeFilter);
+    btn.textContent = '◈ ' + (cat ? cat.lbl : 'Category');
+    btn.style.borderColor = 'var(--moon)';
+    btn.style.color = 'var(--ink)';
+    btn.style.background = 'var(--moon)';
+  }
 }
 
 function renderDreams(){
