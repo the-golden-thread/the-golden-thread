@@ -431,6 +431,7 @@ h1 em { display:block; font-style:italic; font-weight:300; font-size:.42em; lett
     <button class="sub-tab-btn" id="sub-btn-journal" onclick="switchPractice('journal',this)">📓 Journal</button>
     <button class="sub-tab-btn" id="sub-btn-within" onclick="switchPractice('within',this)">◈ Within</button>
     <button class="sub-tab-btn" id="sub-btn-shadow" onclick="switchPractice('shadow',this)">🜃 Shadow</button>
+    <button class="sub-tab-btn" id="sub-btn-garden" onclick="switchPractice('garden',this)">🌱 Garden</button>
     <button class="sub-tab-btn" id="sub-btn-readings" onclick="switchPractice('readings',this)">🔮 Readings</button>
     <button class="sub-tab-btn" id="sub-btn-gateway" onclick="switchPractice('gateway',this)">◈ Gateway</button>
     <button class="sub-tab-btn" id="sub-btn-moonintent" onclick="switchPractice('moonintent',this)">🌑 Moon</button>
@@ -515,6 +516,9 @@ h1 em { display:block; font-style:italic; font-weight:300; font-size:.42em; lett
 
     <!-- ✦ PROPHECY WATCH ✦ -->
     <div id="prophecy-watch-widget" style="margin-bottom:24px;"></div>
+
+    <!-- ✦ GARDEN WIDGET ✦ -->
+    <div id="garden-today-widget" style="margin-bottom:20px;"></div>
 
     <!-- ✦ TODAY'S READING ✦ (on demand) -->
     <div id="sanctum-daily" style="margin-bottom:36px;">
@@ -9063,13 +9067,13 @@ function renderDeities(dest) {
       <div style="font-family:'Cormorant Garamond',serif;font-size:.95rem;color:rgba(201,185,154,.45);font-style:italic;margin-bottom:24px;">Divine allies across cultures — their domains, symbols, and how to work with them.</div>
 
       <!-- AI Finder -->
-      <div style="margin-bottom:24px;padding:16px 18px;background:rgba(107,79,138,.04);border:1px solid rgba(107,79,138,.15);">
-        <div style="font-family:'Space Mono',monospace;font-size:.5rem;letter-spacing:.1em;text-transform:uppercase;color:rgba(155,107,171,.6);margin-bottom:10px;">✦ Find a Deity</div>
+      <div style="margin-bottom:24px;padding:16px 18px;background:rgba(201,168,76,.04);border:1px solid rgba(201,168,76,.2);">
+        <div style="font-family:'Space Mono',monospace;font-size:.5rem;letter-spacing:.1em;text-transform:uppercase;color:rgba(201,168,76,.7);margin-bottom:10px;">✦ Find a Deity</div>
         <div style="font-family:'Cormorant Garamond',serif;font-size:.88rem;color:rgba(201,185,154,.45);font-style:italic;margin-bottom:10px;">Describe what you need — a situation, a feeling, something you're moving through — and the archive will suggest the most aligned deity and how to work with them.</div>
         <div style="display:flex;gap:8px;">
           <textarea id="deity-ai-input" rows="3" placeholder="e.g. I'm going through a major transformation that feels like falling apart… I need to connect with someone I've lost… I'm trying to reclaim my sovereignty after a hard year…"
-            style="flex:1;background:rgba(255,255,255,.04);border:1px solid rgba(107,79,138,.2);color:var(--parchment);font-family:'Cormorant Garamond',serif;font-size:.95rem;padding:9px 13px;outline:none;resize:none;line-height:1.6;"></textarea>
-          <button onclick="findDeity()" id="deity-ai-btn" class="astro-gen-btn" style="flex-shrink:0;align-self:stretch;">✦ Find</button>
+            style="flex:1;background:rgba(255,255,255,.04);border:1px solid rgba(201,168,76,.2);color:var(--parchment);font-family:'Cormorant Garamond',serif;font-size:.95rem;padding:9px 13px;outline:none;resize:none;line-height:1.6;"></textarea>
+          <button onclick="findDeity()" id="deity-ai-btn" class="astro-gen-btn" style="flex-shrink:0;align-self:stretch;border-color:rgba(201,168,76,.4);color:rgba(201,168,76,.8);">✦ Find</button>
         </div>
         <div id="deity-ai-result" style="display:none;margin-top:12px;"></div>
       </div>
@@ -9130,7 +9134,7 @@ function renderDeityList() {
       <div style="font-family:'Space Mono',monospace;font-size:.48rem;letter-spacing:.1em;text-transform:uppercase;color:${col};margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid rgba(201,185,154,.08);">${culture}</div>
       ${grouped[culture].map(d => {
         const hasLog = d.log && d.log.length;
-        return `<details style="margin-bottom:12px;">
+        return `<details style="margin-bottom:12px;" ontoggle="if(this.open)loadDeityImage('${d.id}','${d.name.replace(/'/g,String.fromCharCode(39))}')">
           <summary style="list-style:none;cursor:pointer;padding:14px 16px;background:rgba(255,255,255,.02);border:1px solid rgba(201,185,154,.1);border-left:3px solid ${col};display:flex;justify-content:space-between;align-items:flex-start;">
             <div style="flex:1;">
               <div style="font-family:'Cormorant Garamond',serif;font-size:1.15rem;color:var(--parchment);margin-bottom:3px;">${d.name}</div>
@@ -9142,6 +9146,7 @@ function renderDeityList() {
             </div>
           </summary>
           <div style="padding:16px;background:rgba(255,255,255,.015);border:1px solid rgba(201,185,154,.08);border-top:none;">
+            <div id="deity-img-${d.id}" style="margin-bottom:14px;"></div>
             <div style="font-family:'Cormorant Garamond',serif;font-size:.95rem;color:rgba(240,235,224,.7);line-height:1.8;margin-bottom:14px;">${d.description}</div>
 
             <div style="margin-bottom:12px;">
@@ -9349,6 +9354,435 @@ function deleteDeity(deityId) {
   renderDeityList();
 }
 
+
+// ═══════════════════════════════════════════════════════════
+// DEITY IMAGE LOADER
+// ═══════════════════════════════════════════════════════════
+const _deityImageCache = {};
+
+async function loadDeityImage(deityId, deityName) {
+  const slot = document.getElementById('deity-img-' + deityId);
+  if (!slot || slot.dataset.loaded) return;
+  slot.dataset.loaded = 'true';
+
+  // Check localStorage cache first
+  try {
+    const cached = JSON.parse(localStorage.getItem('gt_deity_images') || '{}');
+    if (cached[deityId]) {
+      renderDeityImage(slot, cached[deityId], deityName);
+      return;
+    }
+  } catch(e) {}
+
+  // Show placeholder while loading
+  slot.innerHTML = `<div style="height:4px;background:linear-gradient(90deg,rgba(201,168,76,.1),rgba(201,168,76,.3),rgba(201,168,76,.1));animation:shimmer 1.5s infinite;border-radius:2px;margin-bottom:14px;"></div>`;
+
+  // Fetch from Wikipedia summary API
+  const query = deityName === 'The Morrigan' ? 'The Morrígan' :
+                deityName === 'Oyá' ? 'Oya (mythology)' :
+                deityName === 'Yemoja' ? 'Yemoja' :
+                deityName === 'Oshun' ? 'Oshun' :
+                deityName === 'The Horned God' ? 'Horned God' :
+                deityName === 'The Triple Goddess' ? 'Triple Goddess (Wicca)' :
+                deityName === 'The Green Man' ? 'Green Man' :
+                deityName === 'Baba Yaga' ? 'Baba Yaga' :
+                deityName === 'Inari Okami' ? 'Inari Okami' :
+                deityName === 'Quetzalcóatl' ? 'Quetzalcoatl' :
+                deityName;
+
+  try {
+    const resp = await fetch('https://en.wikipedia.org/api/rest_v1/page/summary/' + encodeURIComponent(query));
+    if (!resp.ok) throw new Error('No article');
+    const data = await resp.json();
+    const imgUrl = data.thumbnail?.source || data.originalimage?.source;
+    if (imgUrl) {
+      // Cache it
+      try {
+        const cached = JSON.parse(localStorage.getItem('gt_deity_images') || '{}');
+        cached[deityId] = imgUrl;
+        localStorage.setItem('gt_deity_images', JSON.stringify(cached));
+      } catch(e) {}
+      renderDeityImage(slot, imgUrl, deityName);
+    } else {
+      slot.innerHTML = '';
+    }
+  } catch(e) {
+    slot.innerHTML = '';
+  }
+}
+
+function renderDeityImage(slot, imgUrl, deityName) {
+  slot.innerHTML = `
+    <div style="margin-bottom:16px;position:relative;overflow:hidden;max-height:280px;border:1px solid rgba(201,185,154,.1);">
+      <img src="${imgUrl}" alt="${deityName}" loading="lazy"
+        style="width:100%;max-height:280px;object-fit:cover;object-position:top center;display:block;filter:sepia(20%) contrast(95%);"
+        onerror="this.parentElement.style.display='none'">
+      <div style="position:absolute;bottom:0;left:0;right:0;height:60px;background:linear-gradient(to top,rgba(18,17,24,.9),transparent);"></div>
+    </div>`;
+}
+
+
+
+// ═══════════════════════════════════════════════════════════
+// GARDEN
+// ═══════════════════════════════════════════════════════════
+
+const PLANT_STATUSES = ['Thriving', 'Needs Attention', 'Seedling', 'Dormant', 'Deceased'];
+const PLANT_STATUS_COLOR = {
+  'Thriving': 'rgba(80,160,100,.8)',
+  'Needs Attention': 'rgba(201,168,76,.9)',
+  'Seedling': 'rgba(107,185,155,.8)',
+  'Dormant': 'rgba(107,107,155,.6)',
+  'Deceased': 'rgba(180,80,80,.5)'
+};
+
+function getGardenPlants() {
+  try { return JSON.parse(localStorage.getItem('gt_garden') || '[]'); } catch(e) { return []; }
+}
+function saveGardenPlants(plants) {
+  try { localStorage.setItem('gt_garden', JSON.stringify(plants)); } catch(e) {}
+}
+
+function renderGarden(dest) {
+  if (!dest) return;
+  dest.innerHTML = `
+    <div style="max-width:740px;margin:0 auto;padding:24px 0 60px;">
+      <div style="font-family:'Space Mono',monospace;font-size:.55rem;letter-spacing:.12em;text-transform:uppercase;color:rgba(80,160,100,.8);margin-bottom:6px;">🌱 Garden</div>
+      <div style="font-family:'Cormorant Garamond',serif;font-size:.95rem;color:rgba(201,185,154,.45);font-style:italic;margin-bottom:28px;">The living things you tend — their care, their cycles, their gifts to your practice.</div>
+      <button onclick="openPlantModal()" style="font-family:'Space Mono',monospace;font-size:.55rem;letter-spacing:.1em;text-transform:uppercase;padding:10px 22px;border:1px solid rgba(80,160,100,.4);background:transparent;color:rgba(80,160,100,.8);cursor:pointer;margin-bottom:28px;">+ Add Plant</button>
+      <div id="garden-plants-list"></div>
+    </div>`;
+  renderGardenList();
+}
+
+function renderGardenList() {
+  const list = document.getElementById('garden-plants-list');
+  if (!list) return;
+  const plants = getGardenPlants();
+  if (!plants.length) {
+    list.innerHTML = `<div style="font-family:'Cormorant Garamond',serif;font-size:1rem;color:rgba(201,185,154,.3);font-style:italic;padding:20px 0;">No plants logged yet. Add your first.</div>`;
+    return;
+  }
+
+  const today = new Date();
+  function daysUntilWater(plant) {
+    if (!plant.lastWatered || !plant.waterFreqDays) return null;
+    const last = new Date(plant.lastWatered + 'T12:00:00');
+    const next = new Date(last.getTime() + plant.waterFreqDays * 86400000);
+    return Math.round((next - today) / 86400000);
+  }
+
+  list.innerHTML = plants.map((p, i) => {
+    const col = PLANT_STATUS_COLOR[p.status] || 'rgba(80,160,100,.6)';
+    const daysW = daysUntilWater(p);
+    const waterLabel = daysW === null ? '' :
+      daysW < 0 ? `<span style="color:rgba(201,80,80,.8);font-family:'Space Mono',monospace;font-size:.45rem;">Overdue ${Math.abs(daysW)}d</span>` :
+      daysW === 0 ? `<span style="color:rgba(201,168,76,.9);font-family:'Space Mono',monospace;font-size:.45rem;">Water today</span>` :
+      daysW === 1 ? `<span style="color:rgba(201,168,76,.7);font-family:'Space Mono',monospace;font-size:.45rem;">Water tomorrow</span>` :
+      `<span style="color:rgba(201,185,154,.35);font-family:'Space Mono',monospace;font-size:.45rem;">Water in ${daysW}d</span>`;
+
+    return `<div style="margin-bottom:20px;padding:18px 20px;background:rgba(255,255,255,.02);border:1px solid rgba(80,160,100,.12);border-left:3px solid ${col};">
+      <div style="display:flex;gap:14px;align-items:flex-start;">
+        ${p.image ? `<div style="flex-shrink:0;width:72px;height:72px;overflow:hidden;border:1px solid rgba(80,160,100,.15);cursor:pointer;" onclick="openPlantModal(${i})"><img src="${p.image}" style="width:100%;height:100%;object-fit:cover;" /></div>` : ''}
+        <div style="flex:1;min-width:0;">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px;gap:8px;">
+            <div>
+              <div style="font-family:'Cormorant Garamond',serif;font-size:1.15rem;color:var(--parchment);cursor:pointer;" onclick="openPlantModal(${i})">${p.name}</div>
+              ${p.species ? `<div style="font-family:'Space Mono',monospace;font-size:.43rem;color:rgba(201,185,154,.35);font-style:italic;">${p.species}</div>` : ''}
+            </div>
+            <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0;">
+              <span style="font-family:'Space Mono',monospace;font-size:.45rem;padding:2px 7px;border:1px solid ${col};color:${col};">${p.status||'Thriving'}</span>
+              ${p.count ? `<span style="font-family:'Space Mono',monospace;font-size:.43rem;color:rgba(201,185,154,.35);">× ${p.count}</span>` : ''}
+            </div>
+          </div>
+          <div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:4px;">
+            ${waterLabel}
+            ${p.sunlight ? `<span style="font-family:'Space Mono',monospace;font-size:.43rem;color:rgba(201,185,154,.3);">☀ ${p.sunlight}</span>` : ''}
+          </div>
+          ${p.magicalUse ? `<div style="font-family:'Cormorant Garamond',serif;font-size:.85rem;color:rgba(80,160,100,.6);font-style:italic;margin-top:5px;line-height:1.5;">${p.magicalUse.slice(0,100)}${p.magicalUse.length>100?'…':''}</div>` : ''}
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;">
+        <button onclick="logWatering(${i})" style="font-family:'Space Mono',monospace;font-size:.48rem;letter-spacing:.06em;padding:5px 12px;border:1px solid rgba(80,160,100,.3);background:transparent;color:rgba(80,160,100,.7);cursor:pointer;">💧 Watered</button>
+        <button onclick="openPlantModal(${i})" style="font-family:'Space Mono',monospace;font-size:.45rem;padding:5px 10px;border:1px solid rgba(201,185,154,.2);background:transparent;color:rgba(201,185,154,.5);cursor:pointer;">Edit</button>
+        ${!p.careData ? `<button onclick="lookupPlant(${i},this)" class="astro-gen-btn" style="font-size:.48rem;padding:5px 12px;border-color:rgba(80,160,100,.4);color:rgba(80,160,100,.8);">✦ Look Up</button>` : `<button onclick="lookupPlant(${i},this)" style="font-family:'Space Mono',monospace;font-size:.45rem;padding:5px 10px;border:1px solid rgba(201,185,154,.15);background:transparent;color:rgba(201,185,154,.35);cursor:pointer;">↻ Refresh Info</button>`}
+      </div>
+      ${p.careData ? `<details style="margin-top:12px;">
+        <summary style="list-style:none;cursor:pointer;font-family:'Space Mono',monospace;font-size:.47rem;letter-spacing:.08em;text-transform:uppercase;color:rgba(80,160,100,.5);">▸ Care & Properties</summary>
+        <div style="padding:12px 0 4px;font-family:'Cormorant Garamond',serif;font-size:.9rem;color:rgba(240,235,224,.65);line-height:1.8;">${p.careData.split('\n\n').map(para=>'<p style=\"margin-bottom:8px;\">'+para+'</p>').join('')}</div>
+      </details>` : ''}
+      ${(p.log||[]).length ? `<div style="margin-top:10px;font-family:'Space Mono',monospace;font-size:.43rem;color:rgba(201,185,154,.3);">Last watered: ${p.log.slice(-1)[0]?.date||'—'}</div>` : ''}
+    </div>`;
+  }).join('');
+}
+
+function logWatering(idx) {
+  const plants = getGardenPlants();
+  if (!plants[idx]) return;
+  const today = localDateStr();
+  plants[idx].lastWatered = today;
+  if (!plants[idx].log) plants[idx].log = [];
+  plants[idx].log.push({ date: today, action: 'watered' });
+  saveGardenPlants(plants);
+  renderGardenList();
+  renderGardenTodayWidget();
+}
+
+async function lookupPlant(idx, btnEl) {
+  const apiKey = getApiKey();
+  if (!apiKey) { gtAlert('Add your API key in Settings first.'); return; }
+  const plants = getGardenPlants();
+  const p = plants[idx];
+  if (!p) return;
+
+  if (btnEl) { btnEl.disabled = true; btnEl.textContent = '⟳ Looking up…'; }
+
+  const moonPhase = (typeof getMoonPhaseForToday === 'function') ? getMoonPhaseForToday() : {};
+  let innerSeason = '';
+  try { const s = loadSeasons(); const c = getCurrentPhase(s); if (c) innerSeason = c.phase.name; } catch(e) {}
+
+  const prompt = `You are a gardening and plant magic expert. For the plant "${p.name}"${p.species ? ' (' + p.species + ')' : ''}, provide a complete reference in two sections:
+
+CARE GUIDE:
+- Watering: how often, how much, signs of over/under watering
+- Sunlight: full sun / partial shade / full shade requirements  
+- Soil: preferred soil type and pH
+- Best time to plant: season/conditions
+- Harvest time: when and how to harvest (if applicable)
+- Key care notes: any important tips
+
+MAGICAL & METAPHYSICAL PROPERTIES:
+- Elemental correspondence (earth/air/fire/water)
+- Planetary ruling
+- Primary magical uses and intentions
+- How to use in practice (fresh, dried, infusion, smoke, etc.)
+- Folklore and spiritual traditions associated with this plant
+- How it might work in combination with spiritual practice
+
+Current context for Tiff (a witch and dreamworker): Inner season: ${innerSeason||'unknown'}, Moon: ${moonPhase.phase||'unknown'}.
+
+Write in flowing prose, 2-3 paragraphs per section. Be specific and practical.`;
+
+  try {
+    const data = await claudeAPI(apiKey, { model:'claude-sonnet-4-6', max_tokens:1200, messages:[{role:'user', content:prompt}] });
+    const text = data.content?.find(c=>c.type==='text')?.text||'';
+    plants[idx].careData = text;
+    // Auto-parse watering frequency from response
+    const waterMatch = text.match(/every\\s+(\\d+)[\\s-]*(to[\\s-]*(\\d+))?\\s*days?/i) || text.match(/(\\d+)[\\s-]*days?/i);
+    if (waterMatch && !plants[idx].waterFreqDays) {
+      const days = parseInt(waterMatch[1]);
+      if (days >= 1 && days <= 30) plants[idx].waterFreqDays = days;
+    }
+    // Auto-parse sunlight
+    const sunMatch = text.match(/full sun|partial shade|full shade|part sun|indirect light|direct sun/i);
+    if (sunMatch && !plants[idx].sunlight) plants[idx].sunlight = sunMatch[0];
+    // Auto-parse magical use summary
+    const lines = text.split('\n').filter(l => l.trim());
+    const magicIdx = lines.findIndex(l => /magical|metaphysical|elemental|planetary/i.test(l));
+    if (magicIdx > -1 && magicIdx + 1 < lines.length && !plants[idx].magicalUse) {
+      plants[idx].magicalUse = lines[magicIdx + 1].slice(0,200);
+    }
+    saveGardenPlants(plants);
+    renderGardenList();
+    renderGardenTodayWidget();
+  } catch(err) {
+    gtAlert('Error looking up plant: ' + err.message);
+    if (btnEl) { btnEl.disabled = false; btnEl.textContent = '✦ Look Up'; }
+  }
+}
+
+function openPlantModal(existingIdx) {
+  const plants = getGardenPlants();
+  const p = existingIdx !== undefined ? plants[existingIdx] : null;
+  const wrap = document.createElement('div');
+  wrap.id = 'plant-modal-wrap';
+  wrap.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.88);z-index:9999;display:flex;align-items:flex-start;justify-content:center;padding:16px;overflow-y:auto;';
+  const statusOpts = PLANT_STATUSES.map(s => `<option value="${s}" ${p&&p.status===s?'selected':''}>${s}</option>`).join('');
+  wrap.innerHTML = `
+    <div style="background:#1a1820;border:1px solid rgba(80,160,100,.25);padding:24px;max-width:600px;width:100%;margin-top:16px;">
+      <div style="font-family:'Space Mono',monospace;font-size:.52rem;letter-spacing:.1em;text-transform:uppercase;color:rgba(80,160,100,.7);margin-bottom:18px;">🌱 ${p?'Edit':'New'} Plant</div>
+
+      ${p?.image ? `<div style="margin-bottom:14px;text-align:center;"><img src="${p.image}" style="max-height:140px;max-width:100%;object-fit:contain;border:1px solid rgba(80,160,100,.2);" /></div>` : ''}
+      <div style="margin-bottom:14px;">
+        <label style="font-family:'Space Mono',monospace;font-size:.5rem;letter-spacing:.08em;text-transform:uppercase;color:rgba(201,185,154,.5);display:block;margin-bottom:6px;">Photo</label>
+        <label style="font-family:'Space Mono',monospace;font-size:.55rem;letter-spacing:.07em;padding:8px 16px;background:transparent;border:1px solid rgba(80,160,100,.3);color:rgba(80,160,100,.7);cursor:pointer;display:inline-block;">📷 ${p?.image ? 'Change Photo' : 'Upload Photo'}<input type="file" accept="image/*" onchange="handlePlantImage(this)" style="display:none;"></label>
+        <input type="hidden" id="plant-image-data" value="${p?.image||''}">
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:13px;">
+        <div><label style="font-family:'Space Mono',monospace;font-size:.5rem;letter-spacing:.08em;text-transform:uppercase;color:rgba(201,185,154,.5);display:block;margin-bottom:5px;">Common Name</label>
+          <input id="plant-name" value="${p?.name||''}" placeholder="e.g. Lavender" style="width:100%;background:rgba(255,255,255,.04);border:1px solid rgba(80,160,100,.25);color:var(--parchment);font-family:'Cormorant Garamond',serif;font-size:1rem;padding:8px 11px;outline:none;box-sizing:border-box;"></div>
+        <div><label style="font-family:'Space Mono',monospace;font-size:.5rem;letter-spacing:.08em;text-transform:uppercase;color:rgba(201,185,154,.5);display:block;margin-bottom:5px;">Species (optional)</label>
+          <input id="plant-species" value="${p?.species||''}" placeholder="e.g. Lavandula angustifolia" style="width:100%;background:rgba(255,255,255,.04);border:1px solid rgba(80,160,100,.25);color:var(--parchment);font-family:'Cormorant Garamond',serif;font-size:.9rem;font-style:italic;padding:8px 11px;outline:none;box-sizing:border-box;"></div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:13px;">
+        <div><label style="font-family:'Space Mono',monospace;font-size:.5rem;letter-spacing:.08em;text-transform:uppercase;color:rgba(201,185,154,.5);display:block;margin-bottom:5px;">Status</label>
+          <select id="plant-status" style="width:100%;background:#1a1820;border:1px solid rgba(80,160,100,.25);color:var(--parchment);font-family:'Space Mono',monospace;font-size:.65rem;padding:8px 11px;outline:none;">${statusOpts}</select></div>
+        <div><label style="font-family:'Space Mono',monospace;font-size:.5rem;letter-spacing:.08em;text-transform:uppercase;color:rgba(201,185,154,.5);display:block;margin-bottom:5px;">Count</label>
+          <input id="plant-count" type="number" min="1" value="${p?.count||1}" style="width:100%;background:rgba(255,255,255,.04);border:1px solid rgba(80,160,100,.25);color:var(--parchment);font-family:'Space Mono',monospace;font-size:.8rem;padding:8px 11px;outline:none;box-sizing:border-box;text-align:center;"></div>
+        <div><label style="font-family:'Space Mono',monospace;font-size:.5rem;letter-spacing:.08em;text-transform:uppercase;color:rgba(201,185,154,.5);display:block;margin-bottom:5px;">Water Every</label>
+          <div style="display:flex;align-items:center;gap:5px;">
+            <input id="plant-waterfreq" type="number" min="1" max="60" value="${p?.waterFreqDays||''}" placeholder="—" style="flex:1;background:rgba(255,255,255,.04);border:1px solid rgba(80,160,100,.25);color:var(--parchment);font-family:'Space Mono',monospace;font-size:.8rem;padding:8px 8px;outline:none;text-align:center;">
+            <span style="font-family:'Space Mono',monospace;font-size:.5rem;color:rgba(201,185,154,.35);">days</span>
+          </div></div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:13px;">
+        <div><label style="font-family:'Space Mono',monospace;font-size:.5rem;letter-spacing:.08em;text-transform:uppercase;color:rgba(201,185,154,.5);display:block;margin-bottom:5px;">Last Watered</label>
+          <input id="plant-lastwatered" type="date" value="${p?.lastWatered||''}" style="width:100%;background:rgba(255,255,255,.04);border:1px solid rgba(80,160,100,.25);color:var(--parchment);font-family:'Space Mono',monospace;font-size:.72rem;padding:8px 11px;outline:none;"></div>
+        <div><label style="font-family:'Space Mono',monospace;font-size:.5rem;letter-spacing:.08em;text-transform:uppercase;color:rgba(201,185,154,.5);display:block;margin-bottom:5px;">Sunlight</label>
+          <input id="plant-sun" value="${p?.sunlight||''}" placeholder="e.g. Full sun" style="width:100%;background:rgba(255,255,255,.04);border:1px solid rgba(80,160,100,.25);color:var(--parchment);font-family:'Cormorant Garamond',serif;font-size:.95rem;padding:8px 11px;outline:none;box-sizing:border-box;"></div>
+      </div>
+
+      <div style="margin-bottom:13px;"><label style="font-family:'Space Mono',monospace;font-size:.5rem;letter-spacing:.08em;text-transform:uppercase;color:rgba(201,185,154,.5);display:block;margin-bottom:5px;">Location / Notes</label>
+        <textarea id="plant-notes" rows="3" placeholder="Where it grows, observations, anything notable…" style="width:100%;background:rgba(255,255,255,.04);border:1px solid rgba(80,160,100,.25);color:var(--parchment);font-family:'Cormorant Garamond',serif;font-size:.98rem;padding:8px 11px;outline:none;resize:vertical;line-height:1.7;box-sizing:border-box;">${p?.notes||''}</textarea></div>
+
+      <div style="display:flex;gap:12px;flex-wrap:wrap;">
+        <button onclick="savePlant(${existingIdx!==undefined?existingIdx:'undefined'})" style="font-family:'Space Mono',monospace;font-size:.55rem;letter-spacing:.1em;text-transform:uppercase;padding:10px 22px;border:1px solid rgba(80,160,100,.5);background:transparent;color:rgba(80,160,100,.9);cursor:pointer;">Save</button>
+        <button onclick="document.getElementById('plant-modal-wrap').remove()" style="font-family:'Space Mono',monospace;font-size:.55rem;letter-spacing:.1em;text-transform:uppercase;padding:10px 22px;border:1px solid rgba(201,185,154,.15);background:transparent;color:rgba(201,185,154,.4);cursor:pointer;">Cancel</button>
+        ${p ? `<button onclick="deletePlant(${existingIdx})" style="font-family:'Space Mono',monospace;font-size:.55rem;letter-spacing:.1em;text-transform:uppercase;padding:10px 22px;border:1px solid rgba(180,80,80,.3);background:transparent;color:rgba(180,80,80,.6);cursor:pointer;margin-left:auto;">Delete</button>` : ''}
+      </div>
+    </div>`;
+  document.body.appendChild(wrap);
+}
+
+function handlePlantImage(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const dataInput = document.getElementById('plant-image-data');
+    if (dataInput) dataInput.value = e.target.result;
+    // Show preview
+    const modal = document.getElementById('plant-modal-wrap');
+    if (modal) {
+      let preview = modal.querySelector('.plant-img-preview');
+      if (!preview) {
+        preview = document.createElement('div');
+        preview.className = 'plant-img-preview';
+        preview.style.cssText = 'margin-bottom:14px;text-align:center;';
+        const uploadLabel = modal.querySelector('label[style*="Upload"]') || modal.querySelector('label[style*="Change"]');
+        if (uploadLabel) uploadLabel.parentElement.insertBefore(preview, uploadLabel.parentElement.firstChild);
+      }
+      preview.innerHTML = `<img src="${e.target.result}" style="max-height:120px;max-width:100%;object-fit:contain;border:1px solid rgba(80,160,100,.2);" />`;
+    }
+  };
+  reader.readAsDataURL(file);
+}
+
+function savePlant(existingIdx) {
+  const name = (document.getElementById('plant-name')||{}).value?.trim()||'';
+  if (!name) { gtAlert('Plant name is required.'); return; }
+  const plant = {
+    name,
+    species: (document.getElementById('plant-species')||{}).value?.trim()||'',
+    status: (document.getElementById('plant-status')||{}).value||'Thriving',
+    count: parseInt((document.getElementById('plant-count')||{}).value)||1,
+    waterFreqDays: parseInt((document.getElementById('plant-waterfreq')||{}).value)||null,
+    lastWatered: (document.getElementById('plant-lastwatered')||{}).value||'',
+    sunlight: (document.getElementById('plant-sun')||{}).value?.trim()||'',
+    notes: (document.getElementById('plant-notes')||{}).value?.trim()||'',
+    image: (document.getElementById('plant-image-data')||{}).value||'',
+  };
+  const plants = getGardenPlants();
+  if (existingIdx !== undefined && !isNaN(parseInt(existingIdx))) {
+    const idx = parseInt(existingIdx);
+    plant.careData = plants[idx]?.careData||'';
+    plant.magicalUse = plants[idx]?.magicalUse||'';
+    plant.log = plants[idx]?.log||[];
+    plants[idx] = plant;
+  } else {
+    plant.log = [];
+    plants.push(plant);
+  }
+  saveGardenPlants(plants);
+  const wrap = document.getElementById('plant-modal-wrap');
+  if (wrap) wrap.remove();
+  renderGardenList();
+  renderGardenTodayWidget();
+}
+
+function deletePlant(idx) {
+  if (!confirm('Remove this plant from your garden?')) return;
+  const plants = getGardenPlants();
+  plants.splice(idx, 1);
+  saveGardenPlants(plants);
+  const wrap = document.getElementById('plant-modal-wrap');
+  if (wrap) wrap.remove();
+  renderGardenList();
+  renderGardenTodayWidget();
+}
+
+// ═══════════════════════════════════════════════════════════
+// GARDEN TODAY WIDGET
+// ═══════════════════════════════════════════════════════════
+function renderGardenTodayWidget() {
+  const el = document.getElementById('garden-today-widget');
+  if (!el) return;
+  const plants = getGardenPlants().filter(p => p.status !== 'Deceased');
+  if (!plants.length) return; // show nothing if no plants logged
+
+  const today = new Date();
+  const todayStr = today.toLocaleDateString('en-CA');
+
+  // Plants needing water
+  const needsWater = plants.filter(p => {
+    if (!p.lastWatered || !p.waterFreqDays) return false;
+    const last = new Date(p.lastWatered + 'T12:00:00');
+    const next = new Date(last.getTime() + p.waterFreqDays * 86400000);
+    return next <= today;
+  });
+
+  // Plants best for practice today — based on moon + inner season
+  const moonPhase = (typeof getMoonPhaseForToday === 'function') ? getMoonPhaseForToday() : {};
+  let innerSeason = '';
+  try { const s = loadSeasons(); const c = getCurrentPhase(s); if (c) innerSeason = c.phase.name.toLowerCase(); } catch(e) {}
+  const moonName = (typeof getCurrentNamedMoon === 'function') ? getCurrentNamedMoon().name.toLowerCase() : '';
+
+  const practiceAligned = plants.filter(p => {
+    if (!p.careData && !p.magicalUse) return false;
+    const text = ((p.careData||'') + ' ' + (p.magicalUse||'')).toLowerCase();
+    if (innerSeason.includes('winter') || innerSeason.includes('menstruat')) {
+      return /rest|sleep|dream|release|ancestor|death|shadow|protection|mugwort|valerian|lavender/i.test(text);
+    }
+    if (innerSeason.includes('spring') || innerSeason.includes('follicul')) {
+      return /new begin|growth|fresh|clarity|purif|cleanse|basil|mint|rosemary/i.test(text);
+    }
+    if (innerSeason.includes('summer') || innerSeason.includes('ovulat')) {
+      return /love|attract|abundance|manifest|rose|jasmine|sun|full moon|flower/i.test(text);
+    }
+    if (innerSeason.includes('autumn') || innerSeason.includes('luteal')) {
+      return /harvest|gratitude|reflect|protect|ground|sage|thyme|chamomile/i.test(text);
+    }
+    if (moonPhase.phase === 'New Moon') return /new|begin|seed|intention|dark/i.test(text);
+    if (moonPhase.phase === 'Full Moon') return /full|peak|love|manifest|power|vision/i.test(text);
+    return false;
+  }).slice(0, 3);
+
+  if (!needsWater.length && !practiceAligned.length) return;
+
+  el.innerHTML = `
+    <div style="padding:14px 18px;background:rgba(80,160,100,.03);border:1px solid rgba(80,160,100,.15);border-left:2px solid rgba(80,160,100,.4);">
+      <div style="font-family:'Space Mono',monospace;font-size:.48rem;letter-spacing:.1em;text-transform:uppercase;color:rgba(80,160,100,.5);margin-bottom:10px;">🌱 Garden</div>
+      ${needsWater.length ? `
+        <div style="margin-bottom:${practiceAligned.length?'10':'0'}px;">
+          <div style="font-family:'Space Mono',monospace;font-size:.44rem;color:rgba(201,168,76,.6);letter-spacing:.06em;margin-bottom:5px;">💧 Needs water</div>
+          <div style="display:flex;flex-wrap:wrap;gap:5px;">
+            ${needsWater.map(p => `<span style="font-family:'Cormorant Garamond',serif;font-size:.88rem;color:var(--parchment);padding:2px 8px;border:1px solid rgba(201,168,76,.2);">${p.name}${p.count>1?' ×'+p.count:''}</span>`).join('')}
+          </div>
+        </div>` : ''}
+      ${practiceAligned.length ? `
+        <div>
+          <div style="font-family:'Space Mono',monospace;font-size:.44rem;color:rgba(80,160,100,.5);letter-spacing:.06em;margin-bottom:5px;">✦ Aligned with today</div>
+          <div style="display:flex;flex-wrap:wrap;gap:5px;">
+            ${practiceAligned.map(p => `<span style="font-family:'Cormorant Garamond',serif;font-size:.88rem;color:rgba(240,235,224,.65);padding:2px 8px;border:1px solid rgba(80,160,100,.15);">${p.name}</span>`).join('')}
+          </div>
+        </div>` : ''}
+    </div>`;
+}
+
+
 function runGlobalSearch(raw) {
   const q = (raw || '').trim().toLowerCase();
   const meta = document.getElementById('global-search-meta');
@@ -9396,7 +9830,8 @@ function runGlobalSearch(raw) {
     within: { label: 'Within', color: 'rgba(201,168,76,.8)', icon: '◈', open: e => { switchTab('practice', document.getElementById('tab-btn-practice')); setTimeout(()=>switchPractice('within'), 100); } },
     code: { label: 'Code', color: 'rgba(107,185,201,.8)', icon: '⌗', open: e => { switchTab('tools', document.getElementById('tab-btn-tools')); setTimeout(()=>switchTools('codes'), 100); } },
     meditation: { label: 'Meditation', color: 'rgba(155,107,171,.8)', icon: '◎', open: e => { switchTab('tools', document.getElementById('tab-btn-tools')); setTimeout(()=>switchTools('meditation'), 100); } },
-    deity: { label: 'Deity', color: 'rgba(201,168,76,.8)', icon: '✦', open: e => { switchTab('tools', document.getElementById('tab-btn-tools')); setTimeout(()=>switchTools('deities'), 100); } }
+    deity: { label: 'Deity', color: 'rgba(201,168,76,.8)', icon: '✦', open: e => { switchTab('tools', document.getElementById('tab-btn-tools')); setTimeout(()=>switchTools('deities'), 100); } },
+    garden: { label: 'Garden', color: 'rgba(80,160,100,.8)', icon: '🌱', open: e => { switchTab('practice', document.getElementById('tab-btn-practice')); setTimeout(()=>switchPractice('garden'), 100); } }
   };
 
   function matchGeneral(e) {
@@ -9601,6 +10036,9 @@ function switchPractice(type, btn) {
   if (type === 'within') {
     dest.innerHTML = '';
     renderWithin(dest);
+  } else if (type === 'garden') {
+    dest.innerHTML = '';
+    renderGarden(dest);
   } else if (type === 'moonintent') {
     dest.innerHTML = '';
     renderMoonIntentions(dest);
@@ -11880,6 +12318,7 @@ async function initSanctum() {
   renderThisDayWidget();
   renderProphecyWatch();
   renderProphecyDateBanner();
+  renderGardenTodayWidget();
   // Restore last used sanctum sub-tab
   const lastSanctumTab = localStorage.getItem('gt_sanctum_tab') || 'today';
   switchSanctumTab(lastSanctumTab);
@@ -14001,7 +14440,7 @@ try { renderInsights(); } catch(e) { console.error('renderInsights crashed:', e)
     const lastTab = isNewSession ? 'sanctum' : (localStorage.getItem('gt_last_tab') || 'sanctum');
     // Map legacy tab IDs to new structure
     const tabMap = {'viz':'insight','insights':'insight','journal':'practice','workings':'practice',
-      'shadow':'practice','readings':'practice','gateway':'practice','moonintent':'practice','manifesting':'practice','within':'practice',
+      'shadow':'practice','readings':'practice','gateway':'practice','moonintent':'practice','manifesting':'practice','within':'practice','garden':'practice',
       'charts':'grimoire','people':'grimoire','elixirs':'grimoire','songs':'grimoire','comms':'grimoire',
       'ancestors':'grimoire','places':'grimoire','rituals':'grimoire','visitations':'grimoire','channel':'grimoire',
       'herbalism':'tools','hblends':'tools','seasons':'tools','sacredDates':'tools','wheel':'tools','codes':'tools','meditation':'tools','deities':'tools',
