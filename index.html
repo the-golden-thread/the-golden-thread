@@ -784,8 +784,8 @@ h1 em { display:block; font-style:italic; font-weight:300; font-size:.42em; lett
     <div id="insights-ask-result" style="display:none;margin-top:14px;"></div>
   </div>
 
+  <div id="saved-patterns-section" style="margin-bottom:20px;"></div>
   <div class="insights-grid" id="insights-grid"></div>
-  <div id="saved-patterns-section" style="margin-top:28px;"></div>
 </div>
 </div>
 
@@ -7464,6 +7464,214 @@ function deleteWithinLogEntry(entryId, logIdx) {
   openWithinModal(entryId);
 }
 
+
+// ═══════════════════════════════════════════════════════════
+// DREAM MAGIC
+// ═══════════════════════════════════════════════════════════
+function renderDreamMagic(dest) {
+  if (!dest) return;
+  dest.innerHTML = `
+    <div style="max-width:740px;margin:0 auto;padding:24px 0 60px;">
+      <div style="font-family:'Space Mono',monospace;font-size:.55rem;letter-spacing:.12em;text-transform:uppercase;color:var(--moon);margin-bottom:6px;">✦ Dream Magic</div>
+      <div style="font-family:'Cormorant Garamond',serif;font-size:.95rem;color:rgba(201,185,154,.45);font-style:italic;margin-bottom:28px;">Incubation → Dream → Thread → Magic. The full arc of intentional dream work.</div>
+      <div id="dream-magic-list"></div>
+      <button onclick="openDreamMagicModal()" style="margin-top:24px;font-family:'Space Mono',monospace;font-size:.55rem;letter-spacing:.1em;text-transform:uppercase;padding:10px 22px;border:1px solid rgba(201,185,154,.3);background:transparent;color:rgba(201,185,154,.7);cursor:pointer;">+ New Working</button>
+    </div>`;
+  renderDreamMagicList();
+}
+
+function getDreamMagicEntries() {
+  try { return JSON.parse(localStorage.getItem('gt_dream_magic') || '[]'); } catch(e) { return []; }
+}
+function saveDreamMagicEntries(entries) {
+  try { localStorage.setItem('gt_dream_magic', JSON.stringify(entries)); } catch(e) {}
+}
+
+const DREAM_MAGIC_TYPES = ['Lucid Dreaming','Dream Spellwork','Waking Integration','Dream Request','Other'];
+const DREAM_MAGIC_STATUSES = ['Active','Complete','Unresolved'];
+
+function renderDreamMagicList() {
+  const list = document.getElementById('dream-magic-list');
+  if (!list) return;
+  const entries = getDreamMagicEntries();
+  if (!entries.length) {
+    list.innerHTML = `<div style="font-family:'Cormorant Garamond',serif;font-size:1rem;color:rgba(201,185,154,.35);font-style:italic;padding:20px 0;">No workings yet. The magic begins when you do.</div>`;
+    return;
+  }
+  const statusColor = {Active:'#c9a84c', Complete:'rgba(201,185,154,.4)', Unresolved:'#6b4f8a'};
+  list.innerHTML = entries.slice().sort((a,b) => b.date.localeCompare(a.date)).map((e,i) => `
+    <div style="margin-bottom:24px;padding:20px;background:rgba(255,255,255,.02);border:1px solid rgba(201,185,154,.1);cursor:pointer;" onclick="openDreamMagicModal(${i})">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;">
+        <div>
+          <div style="font-family:'Space Mono',monospace;font-size:.48rem;letter-spacing:.1em;text-transform:uppercase;color:rgba(201,185,154,.4);margin-bottom:3px;">${e.date} · ${e.type||'Working'}</div>
+          <div style="font-family:'Cormorant Garamond',serif;font-size:1.2rem;color:var(--parchment);">${e.title}</div>
+        </div>
+        <span style="font-family:'Space Mono',monospace;font-size:.45rem;letter-spacing:.07em;padding:3px 8px;border:1px solid ${statusColor[e.status]||'rgba(201,185,154,.3)'};color:${statusColor[e.status]||'rgba(201,185,154,.5)'};">${e.status||'Active'}</span>
+      </div>
+      ${e.intention ? `<div style="font-family:'Cormorant Garamond',serif;font-size:.95rem;color:rgba(240,235,224,.55);font-style:italic;margin-bottom:8px;">${e.intention}</div>` : ''}
+      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;">
+        ${e.linkedIncubations&&e.linkedIncubations.length?`<span style="font-family:'Space Mono',monospace;font-size:.45rem;padding:2px 7px;border:1px solid rgba(201,185,154,.15);color:rgba(201,185,154,.5);">🌙 ${e.linkedIncubations.length} incubation${e.linkedIncubations.length>1?'s':''}</span>`:''}
+        ${e.linkedDreams&&e.linkedDreams.length?`<span style="font-family:'Space Mono',monospace;font-size:.45rem;padding:2px 7px;border:1px solid rgba(201,185,154,.15);color:rgba(201,185,154,.5);">◉ ${e.linkedDreams.length} dream${e.linkedDreams.length>1?'s':''}</span>`:''}
+        ${e.linkedThreads&&e.linkedThreads.length?`<span style="font-family:'Space Mono',monospace;font-size:.45rem;padding:2px 7px;border:1px solid rgba(201,185,154,.15);color:rgba(201,185,154,.5);">∞ ${e.linkedThreads.length} thread${e.linkedThreads.length>1?'s':''}</span>`:''}
+        ${e.images&&e.images.length?`<span style="font-family:'Space Mono',monospace;font-size:.45rem;padding:2px 7px;border:1px solid rgba(201,185,154,.15);color:rgba(201,185,154,.5);">⬡ ${e.images.length} image${e.images.length>1?'s':''}</span>`:''}
+      </div>
+    </div>`).join('');
+}
+
+function openDreamMagicModal(idx) {
+  const entries = getDreamMagicEntries();
+  const e = idx !== undefined ? entries[idx] : null;
+  const allDreams = (window.dreams || []).slice().sort((a,b) => b.date.localeCompare(a.date));
+  const allIncubations = (() => { try { return JSON.parse(localStorage.getItem('gt_incubations')||'[]'); } catch(ex){return[];} })();
+  const allThreads = (() => { try { return JSON.parse(localStorage.getItem('gt_threads')||'[]'); } catch(ex){return[];} })();
+
+  const linkedDreams = e ? (e.linkedDreams||[]) : [];
+  const linkedIncubs = e ? (e.linkedIncubations||[]) : [];
+  const linkedThreads = e ? (e.linkedThreads||[]) : [];
+
+  const wrap = document.createElement('div');
+  wrap.id = 'dream-magic-modal-wrap';
+  wrap.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.85);z-index:9999;display:flex;align-items:flex-start;justify-content:center;padding:16px;overflow-y:auto;';
+
+  const typeOpts = DREAM_MAGIC_TYPES.map(t => `<option value="${t}" ${e&&e.type===t?'selected':''}>${t}</option>`).join('');
+  const statusOpts = DREAM_MAGIC_STATUSES.map(s => `<option value="${s}" ${(e&&e.status===s)||(s==='Active'&&!e)?'selected':''}>${s}</option>`).join('');
+  const dreamOpts = allDreams.map(d => `<option value="${d.id}" ${linkedDreams.includes(d.id)?'selected':''}>${d.date} — ${d.title}</option>`).join('');
+  const incubOpts = allIncubations.map((inc,ii) => `<option value="${ii}" ${linkedIncubs.includes(ii)?'selected':''}>${inc.date||''} — ${inc.intention||inc.title||'Incubation '+(ii+1)}</option>`).join('');
+  const threadOpts = allThreads.map((th,ti) => `<option value="${ti}" ${linkedThreads.includes(ti)?'selected':''}>${th.name||th.title||'Thread '+(ti+1)}</option>`).join('');
+
+  wrap.innerHTML = `
+    <div style="background:#1a1820;border:1px solid rgba(201,185,154,.2);padding:24px;max-width:680px;width:100%;margin-top:16px;">
+      <div style="font-family:'Space Mono',monospace;font-size:.55rem;letter-spacing:.12em;text-transform:uppercase;color:var(--moon);margin-bottom:18px;">✦ ${e?'Edit':'New'} Dream Magic Working</div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;">
+        <div><label style="font-family:'Space Mono',monospace;font-size:.5rem;letter-spacing:.08em;text-transform:uppercase;color:rgba(201,185,154,.5);display:block;margin-bottom:5px;">Title</label>
+          <input id="dm-title" value="${e?e.title:''}" style="width:100%;background:rgba(255,255,255,.04);border:1px solid rgba(201,185,154,.22);color:var(--parchment);font-family:'Cormorant Garamond',serif;font-size:1rem;padding:8px 11px;outline:none;box-sizing:border-box;"></div>
+        <div><label style="font-family:'Space Mono',monospace;font-size:.5rem;letter-spacing:.08em;text-transform:uppercase;color:rgba(201,185,154,.5);display:block;margin-bottom:5px;">Date</label>
+          <input id="dm-date" type="date" value="${e?e.date:new Date().toISOString().slice(0,10)}" style="width:100%;background:rgba(255,255,255,.04);border:1px solid rgba(201,185,154,.22);color:var(--parchment);font-family:'Space Mono',monospace;font-size:.75rem;padding:8px 11px;outline:none;"></div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;">
+        <div><label style="font-family:'Space Mono',monospace;font-size:.5rem;letter-spacing:.08em;text-transform:uppercase;color:rgba(201,185,154,.5);display:block;margin-bottom:5px;">Type</label>
+          <select id="dm-type" style="width:100%;background:#1a1820;border:1px solid rgba(201,185,154,.22);color:var(--parchment);font-family:'Space Mono',monospace;font-size:.7rem;padding:8px 11px;outline:none;">${typeOpts}</select></div>
+        <div><label style="font-family:'Space Mono',monospace;font-size:.5rem;letter-spacing:.08em;text-transform:uppercase;color:rgba(201,185,154,.5);display:block;margin-bottom:5px;">Status</label>
+          <select id="dm-status" style="width:100%;background:#1a1820;border:1px solid rgba(201,185,154,.22);color:var(--parchment);font-family:'Space Mono',monospace;font-size:.7rem;padding:8px 11px;outline:none;">${statusOpts}</select></div>
+      </div>
+
+      <div style="margin-bottom:14px;"><label style="font-family:'Space Mono',monospace;font-size:.5rem;letter-spacing:.08em;text-transform:uppercase;color:rgba(201,185,154,.5);display:block;margin-bottom:5px;">Intention</label>
+        <input id="dm-intention" value="${e?e.intention||'':''}" placeholder="What are you working toward?" style="width:100%;background:rgba(255,255,255,.04);border:1px solid rgba(201,185,154,.22);color:var(--parchment);font-family:'Cormorant Garamond',serif;font-size:1rem;padding:8px 11px;outline:none;box-sizing:border-box;"></div>
+
+      <div style="margin-bottom:14px;"><label style="font-family:'Space Mono',monospace;font-size:.5rem;letter-spacing:.08em;text-transform:uppercase;color:rgba(201,185,154,.5);display:block;margin-bottom:5px;">Method / Working</label>
+        <textarea id="dm-method" rows="5" placeholder="What did you do? How did you work with the dream material?" style="width:100%;background:rgba(255,255,255,.04);border:1px solid rgba(201,185,154,.22);color:var(--parchment);font-family:'Cormorant Garamond',serif;font-size:.98rem;padding:8px 11px;outline:none;resize:vertical;line-height:1.7;box-sizing:border-box;">${e?e.method||'':''}</textarea></div>
+
+      <div style="margin-bottom:14px;"><label style="font-family:'Space Mono',monospace;font-size:.5rem;letter-spacing:.08em;text-transform:uppercase;color:rgba(201,185,154,.5);display:block;margin-bottom:5px;">Outcome</label>
+        <textarea id="dm-outcome" rows="4" placeholder="What happened? How did it resolve? (Can be filled in later.)" style="width:100%;background:rgba(255,255,255,.04);border:1px solid rgba(201,185,154,.22);color:var(--parchment);font-family:'Cormorant Garamond',serif;font-size:.98rem;padding:8px 11px;outline:none;resize:vertical;line-height:1.7;box-sizing:border-box;">${e?e.outcome||'':''}</textarea></div>
+
+      ${incubOpts ? `<div style="margin-bottom:14px;"><label style="font-family:'Space Mono',monospace;font-size:.5rem;letter-spacing:.08em;text-transform:uppercase;color:rgba(201,185,154,.5);display:block;margin-bottom:5px;">🌙 Linked Incubations</label>
+        <select id="dm-incubs" multiple style="width:100%;background:#1a1820;border:1px solid rgba(201,185,154,.22);color:var(--parchment);font-family:'Cormorant Garamond',serif;font-size:.9rem;padding:6px;outline:none;min-height:70px;">${incubOpts}</select>
+        <div style="font-family:'Space Mono',monospace;font-size:.44rem;color:rgba(201,185,154,.3);margin-top:4px;">Hold Ctrl/Cmd to select multiple</div></div>` : ''}
+
+      ${dreamOpts ? `<div style="margin-bottom:14px;"><label style="font-family:'Space Mono',monospace;font-size:.5rem;letter-spacing:.08em;text-transform:uppercase;color:rgba(201,185,154,.5);display:block;margin-bottom:5px;">◉ Linked Dreams</label>
+        <select id="dm-dreams" multiple style="width:100%;background:#1a1820;border:1px solid rgba(201,185,154,.22);color:var(--parchment);font-family:'Cormorant Garamond',serif;font-size:.9rem;padding:6px;outline:none;min-height:70px;">${dreamOpts}</select>
+        <div style="font-family:'Space Mono',monospace;font-size:.44rem;color:rgba(201,185,154,.3);margin-top:4px;">Hold Ctrl/Cmd to select multiple</div></div>` : ''}
+
+      ${threadOpts ? `<div style="margin-bottom:14px;"><label style="font-family:'Space Mono',monospace;font-size:.5rem;letter-spacing:.08em;text-transform:uppercase;color:rgba(201,185,154,.5);display:block;margin-bottom:5px;">∞ Linked Threads</label>
+        <select id="dm-threads" multiple style="width:100%;background:#1a1820;border:1px solid rgba(201,185,154,.22);color:var(--parchment);font-family:'Cormorant Garamond',serif;font-size:.9rem;padding:6px;outline:none;min-height:70px;">${threadOpts}</select>
+        <div style="font-family:'Space Mono',monospace;font-size:.44rem;color:rgba(201,185,154,.3);margin-top:4px;">Hold Ctrl/Cmd to select multiple</div></div>` : ''}
+
+      <div style="margin-bottom:20px;"><label style="font-family:'Space Mono',monospace;font-size:.5rem;letter-spacing:.08em;text-transform:uppercase;color:rgba(201,185,154,.5);display:block;margin-bottom:5px;">Images</label>
+        <label style="font-family:'Space Mono',monospace;font-size:.6rem;letter-spacing:.08em;padding:9px 18px;background:transparent;border:1px solid rgba(201,185,154,.25);color:var(--moon);cursor:pointer;display:inline-block;" onmouseover="this.style.borderColor='var(--moon)'" onmouseout="this.style.borderColor='rgba(201,185,154,.25)'">↑ Attach Images <input type="file" id="dm-images" accept="image/*" multiple onchange="previewDreamMagicImages(this)" style="display:none;"></label>
+        <div id="dm-image-preview" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;">${e&&e.images?e.images.map((img,ii)=>`<div style="position:relative;"><img src="${img}" style="width:80px;height:80px;object-fit:cover;border:1px solid rgba(201,185,154,.2);" /><button onclick="removeDreamMagicImage(${ii})" style="position:absolute;top:2px;right:2px;background:rgba(0,0,0,.7);border:none;color:rgba(201,185,154,.8);cursor:pointer;font-size:.6rem;padding:1px 4px;">✕</button></div>`).join(''):''}
+        </div>
+        <input type="hidden" id="dm-images-data" value="${e&&e.images?JSON.stringify(e.images).replace(/"/g,'&quot;'):'[]'}">
+      </div>
+
+      <div style="display:flex;gap:12px;flex-wrap:wrap;">
+        <button onclick="saveDreamMagicEntry(${idx!==undefined?idx:'undefined'})" style="font-family:'Space Mono',monospace;font-size:.55rem;letter-spacing:.1em;text-transform:uppercase;padding:10px 22px;border:1px solid rgba(201,185,154,.4);background:transparent;color:rgba(201,185,154,.8);cursor:pointer;">Save</button>
+        <button onclick="document.getElementById('dream-magic-modal-wrap').remove()" style="font-family:'Space Mono',monospace;font-size:.55rem;letter-spacing:.1em;text-transform:uppercase;padding:10px 22px;border:1px solid rgba(201,185,154,.15);background:transparent;color:rgba(201,185,154,.4);cursor:pointer;">Cancel</button>
+        ${e ? `<button onclick="deleteDreamMagicEntry(${idx})" style="font-family:'Space Mono',monospace;font-size:.55rem;letter-spacing:.1em;text-transform:uppercase;padding:10px 22px;border:1px solid rgba(180,80,80,.3);background:transparent;color:rgba(180,80,80,.6);cursor:pointer;margin-left:auto;">Delete</button>` : ''}
+      </div>
+    </div>`;
+  document.body.appendChild(wrap);
+}
+
+function previewDreamMagicImages(input) {
+  const preview = document.getElementById('dm-image-preview');
+  const dataInput = document.getElementById('dm-images-data');
+  if (!preview || !dataInput) return;
+  let existing = [];
+  try { existing = JSON.parse(dataInput.value || '[]'); } catch(e) {}
+  const files = Array.from(input.files);
+  let loaded = 0;
+  files.forEach(file => {
+    const reader = new FileReader();
+    reader.onload = function(ev) {
+      existing.push(ev.target.result);
+      loaded++;
+      if (loaded === files.length) {
+        dataInput.value = JSON.stringify(existing);
+        renderDreamMagicImagePreviews(existing, preview);
+      }
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+function renderDreamMagicImagePreviews(images, preview) {
+  if (!preview) return;
+  preview.innerHTML = images.map((img,i) => `<div style="position:relative;"><img src="${img}" style="width:80px;height:80px;object-fit:cover;border:1px solid rgba(201,185,154,.2);" /><button onclick="removeDreamMagicImage(${i})" style="position:absolute;top:2px;right:2px;background:rgba(0,0,0,.7);border:none;color:rgba(201,185,154,.8);cursor:pointer;font-size:.6rem;padding:1px 4px;">✕</button></div>`).join('');
+}
+
+function removeDreamMagicImage(idx) {
+  const dataInput = document.getElementById('dm-images-data');
+  const preview = document.getElementById('dm-image-preview');
+  if (!dataInput) return;
+  let images = [];
+  try { images = JSON.parse(dataInput.value || '[]'); } catch(e) {}
+  images.splice(idx, 1);
+  dataInput.value = JSON.stringify(images);
+  renderDreamMagicImagePreviews(images, preview);
+}
+
+function saveDreamMagicEntry(idx) {
+  const title = (document.getElementById('dm-title')||{}).value||'';
+  const date = (document.getElementById('dm-date')||{}).value||new Date().toISOString().slice(0,10);
+  const type = (document.getElementById('dm-type')||{}).value||'Other';
+  const status = (document.getElementById('dm-status')||{}).value||'Active';
+  const intention = (document.getElementById('dm-intention')||{}).value||'';
+  const method = (document.getElementById('dm-method')||{}).value||'';
+  const outcome = (document.getElementById('dm-outcome')||{}).value||'';
+  const dreamsSel = document.getElementById('dm-dreams');
+  const linkedDreams = dreamsSel ? Array.from(dreamsSel.selectedOptions).map(o=>parseInt(o.value)) : [];
+  const incubsSel = document.getElementById('dm-incubs');
+  const linkedIncubations = incubsSel ? Array.from(incubsSel.selectedOptions).map(o=>parseInt(o.value)) : [];
+  const threadsSel = document.getElementById('dm-threads');
+  const linkedThreads = threadsSel ? Array.from(threadsSel.selectedOptions).map(o=>parseInt(o.value)) : [];
+  let images = [];
+  try { images = JSON.parse((document.getElementById('dm-images-data')||{}).value||'[]'); } catch(e) {}
+  if (!title.trim()) { gtAlert('Please add a title.'); return; }
+  const entry = { title:title.trim(), date, type, status, intention, method, outcome, linkedDreams, linkedIncubations, linkedThreads, images };
+  const entries = getDreamMagicEntries();
+  if (idx !== undefined && idx !== null && !isNaN(parseInt(idx))) {
+    entries[parseInt(idx)] = entry;
+  } else {
+    entries.push(entry);
+  }
+  saveDreamMagicEntries(entries);
+  const wrap = document.getElementById('dream-magic-modal-wrap');
+  if (wrap) wrap.remove();
+  renderDreamMagicList();
+}
+
+function deleteDreamMagicEntry(idx) {
+  if (!confirm('Delete this dream magic working?')) return;
+  const entries = getDreamMagicEntries();
+  entries.splice(idx, 1);
+  saveDreamMagicEntries(entries);
+  const wrap = document.getElementById('dream-magic-modal-wrap');
+  if (wrap) wrap.remove();
+  renderDreamMagicList();
+}
+
 function runGlobalSearch(raw) {
   const q = (raw || '').trim().toLowerCase();
   const meta = document.getElementById('global-search-meta');
@@ -8535,6 +8743,7 @@ function renderInsights(){
   grid.innerHTML='';
   renderSavedPatterns();
   renderSavedPatterns();
+  renderSavedPatterns();
 
   // Spirit entry references per insight (using exact SPIRIT_PRELOADED titles)
   const SPIRIT_REFS={
@@ -8619,8 +8828,18 @@ function renderInsights(){
     ]
   };
 
-  INSIGHTS.forEach((ins,insIdx)=>{
-    if (!ins || !ins.title) return; // guard against null/malformed entries
+  // Flat sort — dated (AI-discovered) newest first, undated (hardcoded) after
+  const sortedInsights = INSIGHTS.filter(i => i && i.title).sort((a,b) => {
+    const da = a.dateAdded || '';
+    const db = b.dateAdded || '';
+    if (da && db) return db.localeCompare(da);
+    if (da) return -1;
+    if (db) return 1;
+    return 0;
+  });
+
+  sortedInsights.forEach((ins,insIdx)=>{
+    if (!ins || !ins.title) return;
     try {
       const card=document.createElement('div');
       card.className='ins-card'+(ins.feat?' feat':'');
