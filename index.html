@@ -9518,10 +9518,7 @@ function renderGardenList() {
         <button onclick="openPlantModal(${i})" style="font-family:'Space Mono',monospace;font-size:.45rem;padding:5px 10px;border:1px solid rgba(201,185,154,.2);background:transparent;color:rgba(201,185,154,.5);cursor:pointer;">Edit</button>
         ${!p.careData ? `<button onclick="lookupPlant(${i},this)" class="astro-gen-btn" style="font-size:.48rem;padding:5px 12px;border-color:rgba(80,160,100,.4);color:rgba(80,160,100,.8);">✦ Look Up</button>` : `<button onclick="lookupPlant(${i},this)" style="font-family:'Space Mono',monospace;font-size:.45rem;padding:5px 10px;border:1px solid rgba(201,185,154,.15);background:transparent;color:rgba(201,185,154,.35);cursor:pointer;">↻ Refresh Info</button>`}
       </div>
-      ${p.careData ? `<details style="margin-top:12px;">
-        <summary style="list-style:none;cursor:pointer;font-family:'Space Mono',monospace;font-size:.47rem;letter-spacing:.08em;text-transform:uppercase;color:rgba(80,160,100,.5);">▸ Care & Properties</summary>
-        <div style="padding:12px 0 4px;font-family:'Cormorant Garamond',serif;font-size:.9rem;color:rgba(240,235,224,.65);line-height:1.8;">${p.careData.split('\n\n').map(para=>'<p style=\"margin-bottom:8px;\">'+para+'</p>').join('')}</div>
-      </details>` : ''}
+ ${p.careData ? renderPlantCareData(p.careData) : ''}
       ${(p.log||[]).length ? `<div style="margin-top:10px;font-family:'Space Mono',monospace;font-size:.43rem;color:rgba(201,185,154,.3);">Last watered: ${p.log.slice(-1)[0]?.date||'—'}</div>` : ''}
     </div>`;
   }).join('');
@@ -9552,27 +9549,24 @@ async function lookupPlant(idx, btnEl) {
   let innerSeason = '';
   try { const s = loadSeasons(); const c = getCurrentPhase(s); if (c) innerSeason = c.phase.name; } catch(e) {}
 
-  const prompt = `You are a gardening and plant magic expert. For the plant "${p.name}"${p.species ? ' (' + p.species + ')' : ''}, provide a complete reference in two sections:
+  const prompt = `For the plant "${p.name}"${p.species ? ' (' + p.species + ')' : ''}, give a compact reference. Be brief — one sentence per care item, keywords for metaphysical.
 
-CARE GUIDE:
-- Watering: how often, how much, signs of over/under watering
-- Sunlight: full sun / partial shade / full shade requirements  
-- Soil: preferred soil type and pH
-- Best time to plant: season/conditions
-- Harvest time: when and how to harvest (if applicable)
-- Key care notes: any important tips
+CARE:
+Watering: [one sentence — how often and how much]
+Sunlight: [one phrase]
+Soil: [one phrase]
+Plant: [best season/time to plant]
+Harvest: [when/how, or "N/A"]
+Note: [one key care tip]
 
-MAGICAL & METAPHYSICAL PROPERTIES:
-- Elemental correspondence (earth/air/fire/water)
-- Planetary ruling
-- Primary magical uses and intentions
-- How to use in practice (fresh, dried, infusion, smoke, etc.)
-- Folklore and spiritual traditions associated with this plant
-- How it might work in combination with spiritual practice
+METAPHYSICAL:
+Element: [element]
+Planet: [ruling planet]
+Uses: [5-8 comma-separated keywords — e.g. protection, dreamwork, divination]
+Practice: [one sentence on how to use in ritual/practice]
+Tiff's moment (${innerSeason||'unknown'} season, ${moonPhase.phase||'unknown'} moon): [one sentence on why this plant is relevant right now]
 
-Current context for Tiff (a witch and dreamworker): Inner season: ${innerSeason||'unknown'}, Moon: ${moonPhase.phase||'unknown'}.
-
-Write in flowing prose, 2-3 paragraphs per section. Be specific and practical.`;
+Keep everything tight. No preamble or closing remarks.`;
 
   try {
     const data = await claudeAPI(apiKey, { model:'claude-sonnet-4-6', max_tokens:1200, messages:[{role:'user', content:prompt}] });
@@ -9876,6 +9870,37 @@ Return ONLY valid JSON.`;
     if (resultEl) resultEl.textContent = 'Error: ' + err.message;
     if (btn) { btn.disabled = false; btn.textContent = '✦ Fill in Details with AI'; }
   }
+}
+
+
+function renderPlantCareData(careData) {
+  const lines = careData.split('\n').map(l => l.replace(/^[-*•]\s*/,'').trim()).filter(Boolean);
+  let careLines = [], metaLines = [];
+  let section = '';
+  lines.forEach(l => {
+    if (/^CARE/i.test(l)) { section = 'care'; return; }
+    if (/^METAPHYSICAL/i.test(l)) { section = 'meta'; return; }
+    if (section === 'care') careLines.push(l);
+    if (section === 'meta') metaLines.push(l);
+  });
+  // Fallback: if no sections found, show as plain text
+  if (!careLines.length && !metaLines.length) {
+    return `<details style="margin-top:12px;"><summary style="list-style:none;cursor:pointer;font-family:'Space Mono',monospace;font-size:.47rem;letter-spacing:.08em;text-transform:uppercase;color:rgba(80,160,100,.5);">▸ Care & Properties</summary><div style="padding:10px 0 4px;font-family:'Cormorant Garamond',serif;font-size:.9rem;color:rgba(240,235,224,.65);line-height:1.7;">${careData}</div></details>`;
+  }
+  const renderLine = l => {
+    const colon = l.indexOf(':');
+    if (colon > -1 && colon < 20) {
+      const key = l.slice(0, colon).trim();
+      const val = l.slice(colon+1).trim();
+      if (!val) return '';
+      return `<div style="display:grid;grid-template-columns:72px 1fr;gap:8px;margin-bottom:5px;"><span style="font-family:'Space Mono',monospace;font-size:.43rem;color:rgba(80,160,100,.55);padding-top:2px;">${key}</span><span style="font-family:'Cormorant Garamond',serif;font-size:.9rem;color:rgba(240,235,224,.7);line-height:1.5;">${val}</span></div>`;
+    }
+    return `<div style="font-family:'Cormorant Garamond',serif;font-size:.9rem;color:rgba(240,235,224,.65);line-height:1.6;margin-bottom:4px;">${l}</div>`;
+  };
+  let inner = '';
+  if (careLines.length) inner += `<div style="font-family:'Space Mono',monospace;font-size:.43rem;letter-spacing:.08em;text-transform:uppercase;color:rgba(80,160,100,.5);margin-bottom:7px;">Care</div>${careLines.map(renderLine).join('')}`;
+  if (metaLines.length) inner += `<div style="font-family:'Space Mono',monospace;font-size:.43rem;letter-spacing:.08em;text-transform:uppercase;color:rgba(107,155,201,.5);margin-top:10px;margin-bottom:7px;">Metaphysical</div>${metaLines.map(renderLine).join('')}`;
+  return `<details style="margin-top:12px;"><summary style="list-style:none;cursor:pointer;font-family:'Space Mono',monospace;font-size:.47rem;letter-spacing:.08em;text-transform:uppercase;color:rgba(80,160,100,.5);">▸ Care & Properties</summary><div style="padding:10px 0 4px;">${inner}</div></details>`;
 }
 
 function runGlobalSearch(raw) {
