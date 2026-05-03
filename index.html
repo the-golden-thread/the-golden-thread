@@ -413,8 +413,8 @@ h1 em { display:block; font-style:italic; font-weight:300; font-size:.42em; lett
 <div id="sub-bar-slot" style="display:none;background:var(--ink);border-bottom:1px solid rgba(201,185,154,.1);overflow-x:auto;overflow-y:hidden;scrollbar-width:none;">
   <!-- Dreams sub-bar -->
   <div id="sub-bar-dreams" style="display:none;white-space:nowrap;">
-    <button class="sub-tab-btn active" id="sub-btn-archive" onclick="switchDreams('archive',this)">🌙 Archive</button>
-    <button class="sub-tab-btn" id="sub-btn-incubation" onclick="switchDreams('incubation',this)">🌙 Incubation</button>
+    <button class="sub-tab-btn active" id="sub-btn-archive" onclick="switchDreams('archive',this)">◎ Archive</button>
+    <button class="sub-tab-btn" id="sub-btn-incubation" onclick="switchDreams('incubation',this)">○ Incubation</button>
     <button class="sub-tab-btn" id="sub-btn-symbols-d" onclick="switchDreams('symbols',this)">&#10022; Symbols</button>
     <button class="sub-tab-btn" id="sub-btn-threads-d" onclick="switchDreams('threads',this)">∞ Threads</button>
     <button class="sub-tab-btn" id="sub-btn-magic-d" onclick="switchDreams('magic',this)">✦ Magic</button>
@@ -7297,7 +7297,7 @@ function openDreamMagicModal(idx) {
   const statusOpts = DREAM_MAGIC_STATUSES.map(s => `<option value="${s}" ${(e&&e.status===s)||(s==='Active'&&!e)?'selected':''}>${s}</option>`).join('');
   const dreamOpts = allDreams.map(d => `<option value="${d.id}" ${linkedDreams.includes(d.id)?'selected':''}>${d.date} — ${d.title}</option>`).join('');
   const incubOpts = allIncubations.map((inc,ii) => `<option value="${ii}" ${linkedIncubs.includes(ii)?'selected':''}>${inc.date||''} — ${inc.intention||inc.title||'Incubation '+(ii+1)}</option>`).join('');
-  const threadOpts = allThreads.map((th,ti) => `<option value="${ti}" ${linkedThreads.includes(ti)?'selected':''}>${th.title||'Thread '+(ti+1)}</option>`).join('');
+  const threadOpts = allThreads.map((th,ti) => `<option value="${ti}" ${linkedThreads.includes(ti)?'selected':''}>${th.name||th.title||'Thread '+(ti+1)}</option>`).join('');
 
   wrap.innerHTML = `
     <div style="background:#1a1820;border:1px solid rgba(201,185,154,.2);padding:24px;max-width:680px;width:100%;margin-top:16px;">
@@ -7339,7 +7339,7 @@ function openDreamMagicModal(idx) {
         <div style="font-family:'Space Mono',monospace;font-size:.44rem;color:rgba(201,185,154,.3);margin-top:4px;">Hold Ctrl/Cmd to select multiple</div></div>` : ''}
 
       <div style="margin-bottom:20px;"><label style="font-family:'Space Mono',monospace;font-size:.5rem;letter-spacing:.08em;text-transform:uppercase;color:rgba(201,185,154,.5);display:block;margin-bottom:5px;">Images</label>
-        <input type="file" id="dm-images" accept="image/*" multiple onchange="previewDreamMagicImages(this)" style="font-family:'Space Mono',monospace;font-size:.6rem;color:rgba(201,185,154,.6);width:100%;">
+        <label style="font-family:'Space Mono',monospace;font-size:.6rem;letter-spacing:.08em;padding:9px 18px;background:transparent;border:1px solid rgba(201,185,154,.25);color:var(--moon);cursor:pointer;display:inline-block;" onmouseover="this.style.borderColor='var(--moon)'" onmouseout="this.style.borderColor='rgba(201,185,154,.25)'">↑ Attach Images <input type="file" id="dm-images" accept="image/*" multiple onchange="previewDreamMagicImages(this)" style="display:none;"></label>
         <div id="dm-image-preview" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;">${e&&e.images?e.images.map((img,ii)=>`<div style="position:relative;"><img src="${img}" style="width:80px;height:80px;object-fit:cover;border:1px solid rgba(201,185,154,.2);" /><button onclick="removeDreamMagicImage(${ii})" style="position:absolute;top:2px;right:2px;background:rgba(0,0,0,.7);border:none;color:rgba(201,185,154,.8);cursor:pointer;font-size:.6rem;padding:1px 4px;">✕</button></div>`).join(''):''}
         </div>
         <input type="hidden" id="dm-images-data" value="${e&&e.images?JSON.stringify(e.images).replace(/"/g,'&quot;'):'[]'}">
