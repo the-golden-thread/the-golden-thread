@@ -402,15 +402,23 @@ h1 em { display:block; font-style:italic; font-weight:300; font-size:.42em; lett
     <button class="tab-btn tab-active" id="tab-btn-sanctum" onclick="switchTab('sanctum',this)">✦ Sanctum</button>
     <button class="tab-btn" id="tab-btn-dreams" onclick="switchTab('dreams',this)">🌙 Dreams</button>
     <button class="tab-btn" id="tab-btn-practice" onclick="switchTab('practice',this)">🕯 Practice</button>
-    <button class="tab-btn" id="tab-btn-insight" onclick="switchTab('insight',this)">◉ Insight</button>
+    <button class="tab-btn" id="tab-btn-tools" onclick="switchTab('tools',this)">⚙ Tools</button>
     <button class="tab-btn" id="tab-btn-grimoire" onclick="switchTab('grimoire',this)">◈ Grimoire</button>
-    <button class="tab-btn" id="tab-btn-search" onclick="switchTab('search',this)">⌕ Search</button>
+    <button class="tab-btn" id="tab-btn-insight" onclick="switchTab('insight',this)">◉ Insight</button>
   </div>
 </div>
 
 
-<!-- ══ SUB-TAB BAR — appears under main tabs for practice/insight/grimoire ══ -->
+<!-- ══ SUB-TAB BAR — appears under main tabs for dreams/practice/tools/grimoire/insight ══ -->
 <div id="sub-bar-slot" style="display:none;background:var(--ink);border-bottom:1px solid rgba(201,185,154,.1);overflow-x:auto;overflow-y:hidden;scrollbar-width:none;">
+  <!-- Dreams sub-bar -->
+  <div id="sub-bar-dreams" style="display:none;white-space:nowrap;">
+    <button class="sub-tab-btn active" id="sub-btn-archive" onclick="switchDreams('archive',this)">🌙 Archive</button>
+    <button class="sub-tab-btn" id="sub-btn-incubation" onclick="switchDreams('incubation',this)">🌙 Incubation</button>
+    <button class="sub-tab-btn" id="sub-btn-symbols-d" onclick="switchDreams('symbols',this)">&#10022; Symbols</button>
+    <button class="sub-tab-btn" id="sub-btn-threads-d" onclick="switchDreams('threads',this)">∞ Threads</button>
+    <button class="sub-tab-btn" id="sub-btn-magic-d" onclick="switchDreams('magic',this)">✦ Magic</button>
+  </div>
   <!-- Practice sub-bar -->
   <div id="sub-bar-practice" style="display:none;white-space:nowrap;">
     <button class="sub-tab-btn active" id="sub-btn-workings" onclick="switchPractice('workings',this)">🕯 Workings</button>
@@ -418,35 +426,37 @@ h1 em { display:block; font-style:italic; font-weight:300; font-size:.42em; lett
     <button class="sub-tab-btn" id="sub-btn-shadow" onclick="switchPractice('shadow',this)">🜃 Shadow</button>
     <button class="sub-tab-btn" id="sub-btn-readings" onclick="switchPractice('readings',this)">🔮 Readings</button>
     <button class="sub-tab-btn" id="sub-btn-gateway" onclick="switchPractice('gateway',this)">◈ Gateway</button>
-    <button class="sub-tab-btn" id="sub-btn-seasons" onclick="switchPractice('seasons',this)">🌿 Seasons</button>
-    <button class="sub-tab-btn" id="sub-btn-herbalism" onclick="switchPractice('herbalism',this)">🌱 Herbs</button>
-    <button class="sub-tab-btn" id="sub-btn-hblends" onclick="switchPractice('hblends',this)">🫖 Blends</button>
     <button class="sub-tab-btn" id="sub-btn-moonintent" onclick="switchPractice('moonintent',this)">🌑 Moon</button>
-    <button class="sub-tab-btn" id="sub-btn-visitations" onclick="switchPractice('visitations',this)">✦ Presences</button>
     <button class="sub-tab-btn" id="sub-btn-manifesting" onclick="switchPractice('manifesting',this)">✧ Manifesting</button>
-    <button class="sub-tab-btn" id="sub-btn-sacredDates" onclick="switchPractice('sacredDates',this)">◎ Sacred Dates</button>
-    <button class="sub-tab-btn" id="sub-btn-incubation" onclick="switchPractice('incubation',this)">🌙 Incubation</button>
   </div>
-  <!-- Insight sub-bar -->
-  <div id="sub-bar-insight" style="display:none;white-space:nowrap;">
-    <button class="sub-tab-btn" id="sub-btn-dreamtimeline" onclick="switchInsight('dreamtimeline',this)">&#9135; Timeline</button>
-    <button class="sub-tab-btn" id="sub-btn-symbols" onclick="switchInsight('symbols',this)">&#10022; Symbols</button>
-    <button class="sub-tab-btn active" id="sub-btn-patterns" onclick="switchInsight('patterns',this)">✦ Patterns</button>
-    <button class="sub-tab-btn" id="sub-btn-viz" onclick="switchInsight('viz',this)">◎ Visualizations</button>
-    <button class="sub-tab-btn" id="sub-btn-prophecy" onclick="switchInsight('prophecy',this)">★ Prophecy</button>
-    <button class="sub-tab-btn" id="sub-btn-threads-i" onclick="switchInsight('threads',this)">∞ Threads</button>
+  <!-- Tools sub-bar -->
+  <div id="sub-bar-tools" style="display:none;white-space:nowrap;">
+    <button class="sub-tab-btn active" id="sub-btn-herbalism-t" onclick="switchTools('herbalism',this)">🌱 Herbs</button>
+    <button class="sub-tab-btn" id="sub-btn-hblends-t" onclick="switchTools('hblends',this)">🫖 Blends</button>
+    <button class="sub-tab-btn" id="sub-btn-seasons-t" onclick="switchTools('seasons',this)">🌿 Seasons</button>
+    <button class="sub-tab-btn" id="sub-btn-sacredDates-t" onclick="switchTools('sacredDates',this)">◎ Sacred Dates</button>
+    <button class="sub-tab-btn" id="sub-btn-wheel-t" onclick="switchTools('wheel',this)">☽ Wheel</button>
   </div>
   <!-- Grimoire sub-bar -->
   <div id="sub-bar-grimoire" style="display:none;white-space:nowrap;">
-    <button class="sub-tab-btn active" id="sub-btn-charts" onclick="switchGrimoire('charts',this)">◉ Charts</button>
+    <button class="sub-tab-btn active" id="sub-btn-channel-g" onclick="switchGrimoire('channel',this)">◈ The Channel</button>
+    <button class="sub-tab-btn" id="sub-btn-charts" onclick="switchGrimoire('charts',this)">◉ Charts</button>
+    <button class="sub-tab-btn" id="sub-btn-comms-g" onclick="switchGrimoire('comms',this)">📡 Signals</button>
     <button class="sub-tab-btn" id="sub-btn-beings" onclick="switchGrimoire('beings',this)">✦ Beings</button>
+    <button class="sub-tab-btn" id="sub-btn-visitations-g" onclick="switchGrimoire('visitations',this)">✦ Presences</button>
     <button class="sub-tab-btn" id="sub-btn-elixirs-g" onclick="switchGrimoire('elixirs',this)">⬡ Elixirs</button>
     <button class="sub-tab-btn" id="sub-btn-songs-g" onclick="switchGrimoire('songs',this)">♪ Songs</button>
-    <button class="sub-tab-btn" id="sub-btn-comms-g" onclick="switchGrimoire('comms',this)">📡 Signals</button>
     <button class="sub-tab-btn" id="sub-btn-ancestors-g" onclick="switchGrimoire('ancestors',this)">≥ Ancestors</button>
     <button class="sub-tab-btn" id="sub-btn-places-g" onclick="switchGrimoire('places',this)">&#9672; Places</button>
-    <button class="sub-tab-btn" id="sub-btn-wheel-g" onclick="switchGrimoire('wheel',this)">☽ Wheel</button>
     <button class="sub-tab-btn" id="sub-btn-rituals-g" onclick="switchGrimoire('rituals',this)">⊕ Rituals</button>
+  </div>
+  <!-- Insight sub-bar -->
+  <div id="sub-bar-insight" style="display:none;white-space:nowrap;">
+    <button class="sub-tab-btn active" id="sub-btn-search-i" onclick="switchInsight('search',this)">⌕ Search</button>
+    <button class="sub-tab-btn" id="sub-btn-patterns" onclick="switchInsight('patterns',this)">✦ Patterns</button>
+    <button class="sub-tab-btn" id="sub-btn-dreamtimeline" onclick="switchInsight('dreamtimeline',this)">&#9135; Timeline</button>
+    <button class="sub-tab-btn" id="sub-btn-viz" onclick="switchInsight('viz',this)">◎ Visualizations</button>
+    <button class="sub-tab-btn" id="sub-btn-prophecy" onclick="switchInsight('prophecy',this)">★ Prophecy</button>
   </div>
 </div>
 
@@ -457,6 +467,7 @@ h1 em { display:block; font-style:italic; font-weight:300; font-size:.42em; lett
 <div id="tab-hblends" class="tab-panel" style="display:none;"></div>
 <div id="tab-moonintent" class="tab-panel" style="display:none;"></div>
 <div id="tab-visitations" class="tab-panel" style="display:none;"></div>
+<div id="tab-channel" class="tab-panel" style="display:none;"></div>
 <div id="tab-prophetic" class="tab-panel" style="display:none;"></div>
 <div id="tab-manifesting" class="tab-panel" style="display:none;"></div>
 <div id="tab-threads" class="tab-panel" style="display:none;"></div>
@@ -7068,11 +7079,11 @@ function switchTab(id, btn) {
 
   // Sub-bar slot: show/hide and switch inner bar
   const slot = document.getElementById('sub-bar-slot');
-  ['practice','insight','grimoire'].forEach(g => {
+  ['dreams','practice','tools','grimoire','insight'].forEach(g => {
     const bar = document.getElementById('sub-bar-' + g);
     if (bar) bar.style.display = 'none';
   });
-  if (['practice','insight','grimoire'].includes(id) && slot) {
+  if (['dreams','practice','tools','grimoire','insight'].includes(id) && slot) {
     slot.style.display = 'block';
     const bar = document.getElementById('sub-bar-' + id);
     if (bar) bar.style.display = 'block';
@@ -7085,23 +7096,22 @@ function switchTab(id, btn) {
     if (dest) { const s=document.getElementById('tab-sanctum'); if(s) dest.innerHTML=s.innerHTML; }
     setTimeout(initSanctum, 50);
   }
-  else if (id === 'dreams') {
-    if (dest) { const s=document.getElementById('tab-dreams'); if(s) dest.innerHTML=s.innerHTML; }
-    setTimeout(function(){ buildFilters(); renderDreams(); }, 50);
-  }
+  else if (id === 'dreams') switchDreams(_activeDreamsTab || 'archive');
   else if (id === 'practice') switchPractice(_activePracticeTab || 'workings');
-  else if (id === 'insight') switchInsight(_activeInsightTab || 'patterns');
-  else if (id === 'grimoire') switchGrimoire(_activeGrimoireTab || 'charts');
-  else if (id === 'search') renderGlobalSearch();
+  else if (id === 'tools') switchTools(_activeToolsTab || 'herbalism');
+  else if (id === 'insight') switchInsight(_activeInsightTab || 'search');
+  else if (id === 'grimoire') switchGrimoire(_activeGrimoireTab || 'channel');
 
   // FAB
   // FAB removed
 }
 
 
+let _activeDreamsTab = 'archive';
 let _activePracticeTab = 'workings';
-let _activeInsightTab = 'patterns';
-let _activeGrimoireTab = 'charts';
+let _activeToolsTab = 'herbalism';
+let _activeInsightTab = 'search';
+let _activeGrimoireTab = 'channel';
 
 // ── GLOBAL SEARCH ─────────────────────────────
 function renderGlobalSearch() {
@@ -7120,6 +7130,310 @@ function renderGlobalSearch() {
       <div id="global-search-results"></div>
     </div>`;
   setTimeout(() => document.getElementById('global-search-input')?.focus(), 80);
+}
+
+function renderChannel(dest) {
+  if (!dest) return;
+  dest.innerHTML = `
+    <div style="max-width:740px;margin:0 auto;padding:24px 0 60px;">
+      <div style="font-family:'Space Mono',monospace;font-size:.55rem;letter-spacing:.12em;text-transform:uppercase;color:var(--moon);margin-bottom:6px;">◈ The Channel</div>
+      <div style="font-family:'Cormorant Garamond',serif;font-size:.95rem;color:rgba(201,185,154,.45);font-style:italic;margin-bottom:28px;">A living document of how I receive, translate, and work.</div>
+      <div id="channel-entries-list"></div>
+      <button onclick="openChannelEntryModal()" style="margin-top:24px;font-family:'Space Mono',monospace;font-size:.55rem;letter-spacing:.1em;text-transform:uppercase;padding:10px 22px;border:1px solid rgba(201,185,154,.3);background:transparent;color:rgba(201,185,154,.7);cursor:pointer;">+ Add Entry</button>
+    </div>`;
+  renderChannelEntries();
+}
+
+function getChannelEntries() {
+  try { return JSON.parse(localStorage.getItem('gt_channel_entries') || '[]'); } catch(e) { return []; }
+}
+function saveChannelEntries(entries) {
+  try { localStorage.setItem('gt_channel_entries', JSON.stringify(entries)); } catch(e) {}
+}
+
+function renderChannelEntries() {
+  const list = document.getElementById('channel-entries-list');
+  if (!list) return;
+  const entries = getChannelEntries();
+  if (!entries.length) {
+    list.innerHTML = '<div style="font-family:\'Cormorant Garamond\',serif;font-size:1rem;color:rgba(201,185,154,.35);font-style:italic;padding:20px 0;">No entries yet. Begin documenting how your channel operates.</div>';
+    return;
+  }
+  // Group by category for display, show chronologically within
+  list.innerHTML = entries.slice().sort((a,b) => b.date.localeCompare(a.date)).map((e,i) => `
+    <div style="margin-bottom:28px;padding:20px;background:rgba(255,255,255,.02);border:1px solid rgba(201,185,154,.1);">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;">
+        <div>
+          <div style="font-family:'Space Mono',monospace;font-size:.52rem;letter-spacing:.1em;text-transform:uppercase;color:var(--moon);margin-bottom:4px;">${e.date}</div>
+          <div style="font-family:'Cormorant Garamond',serif;font-size:1.2rem;font-weight:600;color:var(--parchment);">${e.title}</div>
+        </div>
+        <button onclick="deleteChannelEntry(${i})" style="background:none;border:none;color:rgba(201,185,154,.3);cursor:pointer;font-size:.8rem;padding:4px;">✕</button>
+      </div>
+      ${e.categories && e.categories.length ? `<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;">${e.categories.map(c=>`<span style="font-family:'Space Mono',monospace;font-size:.48rem;letter-spacing:.07em;padding:3px 8px;border:1px solid rgba(201,185,154,.2);color:rgba(201,185,154,.6);">${c}</span>`).join('')}</div>` : ''}
+      <div style="font-family:'Cormorant Garamond',serif;font-size:1rem;line-height:1.8;color:rgba(240,235,224,.8);white-space:pre-wrap;">${e.body}</div>
+    </div>`).join('');
+}
+
+function openChannelEntryModal(idx) {
+  const entries = getChannelEntries();
+  const e = idx !== undefined ? entries[idx] : null;
+  const modal = document.getElementById('view-ov') || document.body;
+  const div = document.createElement('div');
+  div.id = 'channel-modal-wrap';
+  div.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.85);z-index:9999;display:flex;align-items:flex-start;justify-content:center;padding:20px;overflow-y:auto;';
+  div.innerHTML = `
+    <div style="background:#1a1820;border:1px solid rgba(201,185,154,.2);padding:28px;max-width:680px;width:100%;margin-top:20px;">
+      <div style="font-family:'Space Mono',monospace;font-size:.55rem;letter-spacing:.12em;text-transform:uppercase;color:var(--moon);margin-bottom:18px;">◈ ${e ? 'Edit' : 'New'} Channel Entry</div>
+      <div style="margin-bottom:14px;"><label style="font-family:'Space Mono',monospace;font-size:.52rem;letter-spacing:.08em;text-transform:uppercase;color:rgba(201,185,154,.5);display:block;margin-bottom:6px;">Title</label>
+        <input id="ch-title" value="${e ? e.title : ''}" style="width:100%;background:rgba(255,255,255,.04);border:1px solid rgba(201,185,154,.22);color:var(--parchment);font-family:'Cormorant Garamond',serif;font-size:1.1rem;padding:9px 13px;outline:none;box-sizing:border-box;"></div>
+      <div style="margin-bottom:14px;"><label style="font-family:'Space Mono',monospace;font-size:.52rem;letter-spacing:.08em;text-transform:uppercase;color:rgba(201,185,154,.5);display:block;margin-bottom:6px;">Date</label>
+        <input id="ch-date" type="date" value="${e ? e.date : new Date().toISOString().slice(0,10)}" style="width:100%;background:rgba(255,255,255,.04);border:1px solid rgba(201,185,154,.22);color:var(--parchment);font-family:'Space Mono',monospace;font-size:.8rem;padding:9px 13px;outline:none;"></div>
+      <div style="margin-bottom:14px;"><label style="font-family:'Space Mono',monospace;font-size:.52rem;letter-spacing:.08em;text-transform:uppercase;color:rgba(201,185,154,.5);display:block;margin-bottom:6px;">Categories (comma separated)</label>
+        <input id="ch-cats" value="${e && e.categories ? e.categories.join(', ') : ''}" placeholder="e.g. dream retrieval, craft, body signals, receiving" style="width:100%;background:rgba(255,255,255,.04);border:1px solid rgba(201,185,154,.22);color:var(--parchment);font-family:'Space Mono',monospace;font-size:.72rem;padding:9px 13px;outline:none;box-sizing:border-box;"></div>
+      <div style="margin-bottom:20px;"><label style="font-family:'Space Mono',monospace;font-size:.52rem;letter-spacing:.08em;text-transform:uppercase;color:rgba(201,185,154,.5);display:block;margin-bottom:6px;">Entry</label>
+        <textarea id="ch-body" rows="12" style="width:100%;background:rgba(255,255,255,.04);border:1px solid rgba(201,185,154,.22);color:var(--parchment);font-family:'Cormorant Garamond',serif;font-size:1rem;padding:9px 13px;outline:none;resize:vertical;line-height:1.7;box-sizing:border-box;">${e ? e.body : ''}</textarea></div>
+      <div style="display:flex;gap:12px;">
+        <button onclick="saveChannelEntry(${idx !== undefined ? idx : 'undefined'})" style="font-family:'Space Mono',monospace;font-size:.55rem;letter-spacing:.1em;text-transform:uppercase;padding:10px 22px;border:1px solid rgba(201,185,154,.4);background:transparent;color:rgba(201,185,154,.8);cursor:pointer;">Save</button>
+        <button onclick="document.getElementById('channel-modal-wrap').remove()" style="font-family:'Space Mono',monospace;font-size:.55rem;letter-spacing:.1em;text-transform:uppercase;padding:10px 22px;border:1px solid rgba(201,185,154,.15);background:transparent;color:rgba(201,185,154,.4);cursor:pointer;">Cancel</button>
+      </div>
+    </div>`;
+  document.body.appendChild(div);
+}
+
+function saveChannelEntry(idx) {
+  const title = (document.getElementById('ch-title') || {}).value || '';
+  const date = (document.getElementById('ch-date') || {}).value || new Date().toISOString().slice(0,10);
+  const catsRaw = (document.getElementById('ch-cats') || {}).value || '';
+  const body = (document.getElementById('ch-body') || {}).value || '';
+  if (!title.trim() || !body.trim()) { gtAlert('Title and entry are required.'); return; }
+  const categories = catsRaw.split(',').map(s=>s.trim()).filter(Boolean);
+  const entry = { title: title.trim(), date, categories, body: body.trim() };
+  const entries = getChannelEntries();
+  if (idx !== undefined && idx !== null && !isNaN(idx)) {
+    entries[idx] = entry;
+  } else {
+    entries.push(entry);
+  }
+  saveChannelEntries(entries);
+  const wrap = document.getElementById('channel-modal-wrap');
+  if (wrap) wrap.remove();
+  renderChannelEntries();
+}
+
+function deleteChannelEntry(idx) {
+  if (!confirm('Delete this channel entry?')) return;
+  const entries = getChannelEntries();
+  entries.splice(idx, 1);
+  saveChannelEntries(entries);
+  renderChannelEntries();
+}
+
+function renderDreamMagic(dest) {
+  if (!dest) return;
+  dest.innerHTML = `
+    <div style="max-width:740px;margin:0 auto;padding:24px 0 60px;">
+      <div style="font-family:'Space Mono',monospace;font-size:.55rem;letter-spacing:.12em;text-transform:uppercase;color:var(--moon);margin-bottom:6px;">✦ Dream Magic</div>
+      <div style="font-family:'Cormorant Garamond',serif;font-size:.95rem;color:rgba(201,185,154,.45);font-style:italic;margin-bottom:28px;">Incubation → Dream → Thread → Magic. The full arc of intentional dream work.</div>
+      <div id="dream-magic-list"></div>
+      <button onclick="openDreamMagicModal()" style="margin-top:24px;font-family:'Space Mono',monospace;font-size:.55rem;letter-spacing:.1em;text-transform:uppercase;padding:10px 22px;border:1px solid rgba(201,185,154,.3);background:transparent;color:rgba(201,185,154,.7);cursor:pointer;">+ New Working</button>
+    </div>`;
+  renderDreamMagicList();
+}
+
+function getDreamMagicEntries() {
+  try { return JSON.parse(localStorage.getItem('gt_dream_magic') || '[]'); } catch(e) { return []; }
+}
+function saveDreamMagicEntries(entries) {
+  try { localStorage.setItem('gt_dream_magic', JSON.stringify(entries)); } catch(e) {}
+}
+
+const DREAM_MAGIC_TYPES = ['Lucid Dreaming','Dream Spellwork','Waking Integration','Dream Request','Other'];
+const DREAM_MAGIC_STATUSES = ['Active','Complete','Unresolved'];
+
+function renderDreamMagicList() {
+  const list = document.getElementById('dream-magic-list');
+  if (!list) return;
+  const entries = getDreamMagicEntries();
+  if (!entries.length) {
+    list.innerHTML = `<div style="font-family:'Cormorant Garamond',serif;font-size:1rem;color:rgba(201,185,154,.35);font-style:italic;padding:20px 0;">No workings yet. The magic begins when you do.</div>`;
+    return;
+  }
+  const statusColor = {Active:'#c9a84c', Complete:'rgba(201,185,154,.4)', Unresolved:'#6b4f8a'};
+  list.innerHTML = entries.slice().sort((a,b) => b.date.localeCompare(a.date)).map((e,i) => `
+    <div style="margin-bottom:24px;padding:20px;background:rgba(255,255,255,.02);border:1px solid rgba(201,185,154,.1);cursor:pointer;" onclick="openDreamMagicModal(${i})">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;">
+        <div>
+          <div style="font-family:'Space Mono',monospace;font-size:.48rem;letter-spacing:.1em;text-transform:uppercase;color:rgba(201,185,154,.4);margin-bottom:3px;">${e.date} · ${e.type||'Working'}</div>
+          <div style="font-family:'Cormorant Garamond',serif;font-size:1.2rem;color:var(--parchment);">${e.title}</div>
+        </div>
+        <span style="font-family:'Space Mono',monospace;font-size:.45rem;letter-spacing:.07em;padding:3px 8px;border:1px solid ${statusColor[e.status]||'rgba(201,185,154,.3)'};color:${statusColor[e.status]||'rgba(201,185,154,.5)'};">${e.status||'Active'}</span>
+      </div>
+      ${e.intention ? `<div style="font-family:'Cormorant Garamond',serif;font-size:.95rem;color:rgba(240,235,224,.55);font-style:italic;margin-bottom:8px;">${e.intention}</div>` : ''}
+      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;">
+        ${e.linkedIncubations&&e.linkedIncubations.length?`<span style="font-family:'Space Mono',monospace;font-size:.45rem;padding:2px 7px;border:1px solid rgba(201,185,154,.15);color:rgba(201,185,154,.5);">🌙 ${e.linkedIncubations.length} incubation${e.linkedIncubations.length>1?'s':''}</span>`:''}
+        ${e.linkedDreams&&e.linkedDreams.length?`<span style="font-family:'Space Mono',monospace;font-size:.45rem;padding:2px 7px;border:1px solid rgba(201,185,154,.15);color:rgba(201,185,154,.5);">◉ ${e.linkedDreams.length} dream${e.linkedDreams.length>1?'s':''}</span>`:''}
+        ${e.linkedThreads&&e.linkedThreads.length?`<span style="font-family:'Space Mono',monospace;font-size:.45rem;padding:2px 7px;border:1px solid rgba(201,185,154,.15);color:rgba(201,185,154,.5);">∞ ${e.linkedThreads.length} thread${e.linkedThreads.length>1?'s':''}</span>`:''}
+        ${e.images&&e.images.length?`<span style="font-family:'Space Mono',monospace;font-size:.45rem;padding:2px 7px;border:1px solid rgba(201,185,154,.15);color:rgba(201,185,154,.5);">⬡ ${e.images.length} image${e.images.length>1?'s':''}</span>`:''}
+      </div>
+    </div>`).join('');
+}
+
+function openDreamMagicModal(idx) {
+  const entries = getDreamMagicEntries();
+  const e = idx !== undefined ? entries[idx] : null;
+  const allDreams = (window.dreams || []).slice().sort((a,b) => b.date.localeCompare(a.date));
+  const allIncubations = (() => { try { return JSON.parse(localStorage.getItem('gt_incubations')||'[]'); } catch(ex){return[];} })();
+  const allThreads = (() => { try { return JSON.parse(localStorage.getItem('gt_threads')||'[]'); } catch(ex){return[];} })();
+
+  const linkedDreams = e ? (e.linkedDreams||[]) : [];
+  const linkedIncubs = e ? (e.linkedIncubations||[]) : [];
+  const linkedThreads = e ? (e.linkedThreads||[]) : [];
+
+  const wrap = document.createElement('div');
+  wrap.id = 'dream-magic-modal-wrap';
+  wrap.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.85);z-index:9999;display:flex;align-items:flex-start;justify-content:center;padding:16px;overflow-y:auto;';
+
+  const typeOpts = DREAM_MAGIC_TYPES.map(t => `<option value="${t}" ${e&&e.type===t?'selected':''}>${t}</option>`).join('');
+  const statusOpts = DREAM_MAGIC_STATUSES.map(s => `<option value="${s}" ${(e&&e.status===s)||(s==='Active'&&!e)?'selected':''}>${s}</option>`).join('');
+  const dreamOpts = allDreams.map(d => `<option value="${d.id}" ${linkedDreams.includes(d.id)?'selected':''}>${d.date} — ${d.title}</option>`).join('');
+  const incubOpts = allIncubations.map((inc,ii) => `<option value="${ii}" ${linkedIncubs.includes(ii)?'selected':''}>${inc.date||''} — ${inc.intention||inc.title||'Incubation '+(ii+1)}</option>`).join('');
+  const threadOpts = allThreads.map((th,ti) => `<option value="${ti}" ${linkedThreads.includes(ti)?'selected':''}>${th.title||'Thread '+(ti+1)}</option>`).join('');
+
+  wrap.innerHTML = `
+    <div style="background:#1a1820;border:1px solid rgba(201,185,154,.2);padding:24px;max-width:680px;width:100%;margin-top:16px;">
+      <div style="font-family:'Space Mono',monospace;font-size:.55rem;letter-spacing:.12em;text-transform:uppercase;color:var(--moon);margin-bottom:18px;">✦ ${e?'Edit':'New'} Dream Magic Working</div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;">
+        <div><label style="font-family:'Space Mono',monospace;font-size:.5rem;letter-spacing:.08em;text-transform:uppercase;color:rgba(201,185,154,.5);display:block;margin-bottom:5px;">Title</label>
+          <input id="dm-title" value="${e?e.title:''}" style="width:100%;background:rgba(255,255,255,.04);border:1px solid rgba(201,185,154,.22);color:var(--parchment);font-family:'Cormorant Garamond',serif;font-size:1rem;padding:8px 11px;outline:none;box-sizing:border-box;"></div>
+        <div><label style="font-family:'Space Mono',monospace;font-size:.5rem;letter-spacing:.08em;text-transform:uppercase;color:rgba(201,185,154,.5);display:block;margin-bottom:5px;">Date</label>
+          <input id="dm-date" type="date" value="${e?e.date:new Date().toISOString().slice(0,10)}" style="width:100%;background:rgba(255,255,255,.04);border:1px solid rgba(201,185,154,.22);color:var(--parchment);font-family:'Space Mono',monospace;font-size:.75rem;padding:8px 11px;outline:none;"></div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;">
+        <div><label style="font-family:'Space Mono',monospace;font-size:.5rem;letter-spacing:.08em;text-transform:uppercase;color:rgba(201,185,154,.5);display:block;margin-bottom:5px;">Type</label>
+          <select id="dm-type" style="width:100%;background:#1a1820;border:1px solid rgba(201,185,154,.22);color:var(--parchment);font-family:'Space Mono',monospace;font-size:.7rem;padding:8px 11px;outline:none;">${typeOpts}</select></div>
+        <div><label style="font-family:'Space Mono',monospace;font-size:.5rem;letter-spacing:.08em;text-transform:uppercase;color:rgba(201,185,154,.5);display:block;margin-bottom:5px;">Status</label>
+          <select id="dm-status" style="width:100%;background:#1a1820;border:1px solid rgba(201,185,154,.22);color:var(--parchment);font-family:'Space Mono',monospace;font-size:.7rem;padding:8px 11px;outline:none;">${statusOpts}</select></div>
+      </div>
+
+      <div style="margin-bottom:14px;"><label style="font-family:'Space Mono',monospace;font-size:.5rem;letter-spacing:.08em;text-transform:uppercase;color:rgba(201,185,154,.5);display:block;margin-bottom:5px;">Intention</label>
+        <input id="dm-intention" value="${e?e.intention||'':''}" placeholder="What are you working toward?" style="width:100%;background:rgba(255,255,255,.04);border:1px solid rgba(201,185,154,.22);color:var(--parchment);font-family:'Cormorant Garamond',serif;font-size:1rem;padding:8px 11px;outline:none;box-sizing:border-box;"></div>
+
+      <div style="margin-bottom:14px;"><label style="font-family:'Space Mono',monospace;font-size:.5rem;letter-spacing:.08em;text-transform:uppercase;color:rgba(201,185,154,.5);display:block;margin-bottom:5px;">Method / Working</label>
+        <textarea id="dm-method" rows="5" placeholder="What did you do? How did you work with the dream material?" style="width:100%;background:rgba(255,255,255,.04);border:1px solid rgba(201,185,154,.22);color:var(--parchment);font-family:'Cormorant Garamond',serif;font-size:.98rem;padding:8px 11px;outline:none;resize:vertical;line-height:1.7;box-sizing:border-box;">${e?e.method||'':''}</textarea></div>
+
+      <div style="margin-bottom:14px;"><label style="font-family:'Space Mono',monospace;font-size:.5rem;letter-spacing:.08em;text-transform:uppercase;color:rgba(201,185,154,.5);display:block;margin-bottom:5px;">Outcome</label>
+        <textarea id="dm-outcome" rows="4" placeholder="What happened? How did it resolve? (Can be filled in later.)" style="width:100%;background:rgba(255,255,255,.04);border:1px solid rgba(201,185,154,.22);color:var(--parchment);font-family:'Cormorant Garamond',serif;font-size:.98rem;padding:8px 11px;outline:none;resize:vertical;line-height:1.7;box-sizing:border-box;">${e?e.outcome||'':''}</textarea></div>
+
+      ${incubOpts ? `<div style="margin-bottom:14px;"><label style="font-family:'Space Mono',monospace;font-size:.5rem;letter-spacing:.08em;text-transform:uppercase;color:rgba(201,185,154,.5);display:block;margin-bottom:5px;">🌙 Linked Incubations</label>
+        <select id="dm-incubs" multiple style="width:100%;background:#1a1820;border:1px solid rgba(201,185,154,.22);color:var(--parchment);font-family:'Cormorant Garamond',serif;font-size:.9rem;padding:6px;outline:none;min-height:70px;">${incubOpts}</select>
+        <div style="font-family:'Space Mono',monospace;font-size:.44rem;color:rgba(201,185,154,.3);margin-top:4px;">Hold Ctrl/Cmd to select multiple</div></div>` : ''}
+
+      ${dreamOpts ? `<div style="margin-bottom:14px;"><label style="font-family:'Space Mono',monospace;font-size:.5rem;letter-spacing:.08em;text-transform:uppercase;color:rgba(201,185,154,.5);display:block;margin-bottom:5px;">◉ Linked Dreams</label>
+        <select id="dm-dreams" multiple style="width:100%;background:#1a1820;border:1px solid rgba(201,185,154,.22);color:var(--parchment);font-family:'Cormorant Garamond',serif;font-size:.9rem;padding:6px;outline:none;min-height:70px;">${dreamOpts}</select>
+        <div style="font-family:'Space Mono',monospace;font-size:.44rem;color:rgba(201,185,154,.3);margin-top:4px;">Hold Ctrl/Cmd to select multiple</div></div>` : ''}
+
+      ${threadOpts ? `<div style="margin-bottom:14px;"><label style="font-family:'Space Mono',monospace;font-size:.5rem;letter-spacing:.08em;text-transform:uppercase;color:rgba(201,185,154,.5);display:block;margin-bottom:5px;">∞ Linked Threads</label>
+        <select id="dm-threads" multiple style="width:100%;background:#1a1820;border:1px solid rgba(201,185,154,.22);color:var(--parchment);font-family:'Cormorant Garamond',serif;font-size:.9rem;padding:6px;outline:none;min-height:70px;">${threadOpts}</select>
+        <div style="font-family:'Space Mono',monospace;font-size:.44rem;color:rgba(201,185,154,.3);margin-top:4px;">Hold Ctrl/Cmd to select multiple</div></div>` : ''}
+
+      <div style="margin-bottom:20px;"><label style="font-family:'Space Mono',monospace;font-size:.5rem;letter-spacing:.08em;text-transform:uppercase;color:rgba(201,185,154,.5);display:block;margin-bottom:5px;">Images</label>
+        <input type="file" id="dm-images" accept="image/*" multiple onchange="previewDreamMagicImages(this)" style="font-family:'Space Mono',monospace;font-size:.6rem;color:rgba(201,185,154,.6);width:100%;">
+        <div id="dm-image-preview" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;">${e&&e.images?e.images.map((img,ii)=>`<div style="position:relative;"><img src="${img}" style="width:80px;height:80px;object-fit:cover;border:1px solid rgba(201,185,154,.2);" /><button onclick="removeDreamMagicImage(${ii})" style="position:absolute;top:2px;right:2px;background:rgba(0,0,0,.7);border:none;color:rgba(201,185,154,.8);cursor:pointer;font-size:.6rem;padding:1px 4px;">✕</button></div>`).join(''):''}
+        </div>
+        <input type="hidden" id="dm-images-data" value="${e&&e.images?JSON.stringify(e.images).replace(/"/g,'&quot;'):'[]'}">
+      </div>
+
+      <div style="display:flex;gap:12px;flex-wrap:wrap;">
+        <button onclick="saveDreamMagicEntry(${idx!==undefined?idx:'undefined'})" style="font-family:'Space Mono',monospace;font-size:.55rem;letter-spacing:.1em;text-transform:uppercase;padding:10px 22px;border:1px solid rgba(201,185,154,.4);background:transparent;color:rgba(201,185,154,.8);cursor:pointer;">Save</button>
+        <button onclick="document.getElementById('dream-magic-modal-wrap').remove()" style="font-family:'Space Mono',monospace;font-size:.55rem;letter-spacing:.1em;text-transform:uppercase;padding:10px 22px;border:1px solid rgba(201,185,154,.15);background:transparent;color:rgba(201,185,154,.4);cursor:pointer;">Cancel</button>
+        ${e ? `<button onclick="deleteDreamMagicEntry(${idx})" style="font-family:'Space Mono',monospace;font-size:.55rem;letter-spacing:.1em;text-transform:uppercase;padding:10px 22px;border:1px solid rgba(180,80,80,.3);background:transparent;color:rgba(180,80,80,.6);cursor:pointer;margin-left:auto;">Delete</button>` : ''}
+      </div>
+    </div>`;
+  document.body.appendChild(wrap);
+}
+
+function previewDreamMagicImages(input) {
+  const preview = document.getElementById('dm-image-preview');
+  const dataInput = document.getElementById('dm-images-data');
+  if (!preview || !dataInput) return;
+  let existing = [];
+  try { existing = JSON.parse(dataInput.value || '[]'); } catch(e) {}
+  const files = Array.from(input.files);
+  let loaded = 0;
+  files.forEach(file => {
+    const reader = new FileReader();
+    reader.onload = function(ev) {
+      existing.push(ev.target.result);
+      loaded++;
+      if (loaded === files.length) {
+        dataInput.value = JSON.stringify(existing);
+        renderDreamMagicImagePreviews(existing, preview);
+      }
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+function renderDreamMagicImagePreviews(images, preview) {
+  if (!preview) return;
+  preview.innerHTML = images.map((img,i) => `<div style="position:relative;"><img src="${img}" style="width:80px;height:80px;object-fit:cover;border:1px solid rgba(201,185,154,.2);" /><button onclick="removeDreamMagicImage(${i})" style="position:absolute;top:2px;right:2px;background:rgba(0,0,0,.7);border:none;color:rgba(201,185,154,.8);cursor:pointer;font-size:.6rem;padding:1px 4px;">✕</button></div>`).join('');
+}
+
+function removeDreamMagicImage(idx) {
+  const dataInput = document.getElementById('dm-images-data');
+  const preview = document.getElementById('dm-image-preview');
+  if (!dataInput) return;
+  let images = [];
+  try { images = JSON.parse(dataInput.value || '[]'); } catch(e) {}
+  images.splice(idx, 1);
+  dataInput.value = JSON.stringify(images);
+  renderDreamMagicImagePreviews(images, preview);
+}
+
+function saveDreamMagicEntry(idx) {
+  const title = (document.getElementById('dm-title')||{}).value||'';
+  const date = (document.getElementById('dm-date')||{}).value||new Date().toISOString().slice(0,10);
+  const type = (document.getElementById('dm-type')||{}).value||'Other';
+  const status = (document.getElementById('dm-status')||{}).value||'Active';
+  const intention = (document.getElementById('dm-intention')||{}).value||'';
+  const method = (document.getElementById('dm-method')||{}).value||'';
+  const outcome = (document.getElementById('dm-outcome')||{}).value||'';
+
+  const dreamsSel = document.getElementById('dm-dreams');
+  const linkedDreams = dreamsSel ? Array.from(dreamsSel.selectedOptions).map(o=>parseInt(o.value)) : [];
+  const incubsSel = document.getElementById('dm-incubs');
+  const linkedIncubations = incubsSel ? Array.from(incubsSel.selectedOptions).map(o=>parseInt(o.value)) : [];
+  const threadsSel = document.getElementById('dm-threads');
+  const linkedThreads = threadsSel ? Array.from(threadsSel.selectedOptions).map(o=>parseInt(o.value)) : [];
+
+  let images = [];
+  try { images = JSON.parse((document.getElementById('dm-images-data')||{}).value||'[]'); } catch(e) {}
+
+  if (!title.trim()) { gtAlert('Please add a title.'); return; }
+
+  const entry = { title:title.trim(), date, type, status, intention, method, outcome, linkedDreams, linkedIncubations, linkedThreads, images };
+  const entries = getDreamMagicEntries();
+  if (idx !== undefined && idx !== null && !isNaN(parseInt(idx))) {
+    entries[parseInt(idx)] = entry;
+  } else {
+    entries.push(entry);
+  }
+  saveDreamMagicEntries(entries);
+  const wrap = document.getElementById('dream-magic-modal-wrap');
+  if (wrap) wrap.remove();
+  renderDreamMagicList();
+}
+
+function deleteDreamMagicEntry(idx) {
+  if (!confirm('Delete this dream magic working?')) return;
+  const entries = getDreamMagicEntries();
+  entries.splice(idx, 1);
+  saveDreamMagicEntries(entries);
+  const wrap = document.getElementById('dream-magic-modal-wrap');
+  if (wrap) wrap.remove();
+  renderDreamMagicList();
 }
 
 function runGlobalSearch(raw) {
@@ -7214,6 +7528,73 @@ function runGlobalSearch(raw) {
   });
 }
 
+// Dreams sub-tab switcher
+function switchDreams(type, btn) {
+  _activeDreamsTab = type;
+  try { localStorage.setItem('gt_last_dreams', type); } catch(e) {}
+  document.querySelectorAll('#sub-bar-dreams .sub-tab-btn').forEach(b => b.classList.remove('active'));
+  const activeBtnEl = btn || document.getElementById('sub-btn-' + type) || document.getElementById('sub-btn-' + type + '-d');
+  if (activeBtnEl) {
+    activeBtnEl.classList.add('active');
+    setTimeout(function() {
+      try { activeBtnEl.scrollIntoView({behavior:'smooth', block:'nearest', inline:'center'}); } catch(e) {}
+    }, 50);
+  }
+  const dest = document.getElementById('gt-content');
+  if (!dest) return;
+  if (type === 'incubation') {
+    dest.innerHTML = '';
+    renderIncubations(dest);
+  } else if (type === 'symbols') {
+    dest.innerHTML = '';
+    renderSymbolLookup(dest);
+  } else if (type === 'threads') {
+    dest.innerHTML = '';
+    renderThreadsTab(dest);
+  } else if (type === 'magic') {
+    dest.innerHTML = '';
+    renderDreamMagic(dest);
+  } else {
+    // Archive — default dreams view
+    const s = document.getElementById('tab-dreams');
+    if (s) dest.innerHTML = s.innerHTML;
+    setTimeout(function(){ buildFilters(); renderDreams(); }, 50);
+  }
+}
+
+// Tools tab switcher
+function switchTools(type, btn) {
+  _activeToolsTab = type;
+  try { localStorage.setItem('gt_last_tools', type); } catch(e) {}
+  document.querySelectorAll('#sub-bar-tools .sub-tab-btn').forEach(b => b.classList.remove('active'));
+  const activeBtnEl = btn || document.getElementById('sub-btn-' + type + '-t') || document.getElementById('sub-btn-' + type);
+  if (activeBtnEl) {
+    activeBtnEl.classList.add('active');
+    setTimeout(function() {
+      try { activeBtnEl.scrollIntoView({behavior:'smooth', block:'nearest', inline:'center'}); } catch(e) {}
+    }, 50);
+  }
+  const dest = document.getElementById('gt-content');
+  if (!dest) return;
+  if (type === 'herbalism') {
+    dest.innerHTML = '';
+    renderHerbalism(dest);
+  } else if (type === 'hblends') {
+    dest.innerHTML = '';
+    renderHerbalBlends(dest);
+  } else if (type === 'seasons') {
+    const src = document.getElementById('tab-seasons');
+    if (src) dest.innerHTML = src.innerHTML;
+    renderSeasons();
+  } else if (type === 'sacredDates') {
+    dest.innerHTML = '';
+    renderSacredDates(dest);
+  } else if (type === 'wheel') {
+    dest.innerHTML = '';
+    renderWheelOfYear();
+  }
+}
+
 // Practice content map — renders existing tab-XXX panels into practice-content
 function switchPractice(type, btn) {
   _activePracticeTab = type;
@@ -7232,40 +7613,21 @@ function switchPractice(type, btn) {
   const dest = document.getElementById('gt-content');
   if (!dest) return;
 
-  if (type === 'herbalism') {
-    dest.innerHTML = '';
-    renderHerbalism(dest);
-  } else if (type === 'hblends') {
-    dest.innerHTML = '';
-    renderHerbalBlends(dest);
-  } else if (type === 'moonintent') {
+  if (type === 'moonintent') {
     dest.innerHTML = '';
     renderMoonIntentions(dest);
-  } else if (type === 'visitations') {
-    dest.innerHTML = '';
-    renderVisitations(dest);
   } else if (type === 'manifesting') {
     dest.innerHTML = '';
     renderManifestations(dest);
   } else if (type === 'gateway') {
     dest.innerHTML = '';
     renderGateway(dest);
-  } else if (type === 'sacredDates') {
-    dest.innerHTML = '';
-    renderSacredDates(dest);
-  } else if (type === 'incubation') {
-    dest.innerHTML = '';
-    renderIncubations(dest);
-  } else if (type === 'incubation') {
-    dest.innerHTML = '';
-    renderIncubations(dest);
   } else {
     // Clone the panel template into gt-content
     const src = document.getElementById('tab-' + type);
     if (!src) return;
     dest.innerHTML = src.innerHTML;
     if (type === 'shadow') { renderSpiritTab('shadow'); }
-    else if (type === 'seasons') renderSeasons();
     else renderSpiritTab(type);
   }
 
@@ -7275,33 +7637,35 @@ function switchPractice(type, btn) {
 
 function switchInsight(type, btn) {
   _activeInsightTab = type;
+  try { localStorage.setItem('gt_last_insight', type); } catch(e) {}
   document.querySelectorAll('#sub-bar-insight .sub-tab-btn').forEach(b => b.classList.remove('active'));
   const activeBtnEl = btn || document.getElementById('sub-btn-' + type) || document.getElementById('sub-btn-' + type + '-i');
-  if (activeBtnEl) activeBtnEl.classList.add('active');
+  if (activeBtnEl) {
+    activeBtnEl.classList.add('active');
+    setTimeout(function() {
+      try { activeBtnEl.scrollIntoView({behavior:'smooth', block:'nearest', inline:'center'}); } catch(e) {}
+    }, 50);
+  }
 
   const dest = document.getElementById('gt-content');
   if (!dest) return;
 
+  if (type === 'search') {
+    renderGlobalSearch();
+    return;
+  }
   if (type === 'prophecy') {
     dest.innerHTML = '';
     renderProphecies(dest);
     return;
   }
-  if (type === 'threads') {
-    dest.innerHTML = '';
-    renderThreadsTab(dest);
-    return;
-  }
+
   if (type === 'dreamtimeline') {
     dest.innerHTML = '';
     renderDreamTimeline(dest);
     return;
   }
-  if (type === 'symbols') {
-    dest.innerHTML = '';
-    renderSymbolLookup(dest);
-    return;
-  }
+
   const panelId = type === 'viz' ? 'viz' : 'insights';
   const src = document.getElementById('tab-' + panelId);
   if (!src) return;
@@ -7318,14 +7682,20 @@ function switchGrimoire(type, btn) {
     document.getElementById('sub-btn-' + type) ||
     document.getElementById('sub-btn-' + type + '-g') ||
     document.querySelector('#sub-bar-grimoire .sub-tab-btn[id*="' + type + '"]');
-  if (btnEl) btnEl.classList.add('active');
+  if (btnEl) {
+    btnEl.classList.add('active');
+    setTimeout(function() {
+      try { btnEl.scrollIntoView({behavior:'smooth', block:'nearest', inline:'center'}); } catch(e) {}
+    }, 50);
+  }
 
   const dest = document.getElementById('gt-content');
   if (!dest) return;
+  if (type === 'channel') { dest.innerHTML = ''; renderChannel(dest); return; }
   if (type === 'ancestors') { dest.innerHTML = ''; renderAncestors(); return; }
   if (type === 'places') { dest.innerHTML = ''; renderPlaces(); return; }
-  if (type === 'wheel') { dest.innerHTML = ''; renderWheelOfYear(); return; }
   if (type === 'rituals') { dest.innerHTML = ''; renderRitualsTab(); return; }
+  if (type === 'visitations') { dest.innerHTML = ''; renderVisitations(dest); return; }
   const panelMap = {charts:'charts', beings:'people', elixirs:'elixirs', songs:'songs', comms:'comms'};
   const panelId = panelMap[type] || type;
   const src = document.getElementById('tab-' + panelId);
@@ -7336,7 +7706,6 @@ function switchGrimoire(type, btn) {
   else if (type === 'elixirs') renderElixirs();
   else if (type === 'songs') renderSongs();
   else if (type === 'comms') renderCommsDict();
-  // FAB removed
 }
 
 
@@ -11577,12 +11946,16 @@ try { renderInsights(); } catch(e) { console.error('renderInsights crashed:', e)
     const lastTab = isNewSession ? 'sanctum' : (localStorage.getItem('gt_last_tab') || 'sanctum');
     // Map legacy tab IDs to new structure
     const tabMap = {'viz':'insight','insights':'insight','journal':'practice','workings':'practice',
-      'shadow':'practice','readings':'practice','gateway':'practice','seasons':'practice',
-      'charts':'grimoire','people':'grimoire','elixirs':'grimoire','songs':'grimoire','comms':'grimoire'};
+      'shadow':'practice','readings':'practice','gateway':'practice','moonintent':'practice','manifesting':'practice',
+      'charts':'grimoire','people':'grimoire','elixirs':'grimoire','songs':'grimoire','comms':'grimoire',
+      'ancestors':'grimoire','places':'grimoire','rituals':'grimoire','visitations':'grimoire','channel':'grimoire',
+      'herbalism':'tools','hblends':'tools','seasons':'tools','sacredDates':'tools','wheel':'tools',
+      'incubation':'dreams','symbols':'dreams','threads':'dreams','magic':'dreams','search':'insight',
+      'patterns':'insight','prophecy':'insight','dreamtimeline':'insight'};
     const resolvedTab = tabMap[lastTab] || lastTab;
     const btn = document.getElementById('tab-btn-' + resolvedTab);
-    // For practice/insight/grimoire there's no tab-panel div, just activate the btn and sub-content
-    const panel = ['practice','insight','grimoire'].includes(resolvedTab) ? {classList:{add:()=>{},remove:()=>{}}} : document.getElementById('tab-' + resolvedTab);
+    // For dreams/practice/tools/grimoire/insight there's no tab-panel div, just activate the btn and sub-content
+    const panel = ['dreams','practice','tools','grimoire','insight'].includes(resolvedTab) ? {classList:{add:()=>{},remove:()=>{}}} : document.getElementById('tab-' + resolvedTab);
     if (btn && panel) {
       document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
       document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active','tab-active'));
@@ -11596,28 +11969,47 @@ try { renderInsights(); } catch(e) { console.error('renderInsights crashed:', e)
         setTimeout(initSanctum, 100);
       }
       else if (resolvedTab === 'dreams') {
-        const dest=document.getElementById('gt-content');
-        const s=document.getElementById('tab-dreams');
-        if(dest&&s) dest.innerHTML=s.innerHTML;
-        setTimeout(function(){ buildFilters(); renderDreams(); }, 100);
+        const slot = document.getElementById('sub-bar-slot');
+        const bar = document.getElementById('sub-bar-dreams');
+        if (slot) slot.style.display = 'block';
+        if (bar) bar.style.display = 'block';
+        const lastDreams = localStorage.getItem('gt_last_dreams') || 'archive';
+        setTimeout(()=>switchDreams(lastDreams), 100);
+      }
+      else if (resolvedTab === 'dreams') {
+        const slot = document.getElementById('sub-bar-slot');
+        const bar = document.getElementById('sub-bar-dreams');
+        if (slot) slot.style.display = 'block';
+        if (bar) bar.style.display = 'block';
+        const lastDreams = localStorage.getItem('gt_last_dreams') || 'archive';
+        const directSub = ['archive','incubation','symbols','threads','magic'].includes(lastTab) ? lastTab : lastDreams;
+        setTimeout(()=>switchDreams(directSub), 100);
       }
       else if (resolvedTab === 'practice') {
-        // show sub-bar
         const slot = document.getElementById('sub-bar-slot');
         const bar = document.getElementById('sub-bar-practice');
         if (slot) slot.style.display = 'block';
         if (bar) bar.style.display = 'block';
         const lastPractice = localStorage.getItem('gt_last_practice') || 'workings';
-        // If lastTab was a direct sub (legacy), use that
-        const directSub = ['journal','workings','shadow','readings','gateway','seasons'].includes(lastTab) ? lastTab : lastPractice;
+        const directSub = ['journal','workings','shadow','readings','gateway','moonintent','manifesting'].includes(lastTab) ? lastTab : lastPractice;
         setTimeout(()=>switchPractice(directSub), 100);
+      }
+      else if (resolvedTab === 'tools') {
+        const slot = document.getElementById('sub-bar-slot');
+        const bar = document.getElementById('sub-bar-tools');
+        if (slot) slot.style.display = 'block';
+        if (bar) bar.style.display = 'block';
+        const lastTools = localStorage.getItem('gt_last_tools') || 'herbalism';
+        const directSub = ['herbalism','hblends','seasons','sacredDates','wheel'].includes(lastTab) ? lastTab : lastTools;
+        setTimeout(()=>switchTools(directSub), 100);
       }
       else if (resolvedTab === 'insight') {
         const slot = document.getElementById('sub-bar-slot');
         const bar = document.getElementById('sub-bar-insight');
         if (slot) slot.style.display = 'block';
         if (bar) bar.style.display = 'block';
-        const subType = lastTab === 'viz' ? 'viz' : 'patterns';
+        const lastInsight = localStorage.getItem('gt_last_insight') || 'search';
+        const subType = ['search','patterns','threads','dreamtimeline','symbols','viz','prophecy'].includes(lastTab) ? lastTab : (lastTab === 'viz' ? 'viz' : lastInsight);
         setTimeout(()=>switchInsight(subType), 100);
       }
       else if (resolvedTab === 'grimoire') {
@@ -11625,8 +12017,8 @@ try { renderInsights(); } catch(e) { console.error('renderInsights crashed:', e)
         const bar = document.getElementById('sub-bar-grimoire');
         if (slot) slot.style.display = 'block';
         if (bar) bar.style.display = 'block';
-        const gm = {'charts':'charts','people':'beings','elixirs':'elixirs','songs':'songs','comms':'comms'};
-        setTimeout(()=>switchGrimoire(gm[lastTab]||'charts'), 100);
+        const gm = {'charts':'charts','people':'beings','elixirs':'elixirs','songs':'songs','comms':'comms','channel':'channel','visitations':'visitations'};
+        setTimeout(()=>switchGrimoire(gm[lastTab]||'channel'), 100);
       }
       } else {
       // Fallback: open sanctum
@@ -12182,7 +12574,7 @@ function renderSacredDatesBanner() {
     const daysAway = Math.round((new Date(d.date + 'T12:00:00') - new Date()) / 86400000);
     const when = daysAway === 0 ? 'Today' : daysAway === 1 ? 'Tomorrow' : `In ${daysAway} days`;
     var _sabbatMatch = getWotySabbatForDate(d.date);
-    var _clickFn = _sabbatMatch ? "openWotyModal('" + _sabbatMatch.id + "',true)" : "switchTab('practice');setTimeout(()=>switchPractice('sacredDates'),100)";
+    var _clickFn = _sabbatMatch ? "openWotyModal('" + _sabbatMatch.id + "',true)" : "switchTab('tools');setTimeout(()=>switchTools('sacredDates'),100)";
     return `<div style="padding:12px 16px;background:${t.bg};border:1px solid ${t.border};border-left:3px solid ${t.dot};margin-bottom:8px;cursor:pointer;" onclick="${_clickFn}">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:3px;">
         <span style="font-family:'Space Mono',monospace;font-size:.52rem;color:${t.color};letter-spacing:.08em;text-transform:uppercase;">${t.label}</span>
