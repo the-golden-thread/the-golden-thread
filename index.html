@@ -14380,7 +14380,10 @@ function openElixir(elixir) {
 
     <div class="spirit-modal-actions" style="margin-top:20px;">
       <button class="spirit-action-btn" onclick="openElixirEdit(${elixir.id})">Edit</button>
-      <button class="spirit-action-btn" onclick="printElixirCard(${elixir.id})" style="border-color:var(--gold);color:var(--gold);">⬡ Generate Card</button>
+      ${elixir.cardMagic
+        ? `<button class="spirit-action-btn" onclick="openElixirCard(${elixir.id})" style="border-color:var(--gold);color:var(--gold);">⬡ View Card</button><button class="spirit-action-btn" onclick="regenerateElixirCard(${elixir.id})" style="border-color:rgba(201,168,76,.4);color:rgba(201,168,76,.5);font-size:.7rem;" title="Regenerate card reading">↻</button>`
+        : `<button class="spirit-action-btn" onclick="printElixirCard(${elixir.id})" style="border-color:var(--gold);color:var(--gold);">⬡ Generate Card</button>`
+      }
       <button class="spirit-action-btn delete" onclick="deleteElixir(${elixir.id})">Delete</button>
     </div>
   `;
@@ -14515,13 +14518,20 @@ async function printElixirCard(elixirId) {
     '<li><span class="el-name">'+e.name+'<\/span><span class="el-qty">'+e.drops+' drops<\/span><\/li>'
   ).join('');
   const magicHtml = processMagicText(elixir.cardMagic);
+  const html = buildElixirCardHTML(elixir, infusionText, magicHtml, crystalRows, essenceRows);
 
-  const html = '<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><title>' + elixir.name + ' \u2014 Essence in Bloom<\/title>'
+  win.document.open();
+  win.document.write(html);
+  win.document.close();
+}
+
+function buildElixirCardHTML(elixir, infusionText, magicHtml, crystalRows, essenceRows) {
+  return '<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><title>' + elixir.name + ' \u2014 Essence in Bloom<\/title>'
     + '<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Cormorant+SC:wght@300;400&display=swap" rel="stylesheet">'
     + '<style>'
     + '*{margin:0;padding:0;box-sizing:border-box;}'
     + ':root{--ink:#1a1714;--ink-light:#3d3530;--ink-faint:#7a6f68;--ink-ghost:#b5aca5;--cream:#faf7f2;--accent:#8b6f5e;--accent-light:#c4a898;}'
-    + '@media print{body{background:white;}.page{box-shadow:none;margin:0;max-width:100%;}@page{margin:0.4in;size:letter portrait;}.footer{page-break-before:avoid;page-break-inside:avoid;}}'
+    + '@media print{.card-toolbar{display:none !important;}body{background:white;padding:0;}.page{box-shadow:none;margin:0;max-width:100%;}@page{margin:0.4in;size:letter portrait;}.footer{page-break-before:avoid;page-break-inside:avoid;}}'
     + 'body{background:#e8e3dc;font-family:"Cormorant Garamond",Georgia,serif;color:var(--ink);display:flex;justify-content:center;padding:30px 20px;min-height:100vh;}'
     + '.page{background:var(--cream);width:8.5in;max-width:100%;padding:0.42in 0.58in 0.42in;box-shadow:0 4px 40px rgba(0,0,0,0.15);position:relative;display:flex;flex-direction:column;}'
     + '.page::before{content:"";position:absolute;inset:14px;border:0.5px solid var(--ink-ghost);pointer-events:none;}'
@@ -14554,36 +14564,70 @@ async function printElixirCard(elixirId) {
     + '.footer-brand{font-family:"Cormorant SC",serif;font-size:7.5pt;letter-spacing:0.3em;color:var(--accent);font-weight:400;display:block;}'
     + '.footer-tagline{font-size:7.5pt;font-style:italic;color:var(--ink-faint);margin-top:2px;font-weight:300;}'
     + '<\/style><\/head><body>'
+    + '<div class="card-toolbar" style="position:fixed;top:0;left:0;right:0;background:rgba(250,247,242,0.97);border-bottom:0.5px solid #b5aca5;padding:10px 20px;display:flex;gap:12px;justify-content:center;align-items:center;z-index:1000;">'
+    + '<button onclick="window.print()" style="font-family:\'Cormorant SC\',serif;font-size:8pt;letter-spacing:0.2em;color:#8b6f5e;background:none;border:0.5px solid #c4a898;padding:7px 18px;cursor:pointer;">Print \/ Save as PDF<\/button>'
+    + '<button onclick="window.close()" style="font-family:\'Cormorant SC\',serif;font-size:8pt;letter-spacing:0.2em;color:#b5aca5;background:none;border:0.5px solid #ddd8d2;padding:7px 14px;cursor:pointer;">Close<\/button>'
+    + '<\/div>'
+    + '<div style="height:46px;"><\/div>'
     + '<div class="page">'
-    + '<div class="brand-header">'
-    + '<span class="brand-name">Essence in Bloom<\/span>'
-    + '<span class="brand-sub">intuitive blends for the body &amp; spirit<\/span>'
-    + '<span class="brand-ornament">\u00b7 \u00b7 \u2736 \u00b7 \u00b7<\/span>'
-    + '<span class="brand-credit">Crafted with love through Tiffany Ayn Dawson<\/span>'
-    + '<\/div>'
-    + '<div class="elixir-header">'
-    + '<div class="elixir-title">' + elixir.name + '<\/div>'
-    + (elixir.intention ? '<div class="elixir-intention">' + elixir.intention + '<\/div>' : '')
-    + '<\/div>'
-    + '<div class="body-columns">'
-    + '<div class="formula-col">'
+    + '<div class="brand-header"><span class="brand-name">Essence in Bloom<\/span><span class="brand-sub">intuitive blends for the body &amp; spirit<\/span><span class="brand-ornament">\u00b7 \u00b7 \u2736 \u00b7 \u00b7<\/span><span class="brand-credit">Crafted with love through Tiffany Ayn Dawson<\/span><\/div>'
+    + '<div class="elixir-header"><div class="elixir-title">' + elixir.name + '<\/div>'
+    + (elixir.intention ? '<div class="elixir-intention">' + elixir.intention + '<\/div>' : '') + '<\/div>'
+    + '<div class="body-columns"><div class="formula-col">'
     + (crystalRows ? '<div class="formula-section"><span class="section-label">Crystal Companions<\/span><ul class="element-list">' + crystalRows + '<\/ul><\/div>' : '')
     + (essenceRows ? '<div class="formula-section"><span class="section-label">Essences<\/span><ul class="element-list">' + essenceRows + '<\/ul><\/div>' : '')
     + (elixir.cleansing ? '<div class="formula-section"><span class="section-label">Cleansing<\/span><div class="formula-text">' + elixir.cleansing + '<\/div><\/div>' : '')
     + (infusionText ? '<div class="formula-section"><span class="section-label">Infusion<\/span><div class="formula-text">' + infusionText + '<\/div><\/div>' : '')
-    + '<div class="usage-section"><span class="section-label">How to Use<\/span>'
-    + '<div class="usage-text">Roll at the pressure points \u2014 behind the ears, along the neck, on the wrists, and at the third eye. The oil is welcome anywhere on the body that feels right to receive it. Even simply opening the bottle and breathing it in is medicine. As you apply it, set an intention. Speaking or feeling your intention in the moment of anointing imbibes the oil with even more of your own power.<\/div><\/div>'
+    + '<div class="usage-section"><span class="section-label">How to Use<\/span><div class="usage-text">Roll at the pressure points \u2014 behind the ears, along the neck, on the wrists, and at the third eye. The oil is welcome anywhere on the body that feels right to receive it. Even simply opening the bottle and breathing it in is medicine. As you apply it, set an intention. Speaking or feeling your intention in the moment of anointing imbibes the oil with even more of your own power.<\/div><\/div>'
     + '<\/div>'
     + '<div class="reading-col"><span class="reading-label">The Magic<\/span><div class="reading-body">' + magicHtml + '<\/div><\/div>'
     + '<\/div>'
     + '<div class="footer"><span class="footer-brand">Essence in Bloom<\/span><div class="footer-tagline">Made with intention. Carried with love.<\/div><\/div>'
-    + '<\/div>'
-    + '<script>window.onload=()=>window.print();<\/script>'
-    + '<\/body><\/html>';
+    + '<\/div><\/body><\/html>';
+}
 
+function openElixirCard(elixirId) {
+  const elixir = ELIXIRS.find(e => e.id == elixirId);
+  if (!elixir || !elixir.cardMagic) { gtAlert('No card has been generated for this elixir yet.'); return; }
+
+  const win = window.open('', '_blank');
+  if (!win) { gtAlert('Please allow popups for this app to view the card.'); return; }
+  win.document.write('<html><body style="background:#faf7f2;display:flex;justify-content:center;align-items:center;height:100vh;font-family:\'Cormorant Garamond\',Georgia,serif;font-size:1.1rem;color:#7a6f68;font-style:italic;">Loading card\u2026</body></html>');
+
+  const crystalRows = (elixir.crystals||[]).map(c =>
+    '<li><span class="el-name">'+c.name+'<\/span><span class="el-qty">x '+c.count+'<\/span><\/li>'
+  ).join('');
+  const essenceRows = (elixir.essences||[]).map(e =>
+    '<li><span class="el-name">'+e.name+'<\/span><span class="el-qty">'+e.drops+' drops<\/span><\/li>'
+  ).join('');
+
+  function processMagicText(raw) {
+    return (raw||'').split('\n\n').filter(Boolean).filter(p => {
+      const t = p.trim();
+      if (t.startsWith('#')) return false;
+      if (/^[-\u2014*_]{1,4}$/.test(t)) return false;
+      if (t.toLowerCase().includes('crafted with love')) return false;
+      if (t.toLowerCase().includes('a reading for')) return false;
+      if (/^\*[^*\n]{1,120}\*$/.test(t)) return false;
+      return true;
+    }).map(p => '<p>' + p.replace(/\*\*(.+?)\*\*/g,'<strong>$1<\/strong>') + '<\/p>').join('');
+  }
+
+  const magicHtml = processMagicText(elixir.cardMagic);
+  const html = buildElixirCardHTML(elixir, elixir.infusion||'', magicHtml, crystalRows, essenceRows);
   win.document.open();
   win.document.write(html);
   win.document.close();
+}
+
+async function regenerateElixirCard(elixirId) {
+  const elixir = ELIXIRS.find(e => e.id == elixirId);
+  if (!elixir) return;
+  if (!confirm('Regenerate the card reading for "' + elixir.name + '"? The current card will be replaced.')) return;
+  const idx = ELIXIRS.findIndex(e => e.id == elixirId);
+  if (idx > -1) { delete ELIXIRS[idx].cardMagic; if (!ELIXIRS[idx].preloaded) saveElixirs(); }
+  elixir.cardMagic = undefined;
+  await printElixirCard(elixirId);
 }
 
 function openElixirAdd(elixir) {
