@@ -14479,16 +14479,23 @@ async function printElixirCard(elixirId) {
     } catch(e) { gtAlert('Could not generate the reading: ' + e.message); win.close(); return; }
   }
 
-  // Rewrite infusion text if it looks like raw notes (first-person, newlines, dashes)
-  let infusionText = elixir.infusion || '';
-  const infusionLooksRaw = infusionText && (/\b(I |I've|I called|I used|I was|my guides)\b/i.test(infusionText) || infusionText.includes('\n') || infusionText.includes('- '));
-  if (infusionLooksRaw && apiKey) {
-    try {
-      const rewritePrompt = 'Rewrite the following oil blend infusion notes as 1-2 sentences of polished, evocative third-person prose suitable for a product card. No first-person. No bullet points. Keep it warm and intentional in tone.\n\n'+infusionText;
-      const rd = await claudeAPI(apiKey, {model:'claude-sonnet-4-6',max_tokens:300,messages:[{role:'user',content:rewritePrompt}]});
-      infusionText = rd.content?.find(c=>c.type==='text')?.text || infusionText;
-    } catch(e) { /* use raw if rewrite fails */ }
+  // Rewrite infusion for card if not already done — always third-person, named, card-quality prose
+  if (!elixir.cardInfusion) {
+    const rawInfusion = elixir.infusion || '';
+    if (rawInfusion && apiKey) {
+      try {
+        const rewritePrompt = 'Rewrite the following oil blend infusion notes as 1-3 sentences of polished, evocative third-person prose for a printed product card. The maker is Tiff. The recipient is '+recipient+'. Use their names where appropriate. No first-person language. Keep it warm, spiritual, and intentional — matching the elevated tone of a handcrafted elixir card. Do not add anything that is not implied by the original notes.\n\n'+rawInfusion;
+        const rd = await claudeAPI(apiKey, {model:'claude-sonnet-4-6',max_tokens:350,messages:[{role:'user',content:rewritePrompt}]});
+        const cleaned = rd.content?.find(c=>c.type==='text')?.text || rawInfusion;
+        const idx = ELIXIRS.findIndex(e => e.id == elixirId);
+        if (idx > -1) { ELIXIRS[idx].cardInfusion = cleaned; if (!ELIXIRS[idx].preloaded) saveElixirs(); }
+        elixir.cardInfusion = cleaned;
+      } catch(e) { elixir.cardInfusion = rawInfusion; }
+    } else {
+      elixir.cardInfusion = rawInfusion;
+    }
   }
+  const infusionText = elixir.cardInfusion || elixir.infusion || '';
 
   // Process magic text: strip leading # headers, convert **bold** to <strong>
   function processMagicText(raw) {
@@ -14668,7 +14675,7 @@ function openElixirCard(elixirId) {
   }
 
   const magicHtml = processMagicText(elixir.cardMagic);
-  const html = buildElixirCardHTML(elixir, elixir.infusion||'', magicHtml, crystalRows, essenceRows);
+  const html = buildElixirCardHTML(elixir, elixir.cardInfusion || elixir.infusion || '', magicHtml, crystalRows, essenceRows);
   const blob = new Blob([html], {type:'text/html'});
   const blobUrl = URL.createObjectURL(blob);
   win.location.replace(blobUrl);
@@ -14680,8 +14687,13 @@ async function regenerateElixirCard(elixirId) {
   if (!elixir) return;
   if (!confirm('Regenerate the card reading for "' + elixir.name + '"? The current card will be replaced.')) return;
   const idx = ELIXIRS.findIndex(e => e.id == elixirId);
-  if (idx > -1) { delete ELIXIRS[idx].cardMagic; if (!ELIXIRS[idx].preloaded) saveElixirs(); }
+  if (idx > -1) {
+    delete ELIXIRS[idx].cardMagic;
+    delete ELIXIRS[idx].cardInfusion;
+    if (!ELIXIRS[idx].preloaded) saveElixirs();
+  }
   elixir.cardMagic = undefined;
+  elixir.cardInfusion = undefined;
   await printElixirCard(elixirId);
 }
 
