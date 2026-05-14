@@ -14446,6 +14446,12 @@ async function printElixirCard(elixirId) {
 
   const apiKey = getApiKey();
 
+  // Open the window IMMEDIATELY while we're still in the user gesture context
+  // (mobile browsers block window.open after async/await)
+  const win = window.open('', '_blank');
+  if (!win) { gtAlert('Please allow popups for this app to generate print cards.'); return; }
+  win.document.write('<html><body style="background:#faf7f2;display:flex;justify-content:center;align-items:center;height:100vh;font-family:\'Cormorant Garamond\',Georgia,serif;font-size:1.1rem;color:#7a6f68;font-style:italic;">Preparing your card\u2026</body></html>');
+
   // Extract recipient name from intention (e.g. "For Mia — ..." → "Mia"), default to "Tiff"
   function extractRecipient(intention) {
     if (!intention) return 'Tiff';
@@ -14467,7 +14473,7 @@ async function printElixirCard(elixirId) {
       const idx = ELIXIRS.findIndex(e => e.id == elixirId);
       if (idx > -1) { ELIXIRS[idx].cardMagic = text; if (!ELIXIRS[idx].preloaded) saveElixirs(); }
       elixir.cardMagic = text;
-    } catch(e) { gtAlert('Could not generate the reading: ' + e.message); return; }
+    } catch(e) { gtAlert('Could not generate the reading: ' + e.message); win.close(); return; }
   }
 
   // Rewrite infusion text if it looks like raw notes (first-person, newlines, dashes)
@@ -14575,9 +14581,9 @@ async function printElixirCard(elixirId) {
     + '<script>window.onload=()=>window.print();<\/script>'
     + '<\/body><\/html>';
 
-  const win = window.open('', '_blank');
-  if (win) { win.document.write(html); win.document.close(); }
-  else { gtAlert('Please allow popups for this app to generate print cards.'); }
+  win.document.open();
+  win.document.write(html);
+  win.document.close();
 }
 
 function openElixirAdd(elixir) {
