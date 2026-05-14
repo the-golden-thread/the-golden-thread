@@ -14446,19 +14446,27 @@ async function printElixirCard(elixirId) {
 
   const apiKey = getApiKey();
 
-  // Generate magic reading if not yet present
-  if (!elixir.magic) {
+  // Extract recipient name from intention (e.g. "For Mia — ..." → "Mia"), default to "Tiff"
+  function extractRecipient(intention) {
+    if (!intention) return 'Tiff';
+    const m = (intention||'').match(/^[Ff]or\s+([A-Z][a-z]+)\b/);
+    return m ? m[1] : 'Tiff';
+  }
+  const recipient = extractRecipient(elixir.intention);
+
+  // Card reading is stored separately from in-app magic so both can coexist
+  if (!elixir.cardMagic) {
     if (!apiKey) { gtAlert('Add your Anthropic API key in Settings to generate the card reading.'); return; }
-    gtAlert('Generating the magic for this blend first — the card will open when ready.');
+    gtAlert('Generating the card reading — the card will open when ready.');
     const crystalList = (elixir.crystals||[]).map(c=>c.count+'x '+c.name).join(', ');
     const essenceList = (elixir.essences||[]).map(e=>e.drops+' drops '+e.name).join(', ');
-    const prompt = 'You are a practicing witch and aromatherapist with deep knowledge of crystal lore, essential oil magic, and energetic alchemy. Write a beautiful card reading for this custom intuitive blend.\n\nName: '+elixir.name+'\nIntention: '+(elixir.intention||'Not specified')+'\nCrystals: '+(crystalList||'None')+'\nEssential oils: '+(essenceList||'None')+(elixir.cleansing?'\nCleansing: '+elixir.cleansing:'')+(elixir.infusion?'\nInfusion method: '+elixir.infusion:'')+'\n\nWrite 4-5 paragraphs of flowing prose explaining what each ingredient contributes energetically, how they work together as a unified formula, and what this blend does for the person who carries it. Use **bold** for ingredient names where helpful. No bullet points. No heading lines starting with #.';
+    const prompt = 'You are a practicing witch and aromatherapist with deep knowledge of crystal lore, essential oil magic, and energetic alchemy. Write a beautiful third-person card reading for this custom intuitive blend made by Tiff.\n\nName: '+elixir.name+'\nMade by: Tiff\nRecipient: '+recipient+'\nIntention: '+(elixir.intention||'Not specified')+'\nCrystals: '+(crystalList||'None')+'\nEssential oils: '+(essenceList||'None')+(elixir.cleansing?'\nCleansing: '+elixir.cleansing:'')+(elixir.infusion?'\nInfusion method: '+elixir.infusion:'')+'\n\nWrite 4-5 paragraphs of flowing prose. Refer to the maker as "Tiff" and the recipient as "'+recipient+'". Never use "you" or "your" — this is a card the recipient will read about themselves, not spoken to them directly. Use **bold** for ingredient names where helpful. No bullet points. No heading lines starting with #. No credit lines or bylines.';
     try {
       const data = await claudeAPI(apiKey, {model:'claude-sonnet-4-6',max_tokens:2200,messages:[{role:'user',content:prompt}]});
       const text = data.content?.find(c=>c.type==='text')?.text||'';
       const idx = ELIXIRS.findIndex(e => e.id == elixirId);
-      if (idx > -1) { ELIXIRS[idx].magic = text; if (!ELIXIRS[idx].preloaded) saveElixirs(); }
-      elixir.magic = text;
+      if (idx > -1) { ELIXIRS[idx].cardMagic = text; if (!ELIXIRS[idx].preloaded) saveElixirs(); }
+      elixir.cardMagic = text;
     } catch(e) { gtAlert('Could not generate the reading: ' + e.message); return; }
   }
 
@@ -14500,7 +14508,7 @@ async function printElixirCard(elixirId) {
   const essenceRows = (elixir.essences||[]).map(e =>
     '<li><span class="el-name">'+e.name+'<\/span><span class="el-qty">'+e.drops+' drops<\/span><\/li>'
   ).join('');
-  const magicHtml = processMagicText(elixir.magic);
+  const magicHtml = processMagicText(elixir.cardMagic);
 
   const html = '<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><title>' + elixir.name + ' \u2014 Essence in Bloom<\/title>'
     + '<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Cormorant+SC:wght@300;400&display=swap" rel="stylesheet">'
