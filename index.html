@@ -14444,22 +14444,15 @@ async function printElixirCard(elixirId) {
   const elixir = ELIXIRS.find(e => e.id == elixirId);
   if (!elixir) return;
 
+  const apiKey = getApiKey();
+
+  // Generate magic reading if not yet present
   if (!elixir.magic) {
-    const apiKey = getApiKey();
     if (!apiKey) { gtAlert('Add your Anthropic API key in Settings to generate the card reading.'); return; }
     gtAlert('Generating the magic for this blend first — the card will open when ready.');
-    const crystalList = (elixir.crystals||[]).map(c=>`${c.count}x ${c.name}`).join(', ');
-    const essenceList = (elixir.essences||[]).map(e=>`${e.drops} drops ${e.name}`).join(', ');
-    const prompt = `You are a practicing witch and aromatherapist with deep knowledge of crystal lore, essential oil magic, and energetic alchemy. Write a beautiful card reading for this custom intuitive blend.
-
-Name: ${elixir.name}
-Intention: ${elixir.intention || 'Not specified'}
-Crystals: ${crystalList || 'None'}
-Essential oils: ${essenceList || 'None'}
-${elixir.cleansing ? 'Cleansing: ' + elixir.cleansing : ''}
-${elixir.infusion ? 'Infusion method: ' + elixir.infusion : ''}
-
-Write 4-5 paragraphs of flowing prose explaining what each ingredient contributes energetically, how they work together as a unified formula, and what this blend does for the person who carries it. No bullet points.`;
+    const crystalList = (elixir.crystals||[]).map(c=>c.count+'x '+c.name).join(', ');
+    const essenceList = (elixir.essences||[]).map(e=>e.drops+' drops '+e.name).join(', ');
+    const prompt = 'You are a practicing witch and aromatherapist with deep knowledge of crystal lore, essential oil magic, and energetic alchemy. Write a beautiful card reading for this custom intuitive blend.\n\nName: '+elixir.name+'\nIntention: '+(elixir.intention||'Not specified')+'\nCrystals: '+(crystalList||'None')+'\nEssential oils: '+(essenceList||'None')+(elixir.cleansing?'\nCleansing: '+elixir.cleansing:'')+(elixir.infusion?'\nInfusion method: '+elixir.infusion:'')+'\n\nWrite 4-5 paragraphs of flowing prose explaining what each ingredient contributes energetically, how they work together as a unified formula, and what this blend does for the person who carries it. Use **bold** for ingredient names where helpful. No bullet points. No heading lines starting with #.';
     try {
       const data = await claudeAPI(apiKey, {model:'claude-sonnet-4-6',max_tokens:2200,messages:[{role:'user',content:prompt}]});
       const text = data.content?.find(c=>c.type==='text')?.text||'';
@@ -14469,51 +14462,75 @@ Write 4-5 paragraphs of flowing prose explaining what each ingredient contribute
     } catch(e) { gtAlert('Could not generate the reading: ' + e.message); return; }
   }
 
+  // Rewrite infusion text if it looks like raw notes (first-person, newlines, dashes)
+  let infusionText = elixir.infusion || '';
+  const infusionLooksRaw = infusionText && (/\b(I |I've|I called|I used|I was|my guides)\b/i.test(infusionText) || infusionText.includes('\n') || infusionText.includes('- '));
+  if (infusionLooksRaw && apiKey) {
+    try {
+      const rewritePrompt = 'Rewrite the following oil blend infusion notes as 1-2 sentences of polished, evocative third-person prose suitable for a product card. No first-person. No bullet points. Keep it warm and intentional in tone.\n\n'+infusionText;
+      const rd = await claudeAPI(apiKey, {model:'claude-sonnet-4-6',max_tokens:300,messages:[{role:'user',content:rewritePrompt}]});
+      infusionText = rd.content?.find(c=>c.type==='text')?.text || infusionText;
+    } catch(e) { /* use raw if rewrite fails */ }
+  }
+
+  // Process magic text: strip leading # headers, convert **bold** to <strong>
+  function processMagicText(raw) {
+    return (raw||'')
+      .split('\n\n')
+      .filter(Boolean)
+      .filter(p => !p.trim().startsWith('#'))
+      .map(p => {
+        const withBold = p.replace(/\*\*(.+?)\*\*/g, '<strong>$1<\/strong>');
+        return '<p>' + withBold + '<\/p>';
+      })
+      .join('');
+  }
+
   const crystalRows = (elixir.crystals||[]).map(c =>
-    `<li><span class="el-name">${c.name}</span><span class="el-qty">x ${c.count}</span></li>`
+    '<li><span class="el-name">'+c.name+'<\/span><span class="el-qty">x '+c.count+'<\/span><\/li>'
   ).join('');
   const essenceRows = (elixir.essences||[]).map(e =>
-    `<li><span class="el-name">${e.name}</span><span class="el-qty">${e.drops} drops</span></li>`
+    '<li><span class="el-name">'+e.name+'<\/span><span class="el-qty">'+e.drops+' drops<\/span><\/li>'
   ).join('');
-  const magicHtml = (elixir.magic||'').split('\n\n').filter(Boolean).map(p => `<p>${p}</p>`).join('');
+  const magicHtml = processMagicText(elixir.magic);
 
   const html = '<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><title>' + elixir.name + ' \u2014 Essence in Bloom<\/title>'
     + '<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Cormorant+SC:wght@300;400&display=swap" rel="stylesheet">'
     + '<style>'
     + '*{margin:0;padding:0;box-sizing:border-box;}'
     + ':root{--ink:#1a1714;--ink-light:#3d3530;--ink-faint:#7a6f68;--ink-ghost:#b5aca5;--cream:#faf7f2;--accent:#8b6f5e;--accent-light:#c4a898;}'
-    + '@media print{body{background:white;}.page{box-shadow:none;margin:0;max-width:100%;}@page{margin:0.45in;size:letter portrait;}}'
-    + 'body{background:#e8e3dc;font-family:"Cormorant Garamond",Georgia,serif;color:var(--ink);display:flex;justify-content:center;padding:40px 20px;min-height:100vh;}'
-    + '.page{background:var(--cream);width:8.5in;max-width:100%;min-height:11in;padding:0.55in 0.7in;box-shadow:0 4px 40px rgba(0,0,0,0.15);position:relative;display:flex;flex-direction:column;}'
-    + '.page::before{content:"";position:absolute;inset:16px;border:0.5px solid var(--ink-ghost);pointer-events:none;}'
-    + '.page::after{content:"";position:absolute;inset:20px;border:0.5px solid var(--accent-light);opacity:0.4;pointer-events:none;}'
-    + '.brand-header{text-align:center;padding-bottom:12px;border-bottom:0.5px solid var(--accent-light);margin-bottom:14px;}'
-    + '.brand-name{font-family:"Cormorant SC",serif;font-size:17pt;font-weight:400;letter-spacing:0.4em;color:var(--ink);display:block;line-height:1.2;}'
-    + '.brand-sub{font-family:"Cormorant Garamond",serif;font-size:8pt;font-style:italic;letter-spacing:0.2em;color:var(--accent);display:block;margin-top:3px;}'
-    + '.brand-ornament{display:block;font-size:9pt;letter-spacing:0.5em;color:var(--accent-light);margin:6px 0 4px;}'
-    + '.brand-credit{font-family:"Cormorant SC",serif;font-size:7pt;letter-spacing:0.2em;color:var(--ink-faint);display:block;}'
-    + '.elixir-header{text-align:center;padding-bottom:14px;border-bottom:0.5px solid var(--ink-ghost);margin-bottom:16px;}'
-    + '.elixir-title{font-family:"Cormorant Garamond",serif;font-size:30pt;font-weight:300;letter-spacing:0.04em;line-height:1.1;color:var(--ink);margin-bottom:6px;}'
-    + '.elixir-intention{font-size:10pt;font-style:italic;color:var(--ink-light);font-weight:300;line-height:1.5;}'
-    + '.body-columns{display:grid;grid-template-columns:1fr 1.8fr;gap:24px;flex:1;align-items:start;}'
-    + '.formula-col{display:flex;flex-direction:column;gap:15px;}'
-    + '.formula-section{border-left:1px solid var(--accent-light);padding-left:11px;}'
-    + '.section-label{font-family:"Cormorant SC",serif;font-size:6.5pt;letter-spacing:0.28em;color:var(--ink-faint);text-transform:uppercase;margin-bottom:6px;display:block;}'
-    + '.element-list{list-style:none;display:flex;flex-direction:column;gap:3px;}'
-    + '.element-list li{font-size:9pt;color:var(--ink-light);line-height:1.4;display:flex;align-items:baseline;gap:5px;}'
-    + '.element-list li::before{content:"\u2014";color:var(--accent-light);font-size:8pt;flex-shrink:0;}'
-    + '.el-name{font-style:italic;}.el-qty{font-family:"Cormorant SC",serif;font-size:7.5pt;color:var(--ink-faint);}'
-    + '.formula-text{font-size:8.5pt;font-style:italic;color:var(--ink-light);line-height:1.6;font-weight:300;}'
-    + '.usage-section{margin-top:15px;padding:10px 11px;border:0.5px solid var(--accent-light);background:rgba(196,168,152,0.06);}'
-    + '.usage-text{font-size:8.5pt;color:var(--ink-light);line-height:1.65;font-style:italic;font-weight:300;}'
-    + '.reading-col{border-left:0.5px solid var(--ink-ghost);padding-left:20px;}'
-    + '.reading-label{font-family:"Cormorant SC",serif;font-size:6.5pt;letter-spacing:0.28em;color:var(--ink-faint);text-transform:uppercase;margin-bottom:9px;display:block;}'
-    + '.reading-body{font-size:8.8pt;line-height:1.72;color:var(--ink-light);font-weight:300;}'
-    + '.reading-body p{margin-bottom:8px;}.reading-body p:last-child{margin-bottom:0;}'
-    + '.reading-body strong{font-weight:500;color:var(--ink);}.reading-body em{font-style:italic;color:var(--ink);}'
-    + '.footer{text-align:center;padding-top:12px;border-top:0.5px solid var(--ink-ghost);margin-top:16px;}'
-    + '.footer-brand{font-family:"Cormorant SC",serif;font-size:8pt;letter-spacing:0.3em;color:var(--accent);font-weight:400;display:block;}'
-    + '.footer-tagline{font-size:8pt;font-style:italic;color:var(--ink-faint);margin-top:2px;font-weight:300;}'
+    + '@media print{body{background:white;}.page{box-shadow:none;margin:0;max-width:100%;}@page{margin:0.4in;size:letter portrait;}.footer{page-break-before:avoid;page-break-inside:avoid;}}'
+    + 'body{background:#e8e3dc;font-family:"Cormorant Garamond",Georgia,serif;color:var(--ink);display:flex;justify-content:center;padding:30px 20px;min-height:100vh;}'
+    + '.page{background:var(--cream);width:8.5in;max-width:100%;padding:0.42in 0.58in 0.42in;box-shadow:0 4px 40px rgba(0,0,0,0.15);position:relative;display:flex;flex-direction:column;}'
+    + '.page::before{content:"";position:absolute;inset:14px;border:0.5px solid var(--ink-ghost);pointer-events:none;}'
+    + '.page::after{content:"";position:absolute;inset:18px;border:0.5px solid var(--accent-light);opacity:0.4;pointer-events:none;}'
+    + '.brand-header{text-align:center;padding-bottom:9px;border-bottom:0.5px solid var(--accent-light);margin-bottom:10px;}'
+    + '.brand-name{font-family:"Cormorant SC",serif;font-size:15pt;font-weight:400;letter-spacing:0.4em;color:var(--ink);display:block;line-height:1.2;}'
+    + '.brand-sub{font-family:"Cormorant Garamond",serif;font-size:7.5pt;font-style:italic;letter-spacing:0.2em;color:var(--accent);display:block;margin-top:2px;}'
+    + '.brand-ornament{display:block;font-size:8pt;letter-spacing:0.5em;color:var(--accent-light);margin:5px 0 3px;}'
+    + '.brand-credit{font-family:"Cormorant SC",serif;font-size:6.5pt;letter-spacing:0.2em;color:var(--ink-faint);display:block;}'
+    + '.elixir-header{text-align:center;padding-bottom:10px;border-bottom:0.5px solid var(--ink-ghost);margin-bottom:12px;}'
+    + '.elixir-title{font-family:"Cormorant Garamond",serif;font-size:26pt;font-weight:300;letter-spacing:0.04em;line-height:1.1;color:var(--ink);margin-bottom:5px;}'
+    + '.elixir-intention{font-size:9.5pt;font-style:italic;color:var(--ink-light);font-weight:300;line-height:1.5;}'
+    + '.body-columns{display:grid;grid-template-columns:1fr 1.8fr;gap:20px;flex:1;align-items:start;}'
+    + '.formula-col{display:flex;flex-direction:column;gap:11px;}'
+    + '.formula-section{border-left:1px solid var(--accent-light);padding-left:10px;}'
+    + '.section-label{font-family:"Cormorant SC",serif;font-size:6pt;letter-spacing:0.28em;color:var(--ink-faint);text-transform:uppercase;margin-bottom:5px;display:block;}'
+    + '.element-list{list-style:none;display:flex;flex-direction:column;gap:2px;}'
+    + '.element-list li{font-size:8.5pt;color:var(--ink-light);line-height:1.4;display:flex;align-items:baseline;gap:5px;}'
+    + '.element-list li::before{content:"\u2014";color:var(--accent-light);font-size:7.5pt;flex-shrink:0;}'
+    + '.el-name{font-style:italic;}.el-qty{font-family:"Cormorant SC",serif;font-size:7pt;color:var(--ink-faint);}'
+    + '.formula-text{font-size:8pt;font-style:italic;color:var(--ink-light);line-height:1.55;font-weight:300;}'
+    + '.usage-section{margin-top:11px;padding:8px 10px;border:0.5px solid var(--accent-light);background:rgba(196,168,152,0.06);}'
+    + '.usage-text{font-size:8pt;color:var(--ink-light);line-height:1.6;font-style:italic;font-weight:300;}'
+    + '.reading-col{border-left:0.5px solid var(--ink-ghost);padding-left:18px;}'
+    + '.reading-label{font-family:"Cormorant SC",serif;font-size:6pt;letter-spacing:0.28em;color:var(--ink-faint);text-transform:uppercase;margin-bottom:7px;display:block;}'
+    + '.reading-body{font-size:8.2pt;line-height:1.65;color:var(--ink-light);font-weight:300;}'
+    + '.reading-body p{margin-bottom:5px;}.reading-body p:last-child{margin-bottom:0;}'
+    + '.reading-body strong{font-weight:600;color:var(--ink);}.reading-body em{font-style:italic;color:var(--ink);}'
+    + '.footer{text-align:center;padding-top:10px;border-top:0.5px solid var(--ink-ghost);margin-top:12px;}'
+    + '.footer-brand{font-family:"Cormorant SC",serif;font-size:7.5pt;letter-spacing:0.3em;color:var(--accent);font-weight:400;display:block;}'
+    + '.footer-tagline{font-size:7.5pt;font-style:italic;color:var(--ink-faint);margin-top:2px;font-weight:300;}'
     + '<\/style><\/head><body>'
     + '<div class="page">'
     + '<div class="brand-header">'
@@ -14531,7 +14548,7 @@ Write 4-5 paragraphs of flowing prose explaining what each ingredient contribute
     + (crystalRows ? '<div class="formula-section"><span class="section-label">Crystal Companions<\/span><ul class="element-list">' + crystalRows + '<\/ul><\/div>' : '')
     + (essenceRows ? '<div class="formula-section"><span class="section-label">Essences<\/span><ul class="element-list">' + essenceRows + '<\/ul><\/div>' : '')
     + (elixir.cleansing ? '<div class="formula-section"><span class="section-label">Cleansing<\/span><div class="formula-text">' + elixir.cleansing + '<\/div><\/div>' : '')
-    + (elixir.infusion ? '<div class="formula-section"><span class="section-label">Infusion<\/span><div class="formula-text">' + elixir.infusion + '<\/div><\/div>' : '')
+    + (infusionText ? '<div class="formula-section"><span class="section-label">Infusion<\/span><div class="formula-text">' + infusionText + '<\/div><\/div>' : '')
     + '<div class="usage-section"><span class="section-label">How to Use<\/span>'
     + '<div class="usage-text">Roll at the pressure points \u2014 behind the ears, along the neck, on the wrists, and at the third eye. The oil is welcome anywhere on the body that feels right to receive it. Even simply opening the bottle and breathing it in is medicine. As you apply it, set an intention. Speaking or feeling your intention in the moment of anointing imbibes the oil with even more of your own power.<\/div><\/div>'
     + '<\/div>'
