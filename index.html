@@ -14478,7 +14478,15 @@ async function printElixirCard(elixirId) {
     return (raw||'')
       .split('\n\n')
       .filter(Boolean)
-      .filter(p => !p.trim().startsWith('#'))
+      .filter(p => {
+        const t = p.trim();
+        if (t.startsWith('#')) return false;
+        if (/^[-\u2014*_]{1,4}$/.test(t)) return false; // divider lines like --- or —
+        if (t.toLowerCase().includes('crafted with love')) return false;
+        if (t.toLowerCase().includes('a reading for')) return false;
+        if (/^\*[^*\n]{1,120}\*$/.test(t)) return false; // short single italic line = byline/credit
+        return true;
+      })
       .map(p => {
         const withBold = p.replace(/\*\*(.+?)\*\*/g, '<strong>$1<\/strong>');
         return '<p>' + withBold + '<\/p>';
