@@ -14469,7 +14469,7 @@ async function printElixirCard(elixirId) {
     gtAlert('Generating the card reading — the card will open when ready.');
     const crystalList = (elixir.crystals||[]).map(c=>c.count+'x '+c.name).join(', ');
     const essenceList = (elixir.essences||[]).map(e=>e.drops+' drops '+e.name).join(', ');
-    const prompt = 'You are a practicing witch and aromatherapist with deep knowledge of crystal lore, essential oil magic, and energetic alchemy. Write a beautiful third-person card reading for this custom intuitive blend made by Tiff.\n\nName: '+elixir.name+'\nMade by: Tiff\nRecipient: '+recipient+'\nIntention: '+(elixir.intention||'Not specified')+'\nCrystals: '+(crystalList||'None')+'\nEssential oils: '+(essenceList||'None')+(elixir.cleansing?'\nCleansing: '+elixir.cleansing:'')+(elixir.infusion?'\nInfusion method: '+elixir.infusion:'')+'\n\nWrite 4-5 paragraphs of flowing prose. Refer to the maker as "Tiff" and the recipient as "'+recipient+'". Never use "you" or "your" — this is a card the recipient will read about themselves, not spoken to them directly. Use **bold** for ingredient names where helpful. No bullet points. No heading lines starting with #. No credit lines or bylines.';
+    const prompt = 'You are a practicing witch and aromatherapist with deep knowledge of crystal lore, essential oil magic, and energetic alchemy. Write a beautiful third-person card reading for this custom intuitive blend made by Tiff.\n\nName: '+elixir.name+'\nMade by: Tiff\nRecipient: '+recipient+'\nIntention: '+(elixir.intention||'Not specified')+'\nCrystals: '+(crystalList||'None')+'\nEssential oils: '+(essenceList||'None')+(elixir.cleansing?'\nCleansing: '+elixir.cleansing:'')+(elixir.infusion?'\nInfusion method: '+elixir.infusion:'')+'\n\nWrite 4-5 paragraphs of flowing prose. Refer to the maker as "Tiff" and the recipient as "'+recipient+'". Never use "you" or "your" — this is a card the recipient will read about themselves, not spoken to them directly. Use **bold** only for the names of specific ingredients — individual oils, crystals, and cleansing materials (e.g. **jasmine**, **rose quartz**, **frankincense smoke**). Do NOT bold person names, blend names, group names, or any other words. No bullet points. No heading lines starting with #. No credit lines or bylines.';
     try {
       const data = await claudeAPI(apiKey, {model:'claude-sonnet-4-6',max_tokens:2200,messages:[{role:'user',content:prompt}]});
       const text = data.content?.find(c=>c.type==='text')?.text||'';
@@ -14520,9 +14520,10 @@ async function printElixirCard(elixirId) {
   const magicHtml = processMagicText(elixir.cardMagic);
   const html = buildElixirCardHTML(elixir, infusionText, magicHtml, crystalRows, essenceRows);
 
-  win.document.open();
-  win.document.write(html);
-  win.document.close();
+  const blob = new Blob([html], {type:'text/html'});
+  const blobUrl = URL.createObjectURL(blob);
+  win.location.replace(blobUrl);
+  setTimeout(() => URL.revokeObjectURL(blobUrl), 120000);
 }
 
 function buildElixirCardHTML(elixir, infusionText, magicHtml, crystalRows, essenceRows) {
@@ -14615,9 +14616,10 @@ function openElixirCard(elixirId) {
 
   const magicHtml = processMagicText(elixir.cardMagic);
   const html = buildElixirCardHTML(elixir, elixir.infusion||'', magicHtml, crystalRows, essenceRows);
-  win.document.open();
-  win.document.write(html);
-  win.document.close();
+  const blob = new Blob([html], {type:'text/html'});
+  const blobUrl = URL.createObjectURL(blob);
+  win.location.replace(blobUrl);
+  setTimeout(() => URL.revokeObjectURL(blobUrl), 120000);
 }
 
 async function regenerateElixirCard(elixirId) {
