@@ -16637,7 +16637,7 @@ function setRitualFilter(f) {
 function renderRitualCard(r) {
   var purposeObj = RITUAL_PURPOSES.find(function(p){return p.id===r.purpose;}) || {label:r.purpose};
   var dateStr = r.date ? ' · ' + r.date : '';
-  return '<div style="border:1px solid rgba(201,185,154,.1);padding:16px;margin-bottom:10px;cursor:pointer;" onclick="openRitualModal(\'\'+r.id+\'\')"'
+  return '<div style="border:1px solid rgba(201,185,154,.1);padding:16px;margin-bottom:10px;cursor:pointer;" onclick="openRitualModal(\'' + r.id + '\')"'
     + ' onmouseover="this.style.background=\'rgba(255,255,255,.02)\'" onmouseout="this.style.background=\'transparent\'">'
     + '<div style="display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:5px;">'
     + '<div style="font-family:Cormorant Garamond,serif;font-size:1.1rem;color:rgba(240,235,224,.9);">'+r.name+'</div>'
