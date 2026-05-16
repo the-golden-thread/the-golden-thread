@@ -11268,7 +11268,7 @@ function showPerson(pid){
 
 function closeView(){document.getElementById('view-ov').classList.remove('open');}
 function renderSigRow(dreamId, currentSig) {
-  var labels = {'':'&mdash;','1':'notable','2':'significant','3':'profound'};
+  var labels = {'':'&mdash;','1':'marked','2':'significant','3':'profound'};
   var cols   = {'':'rgba(201,185,154,.25)','1':'rgba(107,138,83,.85)','2':'rgba(155,107,171,.85)','3':'rgba(201,185,106,.9)'};
   var chips = ['','1','2','3'].map(function(v) {
     var active = currentSig === v;
@@ -11288,7 +11288,7 @@ function setSigRating(dreamId, val) {
   // Re-render just the sig row
   const row = document.getElementById('sig-row-' + dreamId);
   if (!row) return;
-  const labels = {'':'—','1':'notable','2':'significant','3':'profound'};
+  const labels = {'':'—','1':'marked','2':'significant','3':'profound'};
   const cols   = {'':'rgba(201,185,154,.25)','1':'rgba(107,138,83,.85)','2':'rgba(155,107,171,.85)','3':'rgba(201,185,106,.9)'};
   row.querySelectorAll('span[onclick]').forEach(sp => {
     const v = sp.textContent === '—' ? '' : Object.keys(labels).find(k => labels[k] === sp.textContent) || '';
@@ -16500,7 +16500,7 @@ function renderWheelOfYear() {
                : '<span style="font-family:Space Mono,monospace;font-size:.44rem;letter-spacing:.07em;color:rgba(201,185,154,.35);">' + daysAway + ' days</span>';
 
     html2 += '<div onclick="openWotyModal(\'' + s.id + '\')" style="display:flex;align-items:flex-start;gap:16px;padding:14px 16px;border:1px solid ' + borderCol + ';margin-bottom:8px;cursor:pointer;opacity:' + opacity + ';transition:all .2s;" '
-      + 'onmouseover="this.style.background=rgba(255,255,255,.02)" onmouseout="this.style.background=transparent">'
+      + 'onmouseover="this.style.background=\'rgba(255,255,255,.02)\'" onmouseout="this.style.background=\'transparent\'">'
       + '<div style="font-size:1.6rem;flex-shrink:0;margin-top:2px;">' + s.emoji + '</div>'
       + '<div style="flex:1;min-width:0;">'
       + '<div style="display:flex;align-items:baseline;gap:10px;margin-bottom:3px;">'
@@ -16638,7 +16638,7 @@ function renderRitualCard(r) {
   var purposeObj = RITUAL_PURPOSES.find(function(p){return p.id===r.purpose;}) || {label:r.purpose};
   var dateStr = r.date ? ' · ' + r.date : '';
   return '<div style="border:1px solid rgba(201,185,154,.1);padding:16px;margin-bottom:10px;cursor:pointer;" onclick="openRitualModal(\'\'+r.id+\'\')"'
-    + ' onmouseover="this.style.background=rgba(255,255,255,.02)" onmouseout="this.style.background=transparent">'
+    + ' onmouseover="this.style.background=\'rgba(255,255,255,.02)\'" onmouseout="this.style.background=\'transparent\'">'
     + '<div style="display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:5px;">'
     + '<div style="font-family:Cormorant Garamond,serif;font-size:1.1rem;color:rgba(240,235,224,.9);">'+r.name+'</div>'
     + '<div style="font-family:Space Mono,monospace;font-size:.44rem;color:rgba(201,185,154,.35);white-space:nowrap;">'+purposeObj.label+dateStr+'</div>'
