@@ -16680,8 +16680,8 @@ function openRitualModal(id) {
     + '</div>'
     + (r.outcome ? '<div style="padding:14px 22px;"><div style="font-family:Space Mono,monospace;font-size:.46rem;letter-spacing:.09em;text-transform:uppercase;color:rgba(201,185,154,.32);margin-bottom:6px;">Outcome Notes</div><div style="font-family:Cormorant Garamond,serif;font-size:.92rem;font-weight:300;line-height:1.75;color:rgba(201,185,154,.65);">'+r.outcome+'</div></div>' : '')
     + '<div style="padding:12px 22px 0;display:flex;gap:8px;">'
-    + '<button onclick="openEditRitualModal(\'\'+r.id+\'\')" style="font-family:Space Mono,monospace;font-size:.48rem;letter-spacing:.06em;padding:6px 14px;border:1px solid rgba(201,185,154,.2);background:transparent;color:rgba(201,185,154,.55);cursor:pointer;">Edit</button>'
-    + '<button onclick="deleteRitual(\'\'+r.id+\'\')" style="font-family:Space Mono,monospace;font-size:.48rem;letter-spacing:.06em;padding:6px 14px;border:1px solid rgba(200,80,80,.2);background:transparent;color:rgba(200,80,80,.45);cursor:pointer;">Delete</button>'
+    + '<button onclick="openEditRitualModal(\'' + id + '\')" style="font-family:Space Mono,monospace;font-size:.48rem;letter-spacing:.06em;padding:6px 14px;border:1px solid rgba(201,185,154,.2);background:transparent;color:rgba(201,185,154,.55);cursor:pointer;">Edit</button>'
+    + '<button onclick="deleteRitual(\'' + id + '\')" style="font-family:Space Mono,monospace;font-size:.48rem;letter-spacing:.06em;padding:6px 14px;border:1px solid rgba(200,80,80,.2);background:transparent;color:rgba(200,80,80,.45);cursor:pointer;">Delete</button>'
     + '</div>'
     + '</div>';
   document.body.appendChild(ov);
