@@ -424,6 +424,7 @@ h1 em { display:block; font-style:italic; font-weight:300; font-size:.42em; lett
     <button class="sub-tab-btn" id="sub-btn-symbols-d" onclick="switchDreams('symbols',this)">&#10022; Symbols</button>
     <button class="sub-tab-btn" id="sub-btn-threads-d" onclick="switchDreams('threads',this)">∞ Threads</button>
     <button class="sub-tab-btn" id="sub-btn-magic-d" onclick="switchDreams('magic',this)">✦ Magic</button>
+    <button class="sub-tab-btn" id="sub-btn-presleep" onclick="switchDreams('presleep',this)">◑ Pre-Sleep</button>
   </div>
   <!-- Practice sub-bar -->
   <div id="sub-bar-practice" style="display:none;white-space:nowrap;">
@@ -1429,6 +1430,12 @@ function loadUserViv(dreamId) {
 }
 function saveUserViv(dreamId, val) {
   try { localStorage.setItem(lsKey('viv', dreamId), val); } catch(e) {}
+}
+function loadDreamSig(dreamId) {
+  try { return localStorage.getItem(lsKey('sig', dreamId)) || ''; } catch(e) { return ''; }
+}
+function saveDreamSig(dreamId, val) {
+  try { localStorage.setItem(lsKey('sig', dreamId), val); } catch(e) {}
 }
 function saveDreamFlags(dreamId, flags) {
   try { localStorage.setItem(lsKey('flags', dreamId), JSON.stringify(flags)); } catch(e) {}
@@ -6808,7 +6815,7 @@ function renderSeasons() {
             return `<div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:rgba(255,255,255,.02);border:1px solid rgba(201,185,154,.1);">
               <span style="font-size:.9rem;">🌑</span>
               <span style="font-family:'Space Mono',monospace;font-size:.6rem;color:rgba(240,235,224,.8);">${startFmt}</span>
-              ${c.end ? `<span style="font-family:'Space Mono',monospace;font-size:.55rem;color:rgba(201,185,154,.4);">→ ended ${endFmt}</span>` : '<span style="font-family:Space Mono;font-size:.5rem;color:rgba(201,185,154,.35);">period ongoing</span>'}
+              ${c.end ? `<span style="font-family:monospace;font-size:.55rem;color:rgba(201,185,154,.4);">→ ended ${endFmt}</span>` : '<span style="font-family:monospace;font-size:.5rem;color:rgba(201,185,154,.35);">period ongoing</span>'}
               <button onclick="deleteSeasonEntry('${c.id}')" style="margin-left:auto;background:none;border:none;color:rgba(201,185,154,.25);cursor:pointer;font-size:.7rem;">✕</button>
             </div>`;
           }).join('')}
@@ -7531,6 +7538,177 @@ function deleteWithinLogEntry(entryId, logIdx) {
 // ═══════════════════════════════════════════════════════════
 // DREAM MAGIC
 // ═══════════════════════════════════════════════════════════
+// ─── PRE-SLEEP LOG ───────────────────────────────────────────────────────────
+const PRESLEEP_LS = 'gt_presleep_log';
+
+function getPreSleepEntries() {
+  try { return JSON.parse(localStorage.getItem(PRESLEEP_LS) || '[]'); } catch(e) { return []; }
+}
+function savePreSleepEntries(entries) {
+  try { localStorage.setItem(PRESLEEP_LS, JSON.stringify(entries)); } catch(e) {}
+}
+
+const PRESLEEP_ITEMS = [
+  { id:'ormus',       label:'Ormus Gold capsule',            icon:'◈' },
+  { id:'lotus',       label:'Blue lotus tea',                icon:'❀' },
+  { id:'roller',      label:'Dreamy Sleep roller',           icon:'✦' },
+  { id:'intention',   label:'Intention / incubation set',    icon:'○' },
+  { id:'mugwort',     label:'Mugwort sachet under pillow',   icon:'☽' },
+  { id:'braid',       label:'Beltane dream braid under pillow', icon:'∞' },
+  { id:'crystals',    label:'Reset crystals on nightstand',  icon:'◇' },
+  { id:'cleanse',     label:'Cleansed crystals',             icon:'◈' },
+  { id:'realitycheck',label:'Reality check practice today',  icon:'◉' },
+];
+
+function renderPreSleep(dest) {
+  if (!dest) return;
+  const entries = getPreSleepEntries().slice().sort((a,b) => b.date.localeCompare(a.date));
+  const today = localDateStr();
+  const todayEntry = entries.find(e => e.date === today);
+
+  dest.innerHTML = `
+    <div style="max-width:680px;margin:0 auto;padding:24px 0 80px;">
+      <div style="font-family:'Space Mono',monospace;font-size:.55rem;letter-spacing:.12em;text-transform:uppercase;color:var(--moon);margin-bottom:4px;">◑ Pre-Sleep</div>
+      <div style="font-family:'Cormorant Garamond',serif;font-size:.95rem;color:rgba(201,185,154,.4);font-style:italic;margin-bottom:28px;">Track what you bring to the threshold each night.</div>
+
+      <div id="presleep-form-wrap"></div>
+
+      <div style="margin-top:40px;">
+        <div style="font-family:'Space Mono',monospace;font-size:.48rem;letter-spacing:.1em;text-transform:uppercase;color:rgba(201,185,154,.4);margin-bottom:16px;">Past Entries</div>
+        <div id="presleep-history"></div>
+      </div>
+    </div>`;
+
+  renderPreSleepForm(todayEntry, today);
+  renderPreSleepHistory(entries);
+}
+
+function renderPreSleepForm(existing, date) {
+  const wrap = document.getElementById('presleep-form-wrap');
+  if (!wrap) return;
+  const checked = existing ? (existing.items || []) : [];
+  const note = existing ? (existing.note || '') : '';
+  const lucid = existing ? !!existing.lucid : false;
+
+  wrap.innerHTML = `
+    <div style="background:rgba(255,255,255,.02);border:1px solid rgba(201,185,154,.14);padding:20px 22px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;">
+        <div style="font-family:'Cormorant Garamond',serif;font-size:1.15rem;color:var(--parchment);">Tonight — ${date}</div>
+        ${existing ? '<span style="font-family:monospace;font-size:.44rem;letter-spacing:.08em;text-transform:uppercase;color:rgba(201,185,154,.4);">saved</span>' : ''}
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:0;">
+        ${PRESLEEP_ITEMS.map(item => `
+          <label style="display:flex;align-items:center;gap:10px;padding:9px 4px;cursor:pointer;border-bottom:1px solid rgba(201,185,154,.06);">
+            <div style="width:18px;height:18px;border:1px solid rgba(201,185,154,${checked.includes(item.id)?'.6':'.22'});background:${checked.includes(item.id)?'rgba(201,185,154,.15)':'transparent'};display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s;">
+              ${checked.includes(item.id)?'<span style="color:var(--moon);font-size:.7rem;">✓</span>':''}
+            </div>
+            <input type="checkbox" id="ps-${item.id}" ${checked.includes(item.id)?'checked':''} style="display:none;" onchange="presleepCheckChange()">
+            <span style="font-family:'Space Mono',monospace;font-size:.44rem;letter-spacing:.05em;color:rgba(201,185,154,${checked.includes(item.id)?'.85':'.5'});line-height:1.4;">${item.icon} ${item.label}</span>
+          </label>`).join('')}
+      </div>
+
+      <div style="margin-top:16px;">
+        <label style="font-family:'Space Mono',monospace;font-size:.46rem;letter-spacing:.08em;text-transform:uppercase;color:rgba(201,185,154,.45);display:block;margin-bottom:6px;">Intention for tonight</label>
+        <textarea id="ps-note" rows="2" placeholder="what you are asking for, opening to, or working with..." style="width:100%;background:rgba(255,255,255,.03);border:1px solid rgba(201,185,154,.18);color:var(--parchment);font-family:'Cormorant Garamond',serif;font-size:.95rem;padding:9px 12px;outline:none;resize:vertical;box-sizing:border-box;line-height:1.6;">${note}</textarea>
+      </div>
+
+      <div style="margin-top:12px;display:flex;align-items:center;justify-content:space-between;">
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+          <div style="width:18px;height:18px;border:1px solid rgba(155,107,171,${lucid?'.6':'.3'});background:${lucid?'rgba(155,107,171,.15)':'transparent'};display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+            ${lucid?'<span style="color:#9b6bab;font-size:.7rem;">✓</span>':''}
+          </div>
+          <input type="checkbox" id="ps-lucid" ${lucid?'checked':''} style="display:none;" onchange="presleepCheckChange()">
+          <span style="font-family:'Space Mono',monospace;font-size:.44rem;letter-spacing:.05em;color:rgba(155,107,171,${lucid?'.85':'.5'});">◉ Lucid dreaming intention active</span>
+        </label>
+        <button onclick="savePreSleepEntry('${date}')" style="font-family:'Space Mono',monospace;font-size:.5rem;letter-spacing:.08em;text-transform:uppercase;padding:9px 20px;border:1px solid rgba(201,185,154,.35);background:transparent;color:rgba(201,185,154,.75);cursor:pointer;">Save</button>
+      </div>
+    </div>`;
+}
+
+function presleepCheckChange() {
+  // Refresh checkbox visual states without full re-render
+  PRESLEEP_ITEMS.forEach(item => {
+    const cb = document.getElementById('ps-' + item.id);
+    if (!cb) return;
+    const label = cb.closest('label');
+    if (!label) return;
+    const box = label.querySelector('div');
+    const span = label.querySelector('span');
+    if (cb.checked) {
+      box.style.border = '1px solid rgba(201,185,154,.6)';
+      box.style.background = 'rgba(201,185,154,.15)';
+      box.innerHTML = '<span style="color:var(--moon);font-size:.7rem;">✓</span>';
+      if (span) span.style.color = 'rgba(201,185,154,.85)';
+    } else {
+      box.style.border = '1px solid rgba(201,185,154,.22)';
+      box.style.background = 'transparent';
+      box.innerHTML = '';
+      if (span) span.style.color = 'rgba(201,185,154,.5)';
+    }
+  });
+  // lucid checkbox
+  const lcb = document.getElementById('ps-lucid');
+  if (lcb) {
+    const label = lcb.closest('label');
+    const box = label ? label.querySelector('div') : null;
+    const span = label ? label.querySelector('span') : null;
+    if (box) {
+      box.style.border = lcb.checked ? '1px solid rgba(155,107,171,.6)' : '1px solid rgba(155,107,171,.3)';
+      box.style.background = lcb.checked ? 'rgba(155,107,171,.15)' : 'transparent';
+      box.innerHTML = lcb.checked ? '<span style="color:#9b6bab;font-size:.7rem;">✓</span>' : '';
+    }
+    if (span) span.style.color = lcb.checked ? 'rgba(155,107,171,.85)' : 'rgba(155,107,171,.5)';
+  }
+}
+
+function savePreSleepEntry(date) {
+  const items = PRESLEEP_ITEMS.map(i => i.id).filter(id => {
+    const cb = document.getElementById('ps-' + id);
+    return cb && cb.checked;
+  });
+  const note = (document.getElementById('ps-note') || {}).value || '';
+  const lucid = !!(document.getElementById('ps-lucid') || {}).checked;
+
+  const entries = getPreSleepEntries().filter(e => e.date !== date);
+  entries.push({ date, items, note, lucid, savedAt: localDateTimeStr() });
+  savePreSleepEntries(entries);
+
+  // Refresh
+  const dest = document.getElementById('gt-content');
+  if (dest) renderPreSleep(dest);
+}
+
+function renderPreSleepHistory(entries) {
+  const hist = document.getElementById('presleep-history');
+  if (!hist) return;
+  const past = entries.filter(e => e.date !== localDateStr()).sort((a,b) => b.date.localeCompare(a.date)).slice(0, 30);
+  if (!past.length) {
+    hist.innerHTML = '<div style="font-family:serif;font-size:.95rem;color:rgba(201,185,154,.3);font-style:italic;">No past entries yet.</div>';
+    return;
+  }
+  hist.innerHTML = past.map(e => {
+    const checkedItems = PRESLEEP_ITEMS.filter(i => (e.items||[]).includes(i.id));
+    const total = PRESLEEP_ITEMS.length;
+    const count = checkedItems.length;
+    const pct = Math.round(count/total*100);
+    const barFill = Math.round(pct / 10);
+    return `
+      <div style="border-bottom:1px solid rgba(201,185,154,.08);padding:12px 4px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+          <div style="font-family:'Space Mono',monospace;font-size:.46rem;letter-spacing:.08em;color:rgba(201,185,154,.5);">${e.date}${e.lucid ? ' &nbsp;<span style="color:#9b6bab;">◉ lucid</span>' : ''}</div>
+          <div style="font-family:'Space Mono',monospace;font-size:.44rem;color:rgba(201,185,154,.4);">${count}/${total}</div>
+        </div>
+        <div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:${e.note?'8px':'0'};">
+          ${checkedItems.map(i => `<span style="font-family:'Space Mono',monospace;font-size:.42rem;letter-spacing:.04em;padding:2px 7px;border:1px solid rgba(201,185,154,.15);color:rgba(201,185,154,.55);">${i.icon} ${i.label}</span>`).join('')}
+        </div>
+        ${e.note ? `<div style="font-family:'Cormorant Garamond',serif;font-size:.88rem;color:rgba(240,235,224,.45);font-style:italic;">${e.note}</div>` : ''}
+      </div>`;
+  }).join('');
+}
+// ─── END PRE-SLEEP LOG ────────────────────────────────────────────────────────
+
+
 function renderDreamMagic(dest) {
   if (!dest) return;
   dest.innerHTML = `
@@ -10288,6 +10466,9 @@ function switchDreams(type, btn) {
   } else if (type === 'magic') {
     dest.innerHTML = '';
     renderDreamMagic(dest);
+  } else if (type === 'presleep') {
+    dest.innerHTML = '';
+    renderPreSleep(dest);
   } else {
     // Archive — default dreams view
     const s = document.getElementById('tab-dreams');
@@ -10598,6 +10779,7 @@ function openDream(d){
   const vivScore = loadUserViv(d.id) || d.viv || 5;  // localStorage overrides baked-in viv
   const dreamFlags = loadDreamFlags(d.id);
   const userInterp = loadUserInterp(d.id);
+  const dreamSig = loadDreamSig(d.id);
   const flagChips = FLAGS.map(f => `<span class="flag-chip flag-${f.id}${dreamFlags.includes(f.id)?' flag-active':''}" onclick="toggleDreamFlag(${d.id},'${f.id}',this)">${f.label}</span>`).join('');
 
   // Sanitize user text to prevent template literal breakage
@@ -10620,6 +10802,7 @@ function openDream(d){
     <button onclick="saveVivFromModal(${d.id},document.querySelector('#viv-edit-${d.id} input').value)" style="font-family:'Space Mono',monospace;font-size:.55rem;letter-spacing:.08em;padding:5px 12px;background:var(--moon);color:var(--ink);border:none;cursor:pointer;">Save</button>
   </div>
     <div class="flag-row">${flagChips}</div>
+    ${renderSigRow(d.id, dreamSig)}
     ${d.ctx?`<div class="m-sec"><div class="m-lbl">Waking Life Context</div><div class="m-ctx">${_safeCtx}</div></div>`:''}
     <div class="m-sec">
       <div class="m-lbl" style="display:flex;justify-content:space-between;align-items:center;">
@@ -11084,6 +11267,38 @@ function showPerson(pid){
 }
 
 function closeView(){document.getElementById('view-ov').classList.remove('open');}
+function renderSigRow(dreamId, currentSig) {
+  var labels = {'':'&mdash;','1':'notable','2':'significant','3':'profound'};
+  var cols   = {'':'rgba(201,185,154,.25)','1':'rgba(107,138,83,.85)','2':'rgba(155,107,171,.85)','3':'rgba(201,185,106,.9)'};
+  var chips = ['','1','2','3'].map(function(v) {
+    var active = currentSig === v;
+    var border = active ? cols[v] : 'rgba(201,185,154,.18)';
+    var color  = active ? cols[v] : 'rgba(201,185,154,.38)';
+    var bg     = (active && v) ? cols[v] + '22' : 'transparent';
+    return '<span onclick="setSigRating(' + dreamId + ',\'' + v + '\')" style="cursor:pointer;font-family:monospace;font-size:.44rem;letter-spacing:.06em;padding:3px 9px;border:1px solid ' + border + ';color:' + color + ';background:' + bg + ';transition:all .15s;">' + labels[v] + '</span>';
+  }).join('');
+  return '<div id="sig-row-' + dreamId + '" style="display:flex;align-items:center;gap:10px;margin:10px 0 4px;">'
+    + '<span style="font-family:monospace;font-size:.46rem;letter-spacing:.1em;text-transform:uppercase;color:rgba(201,185,154,.4);">Significance</span>'
+    + chips
+    + '</div>';
+}
+
+function setSigRating(dreamId, val) {
+  saveDreamSig(dreamId, val);
+  // Re-render just the sig row
+  const row = document.getElementById('sig-row-' + dreamId);
+  if (!row) return;
+  const labels = {'':'—','1':'notable','2':'significant','3':'profound'};
+  const cols   = {'':'rgba(201,185,154,.25)','1':'rgba(107,138,83,.85)','2':'rgba(155,107,171,.85)','3':'rgba(201,185,106,.9)'};
+  row.querySelectorAll('span[onclick]').forEach(sp => {
+    const v = sp.textContent === '—' ? '' : Object.keys(labels).find(k => labels[k] === sp.textContent) || '';
+    const active = val === v;
+    sp.style.border = '1px solid ' + (active ? cols[v] : 'rgba(201,185,154,.18)');
+    sp.style.color  = active ? cols[v] : 'rgba(201,185,154,.38)';
+    sp.style.background = (active && v) ? cols[v] + '22' : 'transparent';
+  });
+}
+
 function toggleDreamFlag(dreamId, flagId, el) {
   const flags = toggleFlag(dreamId, flagId);
   el.classList.toggle('flag-active', flags.includes(flagId));
