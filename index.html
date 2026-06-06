@@ -6531,13 +6531,14 @@ async function askArchive() {
     if (dateMatch) mentionedDreams = sortedDreams.filter(d => d.date === dateMatch[0]).slice(0,3);
   }
 
-  // Title keyword matching (fallback / supplement)
+  // Keyword matching — search title AND body, across all dreams
   if (!mentionedDreams.length) {
-    mentionedDreams = sortedDreams.slice(0,30).filter(d => {
+    const qWords = qLower.split(/\s+/).filter(w => w.length > 3 && !/^(what|when|where|about|with|have|that|this|from|your|were|they|them|tell|show|does|also|into|more|than|some|like|how|did|the|and|for|are|but|not|you|all|can|her|his|our|its|any|had|has|was|been|will|said|just|over|each|then|most|such|both|many|even|same|back|only|here|last|long|make|much|take|time|very|well|year|those|find|need|look|want|know|think|come|being|while|there|these|their|which|other|would|could|should|might|every|after|under|never|first|still|since|until)$/.test(w));
+    mentionedDreams = sortedDreams.filter(d => {
       const title = (d.title||'').toLowerCase();
-      const words = title.split(/\s+/).filter(w => w.length > 4);
-      return words.some(w => qLower.includes(w));
-    });
+      const body = (d.body||'').toLowerCase();
+      return qWords.some(w => title.includes(w) || body.includes(w));
+    }).slice(0, 8);
   }
 
   // Also pull linked incubations if requested
