@@ -6498,7 +6498,7 @@ async function askArchive() {
   if (result) { result.style.display = 'block'; result.innerHTML = '<div style="font-family:Space Mono;font-size:.6rem;color:rgba(201,185,154,.35);">Weaving the threads…</div>'; }
 
   // Build full archive context
-  const ctx = buildFullArchiveContext({ maxDreams: 128, maxSpirit: 80, bodyLen: 500 });
+  const ctx = buildFullArchiveContext({ maxDreams: 128, maxSpirit: 80, bodyLen: 1200 });
 
   // Smart dream resolution — detect which dreams to pull in full
   const qLower = question.toLowerCase();
@@ -9168,7 +9168,7 @@ async function generateArc() {
   if (btn) { btn.disabled = true; btn.textContent = '∞ Weaving the arc…'; }
   container.innerHTML = '<div style="display:flex;align-items:center;gap:10px;font-family:\'Space Mono\',monospace;font-size:.58rem;color:rgba(201,185,154,.3);"><div class="astro-spinner"></div> Reading the full archive…</div>';
 
-  const ctx = buildFullArchiveContext({ maxDreams: 128, maxSpirit: 80, bodyLen: 300 });
+  const ctx = buildFullArchiveContext({ maxDreams: 128, maxSpirit: 80, bodyLen: 1000 });
   const today = new Date().toLocaleDateString('en-US', {weekday:'long', year:'numeric', month:'long', day:'numeric'});
 
   const prompt = `You are Tiff's spiritual archivist and witness. You have access to her complete Golden Thread archive — every dream, every working, every signal, every prophecy, every Within group call, every meditation, every thread of practice over the last four years. Write a living portrait of who she is and who she is becoming.
@@ -15038,7 +15038,7 @@ async function discoverPatterns() {
   if (btn) { btn.disabled = true; btn.textContent = '⟳ Searching for patterns…'; }
 
   // Build full archive context for pattern finding
-  const ctx = buildFullArchiveContext({ maxDreams: 128, maxSpirit: 40, bodyLen: 250 });
+  const ctx = buildFullArchiveContext({ maxDreams: 128, maxSpirit: 40, bodyLen: 800 });
   const existingTitles = INSIGHTS.map(i=>i.title).join(', ');
 
   const prompt = `You are a dream analyst and spiritual pattern-finder reviewing Tiff's complete personal archive — not just dreams and waking practice but also her communication dictionary, presences, prophecies, manifestations, and dream threads. Your job is to identify NEW patterns and connections that haven't been named yet.
