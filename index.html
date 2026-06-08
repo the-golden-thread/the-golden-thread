@@ -10143,6 +10143,53 @@ function getNumerologyNumbers() {
   return { lifePath, universalYear, personalYear, currentYear };
 }
 
+// ── TAROT ↔ NUMEROLOGY MAP ─────────────────────
+// Major Arcana numbered 0–21; life path / year numbers map to the card of the same number.
+// Master numbers: 11 → Justice (XI), 22 → The Fool (0) completed, treated as 22.
+const TAROT_BY_NUMBER = {
+  0:  { name: 'The Fool',         emoji: '🌀', keywords: ['beginnings','innocence','leap of faith','freedom','potential'],      essence: 'The soul before experience — pure potential, standing at the precipice of a new journey. The Fool trusts the unknown absolutely.' },
+  1:  { name: 'The Magician',     emoji: '✦',  keywords: ['will','skill','manifestation','focus','resourcefulness'],             essence: 'All tools are available. The Magician channels will into form — what is above becomes what is below.' },
+  2:  { name: 'The High Priestess',emoji:'🌙', keywords: ['intuition','mystery','the unseen','receptivity','inner knowing'],      essence: 'Keeper of sacred thresholds. She knows what cannot be spoken — only felt. The veil between worlds belongs to her.' },
+  3:  { name: 'The Empress',      emoji: '🌿', keywords: ['abundance','creativity','fertility','nature','sensory pleasure'],      essence: 'The generative force of creation. She is the body of the earth — growth, beauty, and abundance made flesh.' },
+  4:  { name: 'The Emperor',      emoji: '🏛', keywords: ['structure','authority','stability','sovereignty','order'],             essence: 'The one who holds the container. The Emperor builds systems that protect and endure — power in service of form.' },
+  5:  { name: 'The Hierophant',   emoji: '🗝', keywords: ['transmission','tradition','spiritual teaching','initiation','bridge'], essence: 'The keeper of inner mysteries who offers them outward. Bridge between sacred knowledge and living practice.' },
+  6:  { name: 'The Lovers',       emoji: '⚖', keywords: ['choice','union','values','alignment','sacred partnership'],            essence: 'Not merely romance — the deeper alchemy of genuine choice. To love is to choose, again and again, what you are becoming.' },
+  7:  { name: 'The Chariot',      emoji: '⚡', keywords: ['will','direction','triumph','self-mastery','forward motion'],          essence: 'Victory through self-discipline. The Chariot holds opposing forces in directed tension and moves forward anyway.' },
+  8:  { name: 'Strength',         emoji: '♾', keywords: ['inner strength','patience','courage','compassion','taming the beast'],  essence: 'Power through presence, not force. True strength is the gentle hand that opens the lion\'s mouth with love.' },
+  9:  { name: 'The Hermit',       emoji: '🕯', keywords: ['solitude','wisdom','inner light','guidance','retreat'],                essence: 'The lamp-bearer who walks alone to light the way for others. Wisdom earned in silence, offered in service.' },
+  10: { name: 'The Wheel of Fortune', emoji:'☸', keywords: ['cycles','fate','turning points','destiny','impermanence'],          essence: 'The great wheel turns regardless. Every rise contains a descent; every descent, a rise. Nothing is fixed.' },
+  11: { name: 'Justice',          emoji: '⚖', keywords: ['truth','cause & effect','integrity','clarity','accountability'],        essence: 'The sword that cuts through illusion. Justice sees clearly — it neither punishes nor excuses, only reveals.' },
+  12: { name: 'The Hanged One',   emoji: '🔄', keywords: ['surrender','new perspective','pause','sacrifice','revelation'],        essence: 'Suspended between worlds, the Hanged One gains sight unavailable from solid ground. The pause is the teaching.' },
+  13: { name: 'Death',            emoji: '🌑', keywords: ['transformation','ending','release','threshold','rebirth'],             essence: 'The great transformer — not cessation but transition. What dies makes way for what could not otherwise be born.' },
+  14: { name: 'Temperance',       emoji: '🌊', keywords: ['alchemy','balance','patience','integration','flow'],                   essence: 'The angel who pours between vessels without spilling. Time and integration are the medicine. Nothing is wasted.' },
+  15: { name: 'The Devil',        emoji: '⛓', keywords: ['shadow','bondage','materialism','attachment','the trickster'],         essence: 'The chains we believe we cannot remove. Shadow work territory — what appears to bind us often shows us where we are not yet free.' },
+  16: { name: 'The Tower',        emoji: '⚡', keywords: ['sudden change','revelation','breakdown','liberation','awakening'],      essence: 'What was built on false foundation must fall. The Tower is catastrophe as grace — clearing that cannot be mistaken.' },
+  17: { name: 'The Star',         emoji: '✦', keywords: ['hope','healing','renewal','trust','the cosmic channel'],                essence: 'After the Tower, the Star. She pours from both vessels without hesitation — the eternal channel of cosmic nourishment.' },
+  18: { name: 'The Moon',         emoji: '🌕', keywords: ['illusion','the unconscious','dreams','the deep','cyclical knowing'],   essence: 'The realm of dreams, ancestral knowing, and the waters beneath all things. The Moon does not lie — it simply shows what daylight conceals.' },
+  19: { name: 'The Sun',          emoji: '☀', keywords: ['radiance','clarity','joy','vitality','full expression'],               essence: 'The child who dances without self-consciousness. Pure, unfiltered life force — what it feels like to be entirely yourself.' },
+  20: { name: 'Judgement',        emoji: '🔔', keywords: ['awakening','calling','rebirth','reckoning','forgiveness'],             essence: 'The horn sounds and the dead rise — not as punishment but as invitation. Judgement calls the soul into its fullest becoming.' },
+  21: { name: 'The World',        emoji: '🌍', keywords: ['completion','integration','wholeness','cosmic consciousness','mastery'], essence: 'The dancer at the center of the laurel wreath — all things held in balance. Completion that contains all it has traversed.' },
+  22: { name: 'The Fool (Master)',emoji: '🌀', keywords: ['master potential','limitless possibility','the great leap','pure creation'], essence: 'The Fool at its highest octave — the master who has traversed the entire Major Arcana and leaps again, transformed.' },
+};
+
+function getTarotCardForNumber(num) {
+  // Life path 1-9 → cards 1-9. 10 → The Wheel. 11 → Justice. 22 → Fool (master).
+  // Numbers > 9 that aren't master numbers: reduce and map.
+  if (num === 11) return TAROT_BY_NUMBER[11];
+  if (num === 22) return TAROT_BY_NUMBER[22];
+  // For personal/universal year: map 1-9 directly, 10+ reduce
+  const n = num <= 21 ? num : (num % 9 || 9);
+  return TAROT_BY_NUMBER[n] || TAROT_BY_NUMBER[9];
+}
+
+function computeLifePath(dateStr) {
+  // dateStr: YYYY-MM-DD or MM/DD/YYYY or similar
+  var digits = dateStr.replace(/\D/g,'');
+  if (digits.length < 6) return null;
+  var sum = digits.split('').reduce(function(s,d){ return s+parseInt(d); }, 0);
+  return numerologyReduce(sum, true);
+}
+
 const NUMEROLOGY_MEANINGS = {
   1: { title: 'The Pioneer', keywords: ['independence','leadership','new beginnings','originality','drive'], essence: 'The number of the self — initiating, original, the force that begins.'},
   2: { title: 'The Diplomat', keywords: ['partnership','balance','sensitivity','cooperation','intuition'], essence: 'The number of duality and union — sensitive, receptive, the force that relates.'},
@@ -10221,6 +10268,49 @@ function renderNumerologySection() {
         <div style="font-family:'Cormorant Garamond',serif;font-size:.95rem;color:rgba(240,235,224,.75);line-height:1.75;">${uyT?.events||''}</div>
       </div>
 
+      <!-- Tarot Correspondences -->
+      <div style="margin-bottom:24px;">
+        <div style="font-family:'Space Mono',monospace;font-size:.46rem;letter-spacing:.12em;text-transform:uppercase;color:rgba(201,185,154,.35);margin-bottom:14px;">✦ Tarot Correspondences</div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:18px;">
+          ${(function(){
+            const cards = [
+              { label: 'Life Path ' + lifePath, card: getTarotCardForNumber(lifePath), accent: 'rgba(107,79,138,.3)', bg: 'rgba(107,79,138,.06)' },
+              { label: 'Personal Year ' + personalYear, card: getTarotCardForNumber(personalYear), accent: 'rgba(201,168,76,.3)', bg: 'rgba(201,168,76,.05)' },
+              { label: 'Universal ' + universalYear, card: getTarotCardForNumber(universalYear), accent: 'rgba(107,155,201,.3)', bg: 'rgba(107,155,201,.05)' },
+            ];
+            return cards.map(function(c){
+              return '<div style="padding:14px;background:' + c.bg + ';border:1px solid ' + c.accent + ';text-align:center;">'
+                + '<div style="font-family:\'Space Mono\',monospace;font-size:.42rem;letter-spacing:.08em;text-transform:uppercase;color:rgba(201,185,154,.35);margin-bottom:8px;">' + c.label + '</div>'
+                + '<div style="font-size:1.8rem;margin-bottom:6px;">' + c.card.emoji + '</div>'
+                + '<div style="font-family:\'Cormorant Garamond\',serif;font-size:.95rem;font-style:italic;color:rgba(240,235,224,.9);margin-bottom:6px;">' + c.card.name + '</div>'
+                + '<div style="display:flex;flex-wrap:wrap;gap:3px;justify-content:center;">' + c.card.keywords.slice(0,3).map(function(k){ return '<span style="font-family:\'Space Mono\',monospace;font-size:.4rem;padding:1px 5px;border:1px solid rgba(201,185,154,.15);color:rgba(201,185,154,.5);">' + k + '</span>'; }).join('') + '</div>'
+                + '</div>';
+            }).join('');
+          })()}
+        </div>
+        <div style="padding:14px 18px;background:rgba(201,185,154,.03);border:1px solid rgba(201,185,154,.1);border-left:3px solid rgba(107,79,138,.3);margin-bottom:6px;">
+          <div style="font-family:'Space Mono',monospace;font-size:.44rem;letter-spacing:.08em;text-transform:uppercase;color:rgba(155,107,171,.5);margin-bottom:6px;">Your Soul Card · ${getTarotCardForNumber(lifePath).name}</div>
+          <div style="font-family:'Cormorant Garamond',serif;font-size:.95rem;color:rgba(240,235,224,.75);line-height:1.75;">${getTarotCardForNumber(lifePath).essence}</div>
+        </div>
+
+        <!-- Lookup Tool -->
+        <div style="margin-top:18px;padding:16px 18px;background:rgba(255,255,255,.02);border:1px solid rgba(201,185,154,.12);">
+          <div style="font-family:'Space Mono',monospace;font-size:.44rem;letter-spacing:.1em;text-transform:uppercase;color:rgba(201,185,154,.35);margin-bottom:12px;">◈ Look Up Someone's Card</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;margin-bottom:10px;">
+            <div style="flex:1;min-width:140px;">
+              <div style="font-family:'Space Mono',monospace;font-size:.44rem;color:rgba(201,185,154,.4);margin-bottom:4px;letter-spacing:.06em;">NAME</div>
+              <input id="tarot-lookup-name" type="text" placeholder="e.g. Jenna" style="width:100%;box-sizing:border-box;background:rgba(255,255,255,.04);border:1px solid rgba(201,185,154,.2);color:var(--parchment);font-family:'Cormorant Garamond',serif;font-size:.95rem;padding:8px 12px;outline:none;">
+            </div>
+            <div style="flex:1;min-width:140px;">
+              <div style="font-family:'Space Mono',monospace;font-size:.44rem;color:rgba(201,185,154,.4);margin-bottom:4px;letter-spacing:.06em;">BIRTHDATE</div>
+              <input id="tarot-lookup-date" type="date" style="width:100%;box-sizing:border-box;background:rgba(255,255,255,.04);border:1px solid rgba(201,185,154,.2);color:var(--parchment);font-family:'Space Mono',monospace;font-size:.6rem;padding:8px 12px;outline:none;">
+            </div>
+            <button onclick="tarotLookup()" style="padding:8px 16px;background:rgba(107,79,138,.1);border:1px solid rgba(107,79,138,.3);color:rgba(155,107,171,.8);font-family:'Space Mono',monospace;font-size:.54rem;letter-spacing:.08em;cursor:pointer;white-space:nowrap;flex-shrink:0;">✦ Reveal</button>
+          </div>
+          <div id="tarot-lookup-result" style="min-height:0;"></div>
+        </div>
+      </div>
+
       <!-- AI Reading -->
       <div id="numerology-reading-wrap">
         ${savedReading ? `
@@ -10283,6 +10373,31 @@ function renderSavedNumerologyReading(text) {
     <div style="font-family:'Space Mono',monospace;font-size:.46rem;letter-spacing:.08em;text-transform:uppercase;color:rgba(201,185,154,.35);margin-bottom:10px;">✦ Combined Numerology Reading</div>
     <div id="numerology-reading-text" style="font-family:'Cormorant Garamond',serif;font-size:1rem;line-height:1.9;color:rgba(240,235,224,.85);">${text.split('\n\n').filter(p=>p.trim()).map(p=>`<p style="margin-bottom:12px;">${p}</p>`).join('')}</div>
     <button onclick="generateNumerologyReading(true)" style="margin-top:12px;font-family:'Space Mono',monospace;font-size:.5rem;letter-spacing:.08em;text-transform:uppercase;background:transparent;border:1px solid rgba(201,185,154,.2);color:rgba(201,185,154,.35);cursor:pointer;padding:6px 14px;">↻ Regenerate</button>`;
+}
+
+function tarotLookup() {
+  var name = (document.getElementById('tarot-lookup-name')?.value || '').trim();
+  var dateVal = (document.getElementById('tarot-lookup-date')?.value || '').trim();
+  var result = document.getElementById('tarot-lookup-result');
+  if (!result) return;
+  if (!dateVal) { result.innerHTML = '<div style="font-family:\'Space Mono\',monospace;font-size:.52rem;color:rgba(201,185,154,.4);">Enter a birthdate to calculate.</div>'; return; }
+
+  var lp = computeLifePath(dateVal);
+  if (!lp) { result.innerHTML = '<div style="font-family:\'Space Mono\',monospace;font-size:.52rem;color:rgba(201,185,154,.4);">Could not parse that date.</div>'; return; }
+  var card = getTarotCardForNumber(lp);
+  var lpM = NUMEROLOGY_MEANINGS[lp] || NUMEROLOGY_MEANINGS[lp % 9 || 9];
+  var label = name ? name : 'This person';
+
+  result.innerHTML = '<div style="padding:16px;background:rgba(107,79,138,.07);border:1px solid rgba(107,79,138,.25);border-left:3px solid rgba(107,79,138,.4);animation:fadeUp .3s ease both;">'
+    + '<div style="display:flex;align-items:center;gap:12px;margin-bottom:10px;">'
+    + '<div style="font-size:2rem;">' + card.emoji + '</div>'
+    + '<div>'
+    + '<div style="font-family:\'Cormorant Garamond\',serif;font-size:1.1rem;font-style:italic;color:rgba(240,235,224,.95);">' + label + ' · Life Path ' + lp + (lpM ? ' — ' + lpM.title : '') + '</div>'
+    + '<div style="font-family:\'Cormorant Garamond\',serif;font-size:.95rem;color:rgba(155,107,171,.85);font-style:italic;">Soul Card: ' + card.name + '</div>'
+    + '</div></div>'
+    + '<div style="font-family:\'Cormorant Garamond\',serif;font-size:.9rem;color:rgba(240,235,224,.7);line-height:1.75;margin-bottom:10px;">' + card.essence + '</div>'
+    + '<div style="display:flex;flex-wrap:wrap;gap:4px;">' + card.keywords.map(function(k){ return '<span style="font-family:\'Space Mono\',monospace;font-size:.42rem;padding:2px 7px;border:1px solid rgba(107,79,138,.2);color:rgba(155,107,171,.6);">' + k + '</span>'; }).join('') + '</div>'
+    + '</div>';
 }
 
 function runGlobalSearch(raw) {
