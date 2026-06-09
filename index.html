@@ -22044,7 +22044,7 @@ async function crossGenerate() {
       ? '3-4 sentences of guidance from '+nameB+'\'s perspective — how '+nameB+' can best understand and navigate this connection'
       : '3-4 sentences of neutral guidance for how these two might best navigate their relationship together';
 
-  var prompt = 'Astrologer and spiritual guide. Cross-compare between '+nameA+' and '+nameB+' — a '+relType+' relationship.\nPRONOUNS: '+nameA+'='+pronounsA+', '+nameB+'='+pronounsB+'. Use correct pronouns naturally.\n\n'+ctxA+'\n'+ctxB+'\n\nReturn ONLY valid JSON:\n{\n  "shadowLight":{"light":"2-3 sentences on how these two charts illuminate and gift each other","shadow":"2-3 sentences on where they might trigger each other"},\n  "relate":{"tips":["2-4 word tip","2-4 word tip","2-4 word tip"],"full":"'+perspNote+'"}'+risingFields+'\n}\nBe specific to these charts. Avoid platitudes.';
+  var prompt = 'Astrologer and spiritual guide. Cross-compare between '+nameA+' and '+nameB+' — a '+relType+' relationship.\n\n'+ctxA+'\n'+ctxB+'\n\nReturn ONLY valid JSON:\n{\n  "shadowLight":{"light":"2-3 sentences on how these two charts illuminate and gift each other","shadow":"2-3 sentences on where they might trigger each other"},\n  "relate":{"tips":["2-4 word tip","2-4 word tip","2-4 word tip"],"full":"'+perspNote+'"}'+risingFields+'\n}\nBe specific to these charts. Avoid platitudes.';
 
   try {
     var data = await claudeAPI(apiKey, {model:'claude-sonnet-4-6', max_tokens:1000, messages:[{role:'user',content:prompt}]});
@@ -22116,7 +22116,7 @@ async function crossRefresh(cardId) {
   var A = cc.personA, B = cc.personB;
   var ctxA = (A.name||'A').toUpperCase()+' ('+(A.pronouns||'they/them')+'): Sun '+A.sunSign+', Moon '+A.moonSign+(A.rising?', Rising '+A.rising:'')+'. Life Path '+A.lifePath+'. Soul Card: '+(A.soulCard?A.soulCard.name:'?')+'.';
   var ctxB = (B.name||'B').toUpperCase()+' ('+(B.pronouns||'they/them')+'): Sun '+B.sunSign+', Moon '+B.moonSign+(B.rising?', Rising '+B.rising:'')+'. Life Path '+B.lifePath+'. Soul Card: '+(B.soulCard?B.soulCard.name:'?')+'.';
-  var prompt = 'Astrologer. Cross-compare '+(cc.relType||'connection')+' between '+(A.name||'A')+' and '+(B.name||'B')+'.\nPRONOUNS: '+(A.name||'A')+'='+(A.pronouns||'they/them')+', '+(B.name||'B')+'='+(B.pronouns||'they/them')+'. Use correctly.\n\n'+ctxA+'\n'+ctxB+'\n\nReturn ONLY JSON:\n{"shadowLight":{"light":"2-3 sentences","shadow":"2-3 sentences"},"relate":{"tips":["2-4 word tip","2-4 word tip","2-4 word tip"],"full":"3-4 sentences neutral guidance"}}';
+  var prompt = 'Astrologer. Cross-compare '+(cc.relType||'connection')+' between '+(A.name||'A')+' and '+(B.name||'B')+'.\n\n'+ctxA+'\n'+ctxB+'\n\nReturn ONLY JSON:\n{"shadowLight":{"light":"2-3 sentences","shadow":"2-3 sentences"},"relate":{"tips":["2-4 word tip","2-4 word tip","2-4 word tip"],"full":"3-4 sentences neutral guidance"}}';
 
   try {
     var data = await claudeAPI(apiKey,{model:'claude-sonnet-4-6',max_tokens:700,messages:[{role:'user',content:prompt}]});
@@ -22340,10 +22340,10 @@ async function mirrorGenerate() {
     ? ',\n  "rising": "calculate Whole Sign Ascendant for ' + name + ' born ' + dob + ' at ' + time + ' in ' + loc + ' - return sign name only e.g. Cancer",\n  "hdType": "approximate HD type: Generator/Manifesting Generator/Projector/Manifestor/Reflector"'
     : '';
 
-  var tiffCtx = 'TIFF (she/her): Libra Sun 17deg, Aries Moon 6deg, Capricorn Rising 28deg, Scorpio stellium. Life Path 5 - The Hierophant. Personal Year ' + getNumerologyNumbers().personalYear + '. Water Monkey. Pure Generator 4/6.';
+  var tiffCtx = 'TIFF: Libra Sun 17deg, Aries Moon 6deg, Capricorn Rising 28deg, Scorpio stellium. Life Path 5 - The Hierophant. Personal Year ' + getNumerologyNumbers().personalYear + '. Water Monkey. Pure Generator 4/6.';
   var personCtx = name.toUpperCase() + ' (' + pronouns + '): Sun ' + person.sunSign + ', Moon ' + person.moonSign + (person.hasBirthTime?' (confirmed)':' (estimated)') + '. Life Path ' + person.lifePath + ' - ' + (person.lpTitle||'') + '. Soul Card: ' + (person.soulCard?person.soulCard.name:'?') + '. Personal Year ' + person.personalYear + '. ' + (person.czElement||'') + ' ' + person.cz + '. Gene Key ' + person.geneKey + '.';
 
-  var prompt = 'Astrologer and spiritual guide. ' + relType + ' relationship between Tiff and ' + name + '.\nPRONOUNS (use in every sentence): Tiff=she/her, ' + name + '=' + pronouns + '.\n\n' + tiffCtx + '\n' + personCtx + '\n\nReturn ONLY valid JSON:\n{\n  "shadowLight":{"light":"2-3 sentences","shadow":"2-3 sentences"},\n  "relate":{"tips":["2-4 word tip","2-4 word tip","2-4 word tip"],"full":"3-4 sentences of practical guidance for Tiff"}' + risingExtra + '\n}\nBe specific. Avoid platitudes.';
+  var prompt = 'Astrologer and spiritual guide. ' + relType + ' relationship between Tiff and ' + name + '.\n\n' + tiffCtx + '\n' + personCtx + '\n\nReturn ONLY valid JSON:\n{\n  "shadowLight":{"light":"2-3 sentences","shadow":"2-3 sentences"},\n  "relate":{"tips":["2-4 word tip","2-4 word tip","2-4 word tip"],"full":"3-4 sentences of practical guidance for Tiff"}' + risingExtra + '\n}\nBe specific. Avoid platitudes.';
 
   try {
     var data = await claudeAPI(apiKey, {model:'claude-sonnet-4-6', max_tokens:1000, messages:[{role:'user',content:prompt}]});
@@ -22401,10 +22401,10 @@ async function mirrorRefreshReflections(name) {
     ? ',\n  "rising": "calculate Whole Sign Ascendant for ' + name + ' born ' + person.dob + ' at ' + person.birthTime + ' in ' + person.birthLocation + ' - sign name only",\n  "hdType": "approximate HD type"'
     : '';
 
-  var tiffCtx = 'TIFF (she/her): Libra Sun 17deg, Aries Moon 6deg, Capricorn Rising 28deg, Scorpio stellium. Life Path 5 - The Hierophant. Personal Year ' + getNumerologyNumbers().personalYear + '. Water Monkey. Pure Generator 4/6.';
+  var tiffCtx = 'TIFF: Libra Sun 17deg, Aries Moon 6deg, Capricorn Rising 28deg, Scorpio stellium. Life Path 5 - The Hierophant. Personal Year ' + getNumerologyNumbers().personalYear + '. Water Monkey. Pure Generator 4/6.';
   var personCtx = name.toUpperCase() + ' (' + pronouns + '): Sun ' + person.sunSign + ', Moon ' + person.moonSign + (person.rising?', Rising '+person.rising:'') + '. Life Path ' + person.lifePath + '. Soul Card: ' + (person.soulCard?person.soulCard.name:'?') + '. Personal Year ' + person.personalYear + '. ' + (person.czElement||'') + ' ' + person.cz + '. Gene Key ' + person.geneKey + '. ' + (person.hdType?'HD: '+person.hdType+'.':'');
 
-  var prompt = 'Astrologer and spiritual guide. ' + relType + ' relationship between Tiff and ' + name + '.\nPRONOUNS (use in every sentence): Tiff=she/her, ' + name + '=' + pronouns + '.\n\n' + tiffCtx + '\n' + personCtx + '\n\nReturn ONLY valid JSON:\n{\n  "shadowLight":{"light":"2-3 sentences","shadow":"2-3 sentences"},\n  "relate":{"tips":["2-4 word tip","2-4 word tip","2-4 word tip"],"full":"3-4 sentences of practical guidance for Tiff"}' + risingExtra + '\n}\nBe specific.';
+  var prompt = 'Astrologer and spiritual guide. ' + relType + ' relationship between Tiff and ' + name + '.\n\n' + tiffCtx + '\n' + personCtx + '\n\nReturn ONLY valid JSON:\n{\n  "shadowLight":{"light":"2-3 sentences","shadow":"2-3 sentences"},\n  "relate":{"tips":["2-4 word tip","2-4 word tip","2-4 word tip"],"full":"3-4 sentences of practical guidance for Tiff"}' + risingExtra + '\n}\nBe specific.';
 
   try {
     var data = await claudeAPI(apiKey, {model:'claude-sonnet-4-6', max_tokens:800, messages:[{role:'user',content:prompt}]});
