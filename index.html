@@ -21971,10 +21971,12 @@ function crossCompareCard(cc, expanded) {
     +'</div>'
     +'<div id="'+id+'" style="display:'+(expanded?'block':'none')+';padding:0 16px 16px;">'
     // Two chart grids side by side label
-    +'<div style="margin-bottom:4px;">'
-    +'<div style="font-family:Space Mono,monospace;font-size:.44rem;letter-spacing:.08em;text-transform:uppercase;color:rgba(201,185,154,.3);padding-bottom:6px;border-bottom:1px solid rgba(201,185,154,.08);margin-bottom:8px;">'+nameA+'</div>'
+    +'<div style="background:rgba(255,255,255,.02);border:1px solid rgba(201,185,154,.08);padding:14px;margin-bottom:12px;">'
+    +'<div style="font-family:Space Mono,monospace;font-size:.46rem;letter-spacing:.1em;text-transform:uppercase;color:rgba(201,185,154,.4);margin-bottom:12px;">'+nameA+'</div>'
     +'<div id="'+id+'-grid-a">'+mirrorChartGrid(cc.personA)+'</div>'
-    +'<div style="font-family:Space Mono,monospace;font-size:.44rem;letter-spacing:.08em;text-transform:uppercase;color:rgba(201,185,154,.3);padding:12px 0 6px;border-bottom:1px solid rgba(201,185,154,.08);margin-bottom:8px;">'+nameB+'</div>'
+    +'</div>'
+    +'<div style="background:rgba(255,255,255,.02);border:1px solid rgba(201,185,154,.08);padding:14px;margin-bottom:16px;">'
+    +'<div style="font-family:Space Mono,monospace;font-size:.46rem;letter-spacing:.1em;text-transform:uppercase;color:rgba(201,185,154,.4);margin-bottom:12px;">'+nameB+'</div>'
     +'<div id="'+id+'-grid-b">'+mirrorChartGrid(cc.personB)+'</div>'
     +'</div>'
     +'<div id="'+id+'-shadow" style="margin-top:4px;">'+(cc.shadowLight?mirrorShadowLightHTML(cc.shadowLight):'')+'</div>'
@@ -22063,11 +22065,13 @@ async function crossGenerate() {
     if (result) {
       result.innerHTML = '<div style="border:1px solid rgba(107,155,201,.2);background:rgba(107,155,201,.03);padding:16px;margin-bottom:16px;">'
         +'<div style="font-family:Cormorant Garamond,serif;font-size:1.1rem;color:rgba(240,235,224,.9);margin-bottom:4px;">&#8646; '+nameA+' & '+nameB+'</div>'
-        +'<div style="font-family:Space Mono,monospace;font-size:.44rem;color:rgba(107,155,201,.5);margin-bottom:14px;">'+pronounsA+' / '+pronounsB+' \u00b7 '+relType+'</div>'
-        +'<div style="margin-bottom:4px;">'
-        +'<div style="font-family:Space Mono,monospace;font-size:.44rem;text-transform:uppercase;color:rgba(201,185,154,.3);padding-bottom:6px;border-bottom:1px solid rgba(201,185,154,.08);margin-bottom:8px;">'+nameA+'</div>'
+        +'<div style="font-family:Space Mono,monospace;font-size:.44rem;color:rgba(107,155,201,.5);margin-bottom:16px;">'+pronounsA+' / '+pronounsB+' \u00b7 '+relType+'</div>'
+        +'<div style="background:rgba(255,255,255,.02);border:1px solid rgba(201,185,154,.08);padding:14px;margin-bottom:12px;">'
+        +'<div style="font-family:Space Mono,monospace;font-size:.46rem;letter-spacing:.1em;text-transform:uppercase;color:rgba(201,185,154,.4);margin-bottom:12px;">'+nameA+'</div>'
         +mirrorChartGrid(personA)
-        +'<div style="font-family:Space Mono,monospace;font-size:.44rem;text-transform:uppercase;color:rgba(201,185,154,.3);padding:12px 0 6px;border-bottom:1px solid rgba(201,185,154,.08);margin-bottom:8px;">'+nameB+'</div>'
+        +'</div>'
+        +'<div style="background:rgba(255,255,255,.02);border:1px solid rgba(201,185,154,.08);padding:14px;margin-bottom:16px;">'
+        +'<div style="font-family:Space Mono,monospace;font-size:.46rem;letter-spacing:.1em;text-transform:uppercase;color:rgba(201,185,154,.4);margin-bottom:12px;">'+nameB+'</div>'
         +mirrorChartGrid(personB)
         +'</div>'
         +'<div style="margin-top:4px;">'+mirrorShadowLightHTML(r.shadowLight)+'</div>'
@@ -22250,6 +22254,13 @@ function mirrorEditField(name, field) {
 
 function mirrorChartGrid(p) {
   var bid = 'mcb-'+(p.name||'x').replace(/\s+/g,'_');
+  // Clean any verbose rising/hdType values that slipped through from AI
+  var _SIGNS = ['Aries','Taurus','Gemini','Cancer','Leo','Virgo','Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces'];
+  var _HD = ['Generator','Manifesting Generator','Projector','Manifestor','Reflector'];
+  function _cleanSign(s) { if (!s) return s; for (var i=0;i<_SIGNS.length;i++) { if (s === _SIGNS[i]) return s; } for (var j=0;j<_SIGNS.length;j++) { if (s.indexOf(_SIGNS[j])!==-1) return _SIGNS[j]; } return s.split(/[,.(\s]/)[0]; }
+  function _cleanHD(s) { if (!s) return s; for (var i=0;i<_HD.length;i++) { if (s.indexOf(_HD[i])!==-1) return _HD[i]; } return s; }
+  if (p.rising) p.rising = _cleanSign(p.rising);
+  if (p.hdType) p.hdType = _cleanHD(p.hdType);
 
   var SUN_DESCS={Aries:'Bold initiator ruled by Mars — brings courage, directness, and raw drive. Needs to act first and feel second.',Taurus:'Steadfast and sensory, ruled by Venus — values security, beauty, and embodied pleasure. Immovable under pressure.',Gemini:'Quick-minded and dual-natured, ruled by Mercury — adapts fast, communicates brilliantly, craves variety.',Cancer:'Emotionally deep and protective, ruled by the Moon — feels everything; home and belonging are central to self.',Leo:'Radiant and generous, ruled by the Sun — needs to create, express, and be genuinely witnessed.',Virgo:'Discerning and service-oriented, ruled by Mercury — refines and improves; can over-criticize self and others.',Libra:'Relational and fairness-seeking, ruled by Venus — needs harmony, dislikes confrontation, weighs everything.',Scorpio:'Transformative and intense, ruled by Pluto — goes deep, holds nothing lightly; power and truth are central.',Sagittarius:'Expansive and truth-seeking, ruled by Jupiter — needs freedom and meaning; follows the arrow wherever it points.',Capricorn:'Ambitious and structural, ruled by Saturn — builds to last; can be cold under pressure.',Aquarius:'Visionary and unconventional, ruled by Uranus — serves the collective; emotionally detached but deeply principled.',Pisces:'Boundless and empathic, ruled by Neptune — the boundary between self and other is thin; feels the whole ocean.'};
   var MOON_DESCS={Aries:'Processes emotion through action — feelings arrive hot and fast. Needs to move, not stew.',Taurus:'Needs physical comfort and stability to feel safe — soothing, loyal, slow to shift emotionally.',Gemini:'Processes emotion through talking and thinking — needs to narrate feelings to understand them.',Cancer:'Most emotionally sensitive placement — deep nurturer who absorbs everything.',Leo:'Needs to feel seen and appreciated to feel loved — warm and generous, but pride makes them retreat.',Virgo:'Processes emotion by analyzing and helping — feels best when useful, anxious when things are chaotic.',Libra:'Needs harmony in close bonds — dislikes conflict intensely, may suppress feelings to keep peace.',Scorpio:'Feels deeply and holds long — emotional intensity runs underground. Loyalty and betrayal mean everything.',Sagittarius:'Needs freedom and meaning to feel okay — feels caged by emotional obligation.',Capricorn:'Stoic and self-contained — emotions managed, not displayed. Reliability is how love is shown.',Aquarius:'Processes emotion through ideas and detachment — needs space; cares deeply but can seem cool.',Pisces:'Boundlessly empathic — absorbs the emotions of others. Needs solitude to return to self.'};
