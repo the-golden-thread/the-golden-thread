@@ -21820,6 +21820,15 @@ function renderMirror(dest) {
     + '<div style="font-family:Space Mono,monospace;font-size:.46rem;letter-spacing:.1em;text-transform:uppercase;color:rgba(201,185,154,.35);margin-bottom:10px;">Person B</div>'
     + mirrorPersonForm('b', false)
     + mirrorRelTypeHTML('cross')
+    + '<div style="margin-bottom:18px;">'
+    + '<div style="font-family:Space Mono,monospace;font-size:.44rem;letter-spacing:.1em;text-transform:uppercase;color:rgba(201,185,154,.35);margin-bottom:8px;">Perspective</div>'
+    + '<div style="display:flex;gap:0;border:1px solid rgba(201,185,154,.12);" id="cross-persp-btns">'
+    + '<button id="cross-persp-neutral" onclick="crossSetPerspective(this,\'neutral\')" style="flex:1;font-family:Space Mono,monospace;font-size:.46rem;padding:7px;background:rgba(107,155,201,.08);border:none;border-right:1px solid rgba(201,185,154,.12);color:rgba(107,155,201,.7);cursor:pointer;">Neutral</button>'
+    + '<button id="cross-persp-a" onclick="crossSetPerspective(this,\'a\')" style="flex:1;font-family:Space Mono,monospace;font-size:.46rem;padding:7px;background:transparent;border:none;border-right:1px solid rgba(201,185,154,.12);color:rgba(201,185,154,.4);cursor:pointer;">Person A</button>'
+    + '<button id="cross-persp-b" onclick="crossSetPerspective(this,\'b\')" style="flex:1;font-family:Space Mono,monospace;font-size:.46rem;padding:7px;background:transparent;border:none;color:rgba(201,185,154,.4);cursor:pointer;">Person B</button>'
+    + '</div>'
+    + '<input type="hidden" id="cross-perspective" value="neutral">'
+    + '</div>'
     + '<button onclick="crossGenerate()" style="width:100%;font-family:Space Mono,monospace;font-size:.55rem;letter-spacing:.1em;text-transform:uppercase;padding:14px;background:rgba(107,155,201,.06);border:1px solid rgba(107,155,201,.25);color:rgba(107,155,201,.7);cursor:pointer;margin-bottom:24px;">&#8646; Generate Cross-Compare</button>'
     + '<div id="cross-result"></div>'
     + '</div>'
@@ -21954,6 +21963,21 @@ function crossCompareCard(cc, expanded) {
 }
 
 // ── CROSS-GENERATE ────────────────────────────────────────────
+function crossSetPerspective(btn, val) {
+  var inp = document.getElementById('cross-perspective');
+  if (inp) inp.value = val;
+  var btns = document.querySelectorAll('#cross-persp-btns button');
+  btns.forEach(function(b){ b.style.background='transparent'; b.style.color='rgba(201,185,154,.4)'; });
+  btn.style.background='rgba(107,155,201,.08)'; btn.style.color='rgba(107,155,201,.8)';
+  // Update labels with actual names
+  var nameA = (document.getElementById('mirror-a-name')?.value||'').trim()||'Person A';
+  var nameB = (document.getElementById('mirror-b-name')?.value||'').trim()||'Person B';
+  var btnA = document.getElementById('cross-persp-a');
+  var btnB = document.getElementById('cross-persp-b');
+  if (btnA) btnA.textContent = nameA;
+  if (btnB) btnB.textContent = nameB;
+}
+
 async function crossGenerate() {
   var nameA     = (document.getElementById('mirror-a-name')?.value||'').trim();
   var pronounsA = (document.getElementById('mirror-a-pronouns')?.value||'they/them').trim();
@@ -21988,7 +22012,14 @@ async function crossGenerate() {
   var ctxA = nameA.toUpperCase()+' ('+pronounsA+'): Sun '+personA.sunSign+', Moon '+personA.moonSign+'. Life Path '+personA.lifePath+' - '+(personA.lpTitle||'')+'. Soul Card: '+(personA.soulCard?personA.soulCard.name:'?')+'. Personal Year '+personA.personalYear+'. '+(personA.czElement||'')+' '+personA.cz+'. Gene Key '+personA.geneKey+'.'+risingA;
   var ctxB = nameB.toUpperCase()+' ('+pronounsB+'): Sun '+personB.sunSign+', Moon '+personB.moonSign+'. Life Path '+personB.lifePath+' - '+(personB.lpTitle||'')+'. Soul Card: '+(personB.soulCard?personB.soulCard.name:'?')+'. Personal Year '+personB.personalYear+'. '+(personB.czElement||'')+' '+personB.cz+'. Gene Key '+personB.geneKey+'.'+risingB;
 
-  var prompt = 'Astrologer and spiritual guide. Cross-compare between '+nameA+' and '+nameB+' — a '+relType+' relationship.\nPRONOUNS: '+nameA+'='+pronounsA+', '+nameB+'='+pronounsB+'. Use correct pronouns naturally.\n\n'+ctxA+'\n'+ctxB+'\n\nReturn ONLY valid JSON:\n{\n  "shadowLight":{"light":"2-3 sentences on how these two charts illuminate and gift each other","shadow":"2-3 sentences on where they might trigger each other"},\n  "relate":{"tips":["2-4 word tip","2-4 word tip","2-4 word tip"],"full":"3-4 sentences of neutral guidance for how these two might best navigate their relationship"}'+risingFields+'\n}\nBe specific to these charts. Avoid platitudes.';
+  var perspective = (document.getElementById('cross-perspective')?.value||'neutral');
+  var perspNote = perspective==='a'
+    ? '3-4 sentences of guidance from '+nameA+'\'s perspective — how '+nameA+' can best understand and navigate this connection'
+    : perspective==='b'
+      ? '3-4 sentences of guidance from '+nameB+'\'s perspective — how '+nameB+' can best understand and navigate this connection'
+      : '3-4 sentences of neutral guidance for how these two might best navigate their relationship together';
+
+  var prompt = 'Astrologer and spiritual guide. Cross-compare between '+nameA+' and '+nameB+' — a '+relType+' relationship.\nPRONOUNS: '+nameA+'='+pronounsA+', '+nameB+'='+pronounsB+'. Use correct pronouns naturally.\n\n'+ctxA+'\n'+ctxB+'\n\nReturn ONLY valid JSON:\n{\n  "shadowLight":{"light":"2-3 sentences on how these two charts illuminate and gift each other","shadow":"2-3 sentences on where they might trigger each other"},\n  "relate":{"tips":["2-4 word tip","2-4 word tip","2-4 word tip"],"full":"'+perspNote+'"}'+risingFields+'\n}\nBe specific to these charts. Avoid platitudes.';
 
   try {
     var data = await claudeAPI(apiKey, {model:'claude-sonnet-4-6', max_tokens:1000, messages:[{role:'user',content:prompt}]});
@@ -22000,7 +22031,7 @@ async function crossGenerate() {
     if (r.risingA) personA.rising = r.risingA;
     if (r.risingB) personB.rising = r.risingB;
 
-    var cc = { id: 'cc_'+Date.now(), personA: personA, personB: personB, relType: relType, shadowLight: r.shadowLight, relate: r.relate };
+    var cc = { id: 'cc_'+Date.now(), personA: personA, personB: personB, relType: relType, perspective: perspective, shadowLight: r.shadowLight, relate: r.relate };
     window._crossPending = cc;
 
     if (result) {
@@ -22039,7 +22070,7 @@ function crossSavePending() {
   if (btn) { btn.textContent='Saved'; btn.disabled=true; btn.style.color='rgba(107,180,107,.4)'; }
   // Update established count
   var dest = document.getElementById('gt-content');
-  if (dest) { var eb = dest.querySelector('#mirror-btn-established'); if(eb){ var n=getMirrorPeople().length+getCrossCompares().length; eb.textContent='&#9680; Established'+(n?' ('+n+')':''); } }
+  if (dest) { var eb = dest.querySelector('#mirror-btn-established'); if(eb){ var n=getMirrorPeople().length+getCrossCompares().length; eb.innerHTML='&#9680; Established'+(n?' ('+n+')':''); } }
 }
 
 function clearCrossResult() {
@@ -22095,7 +22126,7 @@ function mirrorSavePending() {
   var btn = document.getElementById('mirror-save-btn');
   if (btn) { btn.textContent = 'Saved'; btn.disabled = true; btn.style.color='rgba(107,180,107,.4)'; }
   var dest = document.getElementById('gt-content');
-  if (dest) { var eb = dest.querySelector('#mirror-btn-established'); if (eb) { var n=getMirrorPeople().length; eb.textContent='&#9680; Established'+(n?' ('+n+')':''); } }
+  if (dest) { var eb = dest.querySelector('#mirror-btn-established'); if (eb) { var n=getMirrorPeople().length; eb.innerHTML='&#9680; Established'+(n?' ('+n+')':''); } }
 }
 
 function clearMirrorResult() {
