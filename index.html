@@ -21971,12 +21971,10 @@ function crossCompareCard(cc, expanded) {
     +'</div>'
     +'<div id="'+id+'" style="display:'+(expanded?'block':'none')+';padding:0 16px 16px;">'
     // Two chart grids side by side label
-    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:4px;">'
-    +'<div style="font-family:Space Mono,monospace;font-size:.44rem;letter-spacing:.08em;text-transform:uppercase;color:rgba(201,185,154,.3);padding-bottom:6px;border-bottom:1px solid rgba(201,185,154,.08);">'+nameA+'</div>'
-    +'<div style="font-family:Space Mono,monospace;font-size:.44rem;letter-spacing:.08em;text-transform:uppercase;color:rgba(201,185,154,.3);padding-bottom:6px;border-bottom:1px solid rgba(201,185,154,.08);">'+nameB+'</div>'
-    +'</div>'
-    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;">'
+    +'<div style="margin-bottom:4px;">'
+    +'<div style="font-family:Space Mono,monospace;font-size:.44rem;letter-spacing:.08em;text-transform:uppercase;color:rgba(201,185,154,.3);padding-bottom:6px;border-bottom:1px solid rgba(201,185,154,.08);margin-bottom:8px;">'+nameA+'</div>'
     +'<div id="'+id+'-grid-a">'+mirrorChartGrid(cc.personA)+'</div>'
+    +'<div style="font-family:Space Mono,monospace;font-size:.44rem;letter-spacing:.08em;text-transform:uppercase;color:rgba(201,185,154,.3);padding:12px 0 6px;border-bottom:1px solid rgba(201,185,154,.08);margin-bottom:8px;">'+nameB+'</div>'
     +'<div id="'+id+'-grid-b">'+mirrorChartGrid(cc.personB)+'</div>'
     +'</div>'
     +'<div id="'+id+'-shadow" style="margin-top:4px;">'+(cc.shadowLight?mirrorShadowLightHTML(cc.shadowLight):'')+'</div>'
@@ -22031,7 +22029,7 @@ async function crossGenerate() {
   var risingA = (timeA && locA) ? ' Birth time '+timeA+' in '+locA+' — calculate Rising.' : '';
   var risingB = (timeB && locB) ? ' Birth time '+timeB+' in '+locB+' — calculate Rising.' : '';
   var risingFields = (timeA&&locA)||(timeB&&locB)
-    ? ',\n  "risingA": "Whole Sign Ascendant for '+nameA+(timeA&&locA?' born '+dobA+' at '+timeA+' in '+locA:'')+'",\n  "risingB": "Whole Sign Ascendant for '+nameB+(timeB&&locB?' born '+dobB+' at '+timeB+' in '+locB:'')+'"'
+    ? ',\n  "risingA": "sign name only e.g. Cancer: Whole Sign Ascendant for '+nameA+' born '+dobA+' at '+timeA+' in '+locA+'",\n  "risingB": "sign name only e.g. Cancer: Whole Sign Ascendant for '+nameB+' born '+dobB+' at '+timeB+' in '+locB+'"'
     : '';
 
   var ctxA = nameA.toUpperCase()+' ('+pronounsA+'): Sun '+personA.sunSign+', Moon '+personA.moonSign+'. Life Path '+personA.lifePath+' - '+(personA.lpTitle||'')+'. Soul Card: '+(personA.soulCard?personA.soulCard.name:'?')+'. Personal Year '+personA.personalYear+'. '+(personA.czElement||'')+' '+personA.cz+'. Gene Key '+personA.geneKey+'.'+risingA;
@@ -22053,8 +22051,11 @@ async function crossGenerate() {
     var clean = raw.replace(/```json|```/g,'').trim();
     var r; try{r=JSON.parse(clean);}catch(pe){var m=clean.match(/\{[\s\S]*\}/);if(m)r=JSON.parse(m[0]);else throw pe;}
 
-    if (r.risingA) personA.rising = r.risingA;
-    if (r.risingB) personB.rising = r.risingB;
+    // Extract just sign name (AI sometimes returns sentences)
+    var SIGNS = ['Aries','Taurus','Gemini','Cancer','Leo','Virgo','Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces'];
+    function extractSign(s) { if (!s) return ''; for (var i=0; i<SIGNS.length; i++) { if (s.indexOf(SIGNS[i]) !== -1) return SIGNS[i]; } return s.split(/[,.\s]/)[0]; }
+    if (r.risingA) personA.rising = extractSign(r.risingA);
+    if (r.risingB) personB.rising = extractSign(r.risingB);
 
     var cc = { id: 'cc_'+Date.now(), personA: personA, personB: personB, relType: relType, perspective: perspective, shadowLight: r.shadowLight, relate: r.relate };
     window._crossPending = cc;
@@ -22063,13 +22064,11 @@ async function crossGenerate() {
       result.innerHTML = '<div style="border:1px solid rgba(107,155,201,.2);background:rgba(107,155,201,.03);padding:16px;margin-bottom:16px;">'
         +'<div style="font-family:Cormorant Garamond,serif;font-size:1.1rem;color:rgba(240,235,224,.9);margin-bottom:4px;">&#8646; '+nameA+' & '+nameB+'</div>'
         +'<div style="font-family:Space Mono,monospace;font-size:.44rem;color:rgba(107,155,201,.5);margin-bottom:14px;">'+pronounsA+' / '+pronounsB+' \u00b7 '+relType+'</div>'
-        +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:4px;">'
-        +'<div style="font-family:Space Mono,monospace;font-size:.44rem;text-transform:uppercase;color:rgba(201,185,154,.3);padding-bottom:6px;border-bottom:1px solid rgba(201,185,154,.08);">'+nameA+'</div>'
-        +'<div style="font-family:Space Mono,monospace;font-size:.44rem;text-transform:uppercase;color:rgba(201,185,154,.3);padding-bottom:6px;border-bottom:1px solid rgba(201,185,154,.08);">'+nameB+'</div>'
-        +'</div>'
-        +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;">'
-        +'<div>'+mirrorChartGrid(personA)+'</div>'
-        +'<div>'+mirrorChartGrid(personB)+'</div>'
+        +'<div style="margin-bottom:4px;">'
+        +'<div style="font-family:Space Mono,monospace;font-size:.44rem;text-transform:uppercase;color:rgba(201,185,154,.3);padding-bottom:6px;border-bottom:1px solid rgba(201,185,154,.08);margin-bottom:8px;">'+nameA+'</div>'
+        +mirrorChartGrid(personA)
+        +'<div style="font-family:Space Mono,monospace;font-size:.44rem;text-transform:uppercase;color:rgba(201,185,154,.3);padding:12px 0 6px;border-bottom:1px solid rgba(201,185,154,.08);margin-bottom:8px;">'+nameB+'</div>'
+        +mirrorChartGrid(personB)
         +'</div>'
         +'<div style="margin-top:4px;">'+mirrorShadowLightHTML(r.shadowLight)+'</div>'
         +'<div style="margin-top:10px;">'+mirrorRelateHTML(r.relate)+'</div>'
@@ -22091,8 +22090,21 @@ function crossSavePending() {
   list.push(cc);
   saveCrossCompares(list);
   window._crossPending = null;
+
   var btn = document.getElementById('cross-save-btn');
   if (btn) { btn.textContent='Saved'; btn.disabled=true; btn.style.color='rgba(107,180,107,.4)'; }
+
+  // Re-render cross panel so card appears immediately
+  var crossPanel = document.getElementById('est-panel-cross');
+  if (crossPanel) {
+    var allCross = getCrossCompares().sort(function(a,b){
+      return (((a.personA&&a.personA.name)||'').localeCompare((b.personA&&b.personA.name)||''));
+    });
+    crossPanel.innerHTML = allCross.length
+      ? allCross.map(function(c){ return crossCompareCard(c); }).join('')
+      : '<div style="font-family:Cormorant Garamond,serif;font-size:.95rem;font-style:italic;color:rgba(201,185,154,.3);padding:16px 0;">No cross-compares saved yet.</div>';
+  }
+
   // Update established count
   var dest = document.getElementById('gt-content');
   if (dest) { var eb = dest.querySelector('#mirror-btn-established'); if(eb){ var n=getMirrorPeople().length+getCrossCompares().length; eb.innerHTML='&#9680; Established'+(n?' ('+n+')':''); } }
@@ -22370,7 +22382,7 @@ async function mirrorGenerate() {
 
   var hasFullBirthData = !!(person.birthTime && person.birthTime.trim() && person.birthLocation && person.birthLocation.trim());
   var risingExtra = hasFullBirthData
-    ? ',\n  "rising": "calculate Whole Sign Ascendant for ' + name + ' born ' + dob + ' at ' + time + ' in ' + loc + ' - return sign name only e.g. Cancer",\n  "hdType": "approximate HD type: Generator/Manifesting Generator/Projector/Manifestor/Reflector"'
+    ? ',\n  "rising": "sign name only e.g. Cancer: Whole Sign Ascendant for ' + name + ' born ' + dob + ' at ' + time + ' in ' + loc + '",\n  "hdType": "HD type, one of: Generator/Manifesting Generator/Projector/Manifestor/Reflector"'
     : '';
 
   var tiffCtx = 'TIFF: Libra Sun 17deg, Aries Moon 6deg, Capricorn Rising 28deg, Scorpio stellium. Life Path 5 - The Hierophant. Personal Year ' + getNumerologyNumbers().personalYear + '. Water Monkey. Pure Generator 4/6.';
@@ -22388,7 +22400,9 @@ async function mirrorGenerate() {
 
     person.shadowLight = reflections.shadowLight;
     person.relate      = reflections.relate;
-    if (reflections.rising) person.rising = reflections.rising;
+    var SIGNS2 = ['Aries','Taurus','Gemini','Cancer','Leo','Virgo','Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces'];
+    function extractSign2(s) { if (!s) return ''; for (var i=0; i<SIGNS2.length; i++) { if (s.indexOf(SIGNS2[i]) !== -1) return SIGNS2[i]; } return s.split(/[,.\s]/)[0]; }
+    if (reflections.rising) person.rising = extractSign2(reflections.rising);
     if (reflections.hdType) person.hdType = reflections.hdType;
 
     window._mirrorPending = person;
@@ -22434,7 +22448,7 @@ async function mirrorRefreshReflections(name) {
   var relType  = person.relType  || 'connection';
   var hasFullBirth = !!(person.birthTime && person.birthTime.trim() && person.birthLocation && person.birthLocation.trim());
   var risingExtra = hasFullBirth
-    ? ',\n  "rising": "calculate Whole Sign Ascendant for ' + name + ' born ' + person.dob + ' at ' + person.birthTime + ' in ' + person.birthLocation + ' - sign name only",\n  "hdType": "approximate HD type"'
+    ? ',\n  "rising": "sign name only e.g. Cancer: Whole Sign Ascendant for ' + name + ' born ' + person.dob + ' at ' + person.birthTime + ' in ' + person.birthLocation + '",\n  "hdType": "HD type, one of: Generator/Manifesting Generator/Projector/Manifestor/Reflector"'
     : '';
 
   var tiffCtx = 'TIFF: Libra Sun 17deg, Aries Moon 6deg, Capricorn Rising 28deg, Scorpio stellium. Life Path 5 - The Hierophant. Personal Year ' + getNumerologyNumbers().personalYear + '. Water Monkey. Pure Generator 4/6.';
@@ -22449,7 +22463,9 @@ async function mirrorRefreshReflections(name) {
     var r; try { r=JSON.parse(clean); } catch(e){ var m=clean.match(/\{[\s\S]*\}/); if(m) r=JSON.parse(m[0]); else throw e; }
     person.shadowLight = r.shadowLight;
     person.relate      = r.relate;
-    if (r.rising) person.rising = r.rising;
+    var SIGNS3 = ['Aries','Taurus','Gemini','Cancer','Leo','Virgo','Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces'];
+    function extractSign3(s) { if (!s) return ''; for (var i=0; i<SIGNS3.length; i++) { if (s.indexOf(SIGNS3[i]) !== -1) return SIGNS3[i]; } return (s||'').split(' ')[0]; }
+    if (r.rising) person.rising = extractSign3(r.rising);
     if (r.hdType) person.hdType = r.hdType;
     saveMirrorPeople(people);
     if (shadowEl) shadowEl.innerHTML = mirrorShadowLightHTML(person.shadowLight);
