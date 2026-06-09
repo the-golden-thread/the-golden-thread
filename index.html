@@ -21868,13 +21868,22 @@ function clearMirrorResult() {
 
 function mirrorPersonCard(person, expanded) {
   var id = 'mpc-' + (person.name||'').replace(/\s+/g,'_');
+  var nm = person.name||'';
   var subline = (person.pronouns?person.pronouns+' \u00b7 ':'')+'\u2600 '+(person.sunSign||'?')+' \u00b7 \ud83c\udf19 '+(person.moonSign||'?')+' \u00b7 LP '+(person.lifePath||'?')+(person.relType?' \u00b7 '+person.relType:'');
+
+  var birthParts = [];
+  if (person.dob) birthParts.push(person.dob);
+  if (person.birthTime) birthParts.push(person.birthTime);
+  if (person.birthLocation) birthParts.push(person.birthLocation);
+  var birthLine = birthParts.length ? '<div style="font-family:Space Mono,monospace;font-size:.42rem;color:rgba(201,185,154,.25);letter-spacing:.05em;margin-top:3px;">'+birthParts.join(' \u00b7 ')+'</div>' : '';
+
   return '<div style="border:1px solid rgba(201,185,154,.1);margin-bottom:10px;background:rgba(255,255,255,.02);">'
     +'<div onclick="mirrorToggle(\''+id+'\')" style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;cursor:pointer;">'
     +'<div style="display:flex;align-items:center;gap:12px;">'
     +'<div style="font-size:1.4rem;">'+(person.czEmoji||'&#9680;')+'</div>'
-    +'<div><div style="font-family:Cormorant Garamond,serif;font-size:1.05rem;color:rgba(240,235,224,.9);">'+(person.name||'')+'</div>'
-    +'<div style="font-family:Space Mono,monospace;font-size:.44rem;color:rgba(201,185,154,.35);letter-spacing:.06em;margin-top:2px;">'+subline+'</div></div></div>'
+    +'<div><div style="font-family:Cormorant Garamond,serif;font-size:1.05rem;color:rgba(240,235,224,.9);">'+nm+'</div>'
+    +'<div style="font-family:Space Mono,monospace;font-size:.44rem;color:rgba(201,185,154,.35);letter-spacing:.06em;margin-top:2px;">'+subline+'</div>'
+    +birthLine+'</div></div>'
     +'<div style="font-family:Space Mono,monospace;font-size:.6rem;color:rgba(201,185,154,.3);" id="'+id+'-chevron">&#9656;</div>'
     +'</div>'
     +'<div id="'+id+'" style="display:'+(expanded?'block':'none')+';padding:0 16px 16px;">'
@@ -21882,9 +21891,27 @@ function mirrorPersonCard(person, expanded) {
     +'<div id="'+id+'-shadow" style="margin-top:16px;">'+(person.shadowLight?mirrorShadowLightHTML(person.shadowLight):'')+'</div>'
     +'<div id="'+id+'-relate" style="margin-top:12px;">'+(person.relate?mirrorRelateHTML(person.relate):'')+'</div>'
     +'<div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap;">'
-    +'<button onclick="mirrorRefreshReflections(\''+person.name+'\')" style="font-family:Space Mono,monospace;font-size:.48rem;letter-spacing:.08em;padding:6px 12px;background:transparent;border:1px solid rgba(107,79,138,.25);color:rgba(155,107,171,.6);cursor:pointer;">&#8635; Refresh Reflections</button>'
-    +'<button onclick="mirrorDelete(\''+person.name+'\')" style="font-family:Space Mono,monospace;font-size:.48rem;letter-spacing:.08em;padding:6px 12px;background:transparent;border:1px solid rgba(180,80,80,.2);color:rgba(180,100,100,.5);cursor:pointer;">&#10005; Remove</button>'
+    +'<button onclick="mirrorRefreshReflections(this.dataset.name)" data-name="'+nm+'" style="font-family:Space Mono,monospace;font-size:.48rem;letter-spacing:.08em;padding:6px 12px;background:transparent;border:1px solid rgba(107,79,138,.25);color:rgba(155,107,171,.6);cursor:pointer;">&#8635; Refresh</button>'
+    +'<button onclick="mirrorEditField(this.dataset.name,this.dataset.field)" data-name="'+nm+'" data-field="rising" style="font-family:Space Mono,monospace;font-size:.48rem;letter-spacing:.08em;padding:6px 12px;background:transparent;border:1px solid rgba(201,185,154,.15);color:rgba(201,185,154,.4);cursor:pointer;">&#9998; Rising</button>'
+    +'<button onclick="mirrorEditField(this.dataset.name,this.dataset.field)" data-name="'+nm+'" data-field="hdType" style="font-family:Space Mono,monospace;font-size:.48rem;letter-spacing:.08em;padding:6px 12px;background:transparent;border:1px solid rgba(201,185,154,.15);color:rgba(201,185,154,.4);cursor:pointer;">&#9998; HD</button>'
+    +'<button onclick="mirrorDelete(this.dataset.name)" data-name="'+nm+'" style="font-family:Space Mono,monospace;font-size:.48rem;letter-spacing:.08em;padding:6px 12px;background:transparent;border:1px solid rgba(180,80,80,.2);color:rgba(180,100,100,.5);cursor:pointer;">&#10005; Remove</button>'
     +'</div></div></div>';
+}
+
+function mirrorEditField(name, field) {
+  var people = getMirrorPeople();
+  var person = people.find(function(p){ return p.name === name; });
+  if (!person) return;
+  var labels = {rising:'Rising Sign', hdType:'HD Type'};
+  var current = person[field] || '';
+  var val = prompt('Edit ' + (labels[field]||field) + ' for ' + name + ':', current);
+  if (val === null) return; // cancelled
+  person[field] = val.trim();
+  saveMirrorPeople(people);
+  // Re-render the card grid inline
+  var id = 'mpc-' + name.replace(/\s+/g,'_');
+  var gridEl = document.getElementById(id+'-grid');
+  if (gridEl) gridEl.innerHTML = mirrorChartGrid(person);
 }
 
 function mirrorChartGrid(p) {
@@ -21982,10 +22009,11 @@ function mirrorRelateHTML(relate) {
     +'</div>';
 }
 
-function mirrorToggle(id) {
-  var el = document.getElementById(id);
-  var ch = document.getElementById(id+'-chevron');
+function mirrorToggle(elOrId) {
+  var el = (typeof elOrId === 'string') ? document.getElementById(elOrId) : elOrId;
   if (!el) return;
+  var eid = el.id || '';
+  var ch = document.getElementById(eid+'-chevron');
   var open = el.style.display !== 'none';
   el.style.display = open ? 'none' : 'block';
   if (ch) ch.textContent = open ? '\u25b8' : '\u25be';
