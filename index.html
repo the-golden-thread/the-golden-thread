@@ -21862,7 +21862,7 @@ function mirrorPersonCard(person, expanded) {
       <div style="font-family:'Space Mono',monospace;font-size:.6rem;color:rgba(201,185,154,.3);" id="${id}-chevron">▸</div>
     </div>
     <div id="${id}" style="display:${expanded?'block':'none'};padding:0 16px 16px;">
-      ${mirrorChartGrid(person)}
+      <div id="mpc-${person.name.replace(/\s+/g, '_')}-grid">${mirrorChartGrid(person)}</div>
       <div id="${id}-shadow" style="margin-top:16px;">${person.shadowLight ? mirrorShadowLightHTML(person.shadowLight) : ''}</div>
       <div id="${id}-relate" style="margin-top:12px;">${person.relate ? mirrorRelateHTML(person.relate) : ''}</div>
       <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap;">
@@ -22006,13 +22006,13 @@ function mirrorChartGrid(p) {
   const items = [
     { label:'Sun',           emoji:'☀',  id:bid+'-sun',    value: p.sunSign||'—',                                                        desc: sunDesc },
     { label:'Moon',          emoji:'🌙', id:bid+'-moon',   value: (p.moonSign||'—')+(p.hasBirthTime?'':' *'),                            desc: moonDesc },
-    { label:'Rising',        emoji:'↑',  id:bid+'-rising', value: p.rising||(p.hasBirthTime?'Calculating…':'Needs birth time'),          desc: risingDesc, dim: !p.rising },
+    { label:'Rising',        emoji:'↑',  id:bid+'-rising', value: p.rising||(p.hasBirthTime?'↻ Tap Refresh':'Needs birth time'),          desc: risingDesc, dim: !p.rising },
     { label:'Life Path',     emoji:'✦',  id:bid+'-lp',     value: p.lifePath?(p.lifePath+(p.lpTitle?' · '+p.lpTitle:'')):'—',            desc: lpDesc },
     { label:'Soul Card',     emoji:'◑',  id:bid+'-sc',     value: p.soulCard?p.soulCard.name:'—',                                        desc: scDesc },
     { label:'Personal Year', emoji:'◎',  id:bid+'-py',     value: String(p.personalYear||'—'),                                           desc: pyDesc },
     { label:'Chinese Zodiac',emoji:'🐉', id:bid+'-cz',     value: (p.czElement||'')+' '+(p.cz||'—')+(p.czYin?' · Yin':' · Yang'),       desc: czDesc },
     { label:'Gene Key',      emoji:'⬡',  id:bid+'-gk',     value: p.geneKey?p.geneKey+' — Life\'s Work':'—',                            desc: gkDesc },
-    { label:'HD Type',       emoji:'◎',  id:bid+'-hd',     value: p.hdType||(p.hasBirthTime?'Calculating…':'Needs birth time'),          desc: hdDesc, dim: !p.hdType },
+    { label:'HD Type',       emoji:'◎',  id:bid+'-hd',     value: p.hdType||(p.hasBirthTime?'↻ Tap Refresh':'Needs birth time'),          desc: hdDesc, dim: !p.hdType },
   ];
 
   function escAttr(s) { return (s||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/"/g,'&quot;'); }
@@ -22138,24 +22138,15 @@ async function mirrorGenerate() {
   const personContext = name + ': Sun in ' + person.sunSign + ', Moon in ' + person.moonSign + (person.hasBirthTime ? ' (confirmed)' : ' (estimated)') + '. Life Path ' + person.lifePath + ' (' + (person.lpTitle||'') + '). Soul Card: ' + (person.soulCard ? person.soulCard.name : '?') + '. Personal Year ' + person.personalYear + '. Chinese Zodiac: ' + person.czElement + ' ' + person.cz + ' (' + (person.czYin?'Yin':'Yang') + '). Gene Key ' + person.geneKey + ' (Life\'s Work).' + (person.hasBirthTime ? ' Birth time provided — include rising/HD interpretation if you can infer from context.' : '');
 
   const relType = (document.getElementById('mirror-rel-type')?.value || 'connection');
-  const prompt = `You are a deeply skilled astrologer, numerologist, and spiritual guide synthesizing chart data for a relationship reading. Write with poetic precision — specific, not generic. This is a ${relType} relationship.
+  const hasFullBirthData = !!(person.birthTime && person.birthTime.trim() && person.birthLocation && person.birthLocation.trim());
+  const genRisingField = hasFullBirthData
+    ? ',\n  "rising": "calculate the Whole Sign Ascendant for this person born at ' + person.birthTime + ' in ' + person.birthLocation + ' on ' + person.dob + ' — return just the sign name e.g. Cancer",\n  "hdType": "calculate approximate Human Design type for this birth data — Generator/Manifesting Generator/Projector/Manifestor/Reflector"'
+    : '';
 
-${tiffContext}
-${personContext}
-
-Return ONLY a JSON object with this exact structure (no markdown, no preamble):
-{
-  "shadowLight": {
-    "light": "2-3 sentences on how these two charts illuminate each other — what gifts the connection activates, where their energies harmonize or complement",
-    "shadow": "2-3 sentences on where they might trigger each other — what wounds could get poked, what growth edges the relationship holds, what to watch for"
-  },
-  "relate": "3-4 sentences of practical, specific guidance for Tiff on how to best navigate and relate to this person given both their charts — what to lean into, what to be mindful of, how to meet them where they are"
-}
-
-Be specific to these actual charts. Avoid generic platitudes. Use the correct pronouns for each person throughout.`;
+  const prompt = 'You are a deeply skilled astrologer, numerologist, and spiritual guide. This is a ' + relType + ' relationship. Write with poetic precision — specific, not generic. Use correct pronouns throughout.\n\n' + tiffContext + '\n' + personContext + '\n\nReturn ONLY a JSON object (no markdown, no preamble):\n{\n  "shadowLight": {\n    "light": "2-3 sentences on how these two charts illuminate each other",\n    "shadow": "2-3 sentences on where they might trigger each other"\n  },\n  "relate": {"tips": ["2-4 word tip", "2-4 word tip", "2-4 word tip"], "full": "3-4 sentences of practical specific guidance for Tiff"}' + genRisingField + '\n}\n\nBe specific to these actual charts. Avoid generic platitudes.';
 
   try {
-    const data = await claudeAPI(apiKey, { model:'claude-sonnet-4-6', max_tokens:800, messages:[{role:'user', content:prompt}] });
+    const data = await claudeAPI(apiKey, { model:'claude-sonnet-4-6', max_tokens:1000, messages:[{role:'user', content:prompt}] });
     if (data.error) throw new Error(data.error.message || 'API error');
     const raw = (data.content?.find(c => c.type==='text')?.text || '').trim();
     const clean = raw.replace(/```json|```/g,'').trim();
@@ -22164,11 +22155,11 @@ Be specific to these actual charts. Avoid generic platitudes. Use the correct pr
 
     person.shadowLight = reflections.shadowLight;
     person.relate = reflections.relate;
+    if (reflections.rising) person.rising = reflections.rising;
+    if (reflections.hdType) person.hdType = reflections.hdType;
 
-    // Save person
-    var people = getMirrorPeople().filter(p => p.name !== name);
-    people.push(person);
-    saveMirrorPeople(people);
+    // Store pending — user must tap Save to persist
+    window._mirrorPending = person;
 
     // Show result inline
     if (result) {
@@ -22181,7 +22172,7 @@ Be specific to these actual charts. Avoid generic platitudes. Use the correct pr
               <div style="font-family:'Space Mono',monospace;font-size:.44rem;color:rgba(201,185,154,.35);margin-top:2px;">${person.pronouns ? person.pronouns+' · ' : ''}☀ ${person.sunSign} · 🌙 ${person.moonSign} · LP ${person.lifePath}</div>
             </div>
           </div>
-          ${mirrorChartGrid(person)}
+          <div id="mpc-${person.name.replace(/\s+/g, '_')}-grid">${mirrorChartGrid(person)}</div>
           <div style="margin-top:14px;">${mirrorShadowLightHTML(person.shadowLight)}</div>
           <div style="margin-top:10px;">${mirrorRelateHTML(person.relate)}</div>
           <div style="margin-top:14px;font-family:'Space Mono',monospace;font-size:.5rem;color:rgba(107,155,107,.5);display:flex;align-items:center;gap:6px;">✓ Saved to Established</div>
@@ -22203,24 +22194,37 @@ async function mirrorRefreshReflections(name) {
   const id = 'mpc-' + name.replace(/\s+/g,'_');
   const shadowEl = document.getElementById(id + '-shadow');
   const relateEl = document.getElementById(id + '-relate');
-  if (shadowEl) shadowEl.innerHTML = '<div style="font-family:\'Space Mono\',monospace;font-size:.52rem;color:rgba(201,185,154,.3);display:flex;align-items:center;gap:8px;padding:12px 0;"><div class="astro-spinner"></div> Refreshing…</div>';
+  if (shadowEl) shadowEl.innerHTML = '<div style="font-family:Space Mono,monospace;font-size:.52rem;color:rgba(201,185,154,.3);display:flex;align-items:center;gap:8px;padding:12px 0;"><div class="astro-spinner"></div> Refreshing…</div>';
 
-  const tiffContext = 'Tiff: Libra Sun 17°, Aries Moon 6°, Capricorn Rising 28°. Life Path 5. Soul Card: The Hierophant. Chinese Zodiac: Water Monkey. HD: Pure Generator 4/6.';
-  const personContext = name + ': Sun ' + person.sunSign + ', Moon ' + person.moonSign + ', Life Path ' + person.lifePath + ', Soul Card: ' + (person.soulCard ? person.soulCard.name : '?') + ', ' + person.czElement + ' ' + person.cz + ', Gene Key ' + person.geneKey + '.';
-  const prompt = `Astrologer/spiritual guide. Write with poetic precision.\n\n${tiffContext}\n${personContext}\n\nReturn ONLY JSON:\n{"shadowLight":{"light":"2-3 sentences","shadow":"2-3 sentences"},"relate":"3-4 sentences of practical guidance for Tiff"}`;
+  const relType = person.relType || 'connection';
+  const pronouns = person.pronouns || 'they/them';
+  const hasFullBirth = !!(person.birthTime && person.birthTime.trim() && person.birthLocation && person.birthLocation.trim());
+  const risingField = hasFullBirth
+    ? ',\\n  "rising": "calculate Whole Sign Ascendant for ' + person.dob + ' at ' + person.birthTime + ' in ' + person.birthLocation + '",\\n  "hdType": "calculate approximate Human Design type"'
+    : '';
+
+  const tiffContext = 'Tiff (she/her): Libra Sun 17°, Aries Moon 6°, Capricorn Rising 28°, Scorpio stellium. Life Path 5 — The Hierophant. Personal Year ' + getNumerologyNumbers().personalYear + '. Water Monkey. Pure Generator 4/6, Sacral authority.';
+  const personContext = name + ' (' + pronouns + '): Sun ' + person.sunSign + ', Moon ' + person.moonSign + (person.rising ? ', Rising ' + person.rising : '') + '. Life Path ' + person.lifePath + ' (' + (person.lpTitle||'') + '). Soul Card: ' + (person.soulCard ? person.soulCard.name : '?') + '. Personal Year ' + person.personalYear + '. ' + (person.czElement||'') + ' ' + person.cz + '. Gene Key ' + person.geneKey + '. ' + (person.hdType ? 'HD: ' + person.hdType + '.' : '') + ' Relationship type: ' + relType + '.';
+
+  const prompt = 'Astrologer and spiritual guide. Use correct pronouns. Write with poetic precision.\n\n' + tiffContext + '\n' + personContext + '\n\nReturn ONLY JSON:\n{\n  "shadowLight": {"light": "2-3 sentences", "shadow": "2-3 sentences"},\n  "relate": {"tips": ["2-4 word tip", "2-4 word tip", "2-4 word tip"], "full": "3-4 sentences of practical guidance for Tiff"}' + risingField + '\n}';
 
   try {
-    const data = await claudeAPI(apiKey, { model:'claude-sonnet-4-6', max_tokens:600, messages:[{role:'user', content:prompt}] });
+    const data = await claudeAPI(apiKey, { model:'claude-sonnet-4-6', max_tokens:800, messages:[{role:'user', content:prompt}] });
     const raw = (data.content?.find(c=>c.type==='text')?.text||'').trim();
     const clean = raw.replace(/```json|```/g,'').trim();
     let r; try { r = JSON.parse(clean); } catch(e) { const m=clean.match(/\{[\s\S]*\}/); if(m) r=JSON.parse(m[0]); else throw e; }
     person.shadowLight = r.shadowLight;
     person.relate = r.relate;
+    if (r.rising) person.rising = r.rising;
+    if (r.hdType) person.hdType = r.hdType;
     saveMirrorPeople(people);
     if (shadowEl) shadowEl.innerHTML = mirrorShadowLightHTML(person.shadowLight);
     if (relateEl) relateEl.innerHTML = mirrorRelateHTML(person.relate);
+    // Re-render chart grid to show populated rising/HD
+    const gridEl = document.getElementById(id + '-grid');
+    if (gridEl) gridEl.innerHTML = mirrorChartGrid(person);
   } catch(err) {
-    if (shadowEl) shadowEl.innerHTML = '<div style="font-family:\'Space Mono\',monospace;font-size:.52rem;color:rgba(180,100,100,.5);">Error refreshing: ' + (err.message||'unknown') + '</div>';
+    if (shadowEl) shadowEl.innerHTML = '<div style="font-family:Space Mono,monospace;font-size:.52rem;color:rgba(180,100,100,.5);">Error: ' + (err.message||'unknown') + '</div>';
   }
 }
 
