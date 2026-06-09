@@ -22148,10 +22148,34 @@ function mirrorSavePending() {
   people.push(person);
   saveMirrorPeople(people);
   window._mirrorPending = null;
+
+  // Confirm save worked
+  var saved = getMirrorPeople();
+  var confirmed = saved.find(function(p){ return p.name === person.name; });
+  if (!confirmed) {
+    console.error('Mirror save failed for:', person.name);
+    gtAlert('Save failed — please try again.');
+    return;
+  }
+
   var btn = document.getElementById('mirror-save-btn');
   if (btn) { btn.textContent = 'Saved'; btn.disabled = true; btn.style.color='rgba(107,180,107,.4)'; }
+
+  // Re-render established panel so it reflects the new person
+  var estPanel = document.getElementById('est-panel-mirrors');
+  if (estPanel) {
+    var allPeople = getMirrorPeople().sort(function(a,b){ return (a.name||'').localeCompare(b.name||''); });
+    estPanel.innerHTML = allPeople.length
+      ? allPeople.map(function(p){ return mirrorPersonCard(p); }).join('')
+      : '<div style="font-family:Cormorant Garamond,serif;font-size:.95rem;font-style:italic;color:rgba(201,185,154,.3);padding:16px 0;">No mirrors saved yet.</div>';
+  }
+
+  // Update established button count
   var dest = document.getElementById('gt-content');
-  if (dest) { var eb = dest.querySelector('#mirror-btn-established'); if (eb) { var n=getMirrorPeople().length; eb.innerHTML='&#9680; Established'+(n?' ('+n+')':''); } }
+  if (dest) {
+    var eb = dest.querySelector('#mirror-btn-established');
+    if (eb) { var n = getMirrorPeople().length + getCrossCompares().length; eb.innerHTML='&#9680; Established'+(n?' ('+n+')':''); }
+  }
 }
 
 function clearMirrorResult() {
