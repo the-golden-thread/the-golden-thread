@@ -22159,6 +22159,15 @@ function clearMirrorResult() {
   if (el) el.innerHTML = '';
 }
 
+function mirrorAction(action, cardId) {
+  // cardId is like 'mpc-Rain' — derive name from it
+  var name = cardId.replace(/^mpc-/, '').replace(/_/g,' ');
+  if (action === 'refresh') mirrorRefreshReflections(name);
+  else if (action === 'rising') mirrorEditField(name, 'rising');
+  else if (action === 'hdType') mirrorEditField(name, 'hdType');
+  else if (action === 'delete') mirrorDelete(name);
+}
+
 function mirrorPersonCard(person, expanded) {
   var id = 'mpc-' + (person.name||'').replace(/\s+/g,'_');
   var nm = person.name||'';
@@ -22182,10 +22191,10 @@ function mirrorPersonCard(person, expanded) {
     +'<div id="'+id+'-shadow" style="margin-top:16px;">'+(person.shadowLight?mirrorShadowLightHTML(person.shadowLight):'')+'</div>'
     +'<div id="'+id+'-relate" style="margin-top:12px;">'+(person.relate?mirrorRelateHTML(person.relate):'')+'</div>'
     +'<div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap;">'
-    +'<button onclick="mirrorRefreshReflections('+JSON.stringify(nm)+')" style="font-family:Space Mono,monospace;font-size:.48rem;letter-spacing:.08em;padding:6px 12px;background:transparent;border:1px solid rgba(107,79,138,.25);color:rgba(155,107,171,.6);cursor:pointer;">&#8635; Refresh</button>'
-    +'<button onclick="mirrorEditField('+JSON.stringify(nm)+',\'rising\')" style="font-family:Space Mono,monospace;font-size:.48rem;letter-spacing:.08em;padding:6px 12px;background:transparent;border:1px solid rgba(201,185,154,.15);color:rgba(201,185,154,.4);cursor:pointer;">&#9998; Rising</button>'
-    +'<button onclick="mirrorEditField('+JSON.stringify(nm)+',\'hdType\')" style="font-family:Space Mono,monospace;font-size:.48rem;letter-spacing:.08em;padding:6px 12px;background:transparent;border:1px solid rgba(201,185,154,.15);color:rgba(201,185,154,.4);cursor:pointer;">&#9998; HD</button>'
-    +'<button onclick="mirrorDelete('+JSON.stringify(nm)+')" style="font-family:Space Mono,monospace;font-size:.48rem;letter-spacing:.08em;padding:6px 12px;background:transparent;border:1px solid rgba(180,80,80,.2);color:rgba(180,100,100,.5);cursor:pointer;">&#10005; Remove</button>'
+    +'<button onclick="mirrorAction(\'refresh\',\''+id+'\')" style="font-family:Space Mono,monospace;font-size:.48rem;letter-spacing:.08em;padding:6px 12px;background:transparent;border:1px solid rgba(107,79,138,.25);color:rgba(155,107,171,.6);cursor:pointer;">&#8635; Refresh</button>'
+    +'<button onclick="mirrorAction(\'rising\',\''+id+'\')" style="font-family:Space Mono,monospace;font-size:.48rem;letter-spacing:.08em;padding:6px 12px;background:transparent;border:1px solid rgba(201,185,154,.15);color:rgba(201,185,154,.4);cursor:pointer;">&#9998; Rising</button>'
+    +'<button onclick="mirrorAction(\'hdType\',\''+id+'\')" style="font-family:Space Mono,monospace;font-size:.48rem;letter-spacing:.08em;padding:6px 12px;background:transparent;border:1px solid rgba(201,185,154,.15);color:rgba(201,185,154,.4);cursor:pointer;">&#9998; HD</button>'
+    +'<button onclick="mirrorAction(\'delete\',\''+id+'\')" style="font-family:Space Mono,monospace;font-size:.48rem;letter-spacing:.08em;padding:6px 12px;background:transparent;border:1px solid rgba(180,80,80,.2);color:rgba(180,100,100,.5);cursor:pointer;">&#10005; Remove</button>'
     +'</div></div></div>';
 }
 
