@@ -21852,7 +21852,32 @@ function renderMirror(dest) {
   mirrorShowPanel('new');
 }
 
-// ── FORM BUILDER ────────────────────────────────────────────
+// ── PANEL SWITCHERS ─────────────────────────────────────────
+function mirrorShowPanel(which) {
+  var np = document.getElementById('mirror-panel-new');
+  var ep = document.getElementById('mirror-panel-established');
+  var nb = document.getElementById('mirror-btn-new');
+  var eb = document.getElementById('mirror-btn-established');
+  if (!np || !ep) return;
+  np.style.display = which === 'new' ? '' : 'none';
+  ep.style.display = which === 'established' ? '' : 'none';
+  if (nb) { nb.style.background=which==='new'?'rgba(107,79,138,.1)':'transparent'; nb.style.borderColor=which==='new'?'rgba(107,79,138,.3)':'rgba(201,185,154,.15)'; nb.style.color=which==='new'?'rgba(155,107,171,.7)':'rgba(201,185,154,.4)'; }
+  if (eb) { eb.style.background=which==='established'?'rgba(107,79,138,.1)':'transparent'; eb.style.borderColor=which==='established'?'rgba(107,79,138,.3)':'rgba(201,185,154,.15)'; eb.style.color=which==='established'?'rgba(155,107,171,.7)':'rgba(201,185,154,.4)'; }
+}
+
+function mirrorEstTab(tab) {
+  var isMirrors = tab === 'mirrors';
+  var mp = document.getElementById('est-panel-mirrors');
+  var cp = document.getElementById('est-panel-cross');
+  var mb = document.getElementById('est-tab-mirrors');
+  var cb = document.getElementById('est-tab-cross');
+  if (mp) mp.style.display = isMirrors ? '' : 'none';
+  if (cp) cp.style.display = isMirrors ? 'none' : '';
+  if (mb) { mb.style.background=isMirrors?'rgba(107,79,138,.08)':'transparent'; mb.style.color=isMirrors?'rgba(155,107,171,.7)':'rgba(201,185,154,.4)'; }
+  if (cb) { cb.style.background=isMirrors?'transparent':'rgba(107,155,201,.06)'; cb.style.color=isMirrors?'rgba(201,185,154,.4)':'rgba(107,155,201,.7)'; }
+}
+
+// ── FORM BUILDER ─────────────────────────────────────────────
 function mirrorPersonForm(prefix, compact) {
   var p = prefix ? prefix+'-' : '';
   return '<div style="display:flex;flex-direction:column;gap:10px;margin-bottom:16px;">'
