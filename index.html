@@ -8446,7 +8446,7 @@ Respond in this exact JSON format:
 Return ONLY valid JSON. No preamble. If nothing is relevant, return [].`;
 
   try {
-    const data = await claudeAPI(apiKey, { model:'claude-sonnet-4-6', max_tokens:800, messages:[{role:'user', content:prompt}] });
+    const data = await claudeAPI(apiKey, { model:'claude-sonnet-4-6', max_tokens:1000, messages:[{role:'user', content:prompt}] });
     const text = data.content?.find(c=>c.type==='text')?.text||'';
     const clean = text.replace(/```json|```/g,'').trim();
     const matches = JSON.parse(clean);
@@ -21670,8 +21670,9 @@ function getChineseZodiac(birthYear) {
 }
 
 function getChineseYearElement(year) {
+  // Heavenly stem: year % 10 gives correct element
   const elems = ['Metal','Metal','Water','Water','Wood','Wood','Fire','Fire','Earth','Earth'];
-  return elems[((year - 4) % 10 + 10) % 10];
+  return elems[year % 10];
 }
 
 function renderChineseZodiacSection() {
@@ -21751,9 +21752,14 @@ function computePersonChart(name, dob, birthTime, birthLocation) {
   const geneKey = Math.floor(((dayOfYear - 1) / 365) * 64) + 1;
   const clampedGK = Math.min(Math.max(geneKey, 1), 64);
 
+  // Rising sign requires full astronomical calculation — flag for AI to interpret
+  const risingNote = (birthTime && birthTime.trim() && birthLocation && birthLocation.trim())
+    ? 'Birth time ' + birthTime + ' at ' + birthLocation + ' — calculate Ascendant in reading'
+    : '';
+
   return {
     name, dob, birthTime: birthTime || '', birthLocation: birthLocation || '',
-    sunSign, moonSign, moonPhase,
+    sunSign, moonSign, moonPhase, risingNote,
     hasBirthTime: !!(birthTime && birthTime.trim()),
     cz: cz.sign, czEmoji: cz.emoji, czElement: czEl, czFixed: cz.element_fixed, czYin: cz.yin,
     czTraits: cz.traits, czShadow: cz.shadow,
@@ -21859,22 +21865,31 @@ function mirrorPersonCard(person, expanded) {
 }
 
 function mirrorChartGrid(p) {
+  const sunDesc = (CHART_BOX_DESCRIPTIONS.Sun || {})[p.sunSign] || '';
+  const moonDesc = (CHART_BOX_DESCRIPTIONS.Moon || {})[p.moonSign] || '';
+  const boxId = 'mcb-' + (p.name||'').replace(/\s+/g,'_');
   const items = [
-    { label:'Sun', value: p.sunSign || '—', emoji:'☀' },
-    { label:'Moon', value: (p.moonSign || '—') + (p.hasBirthTime ? '' : ' *'), emoji:'🌙' },
-    { label:'Rising', value: p.hasBirthTime ? (p.rising || 'See reading') : 'Needs birth time', emoji:'↑', dim: !p.hasBirthTime },
+    { label:'Sun', value: p.sunSign || '—', emoji:'☀', clickDesc: sunDesc, id: boxId+'-sun' },
+    { label:'Moon', value: (p.moonSign || '—') + (p.hasBirthTime ? '' : ' *'), emoji:'🌙', clickDesc: moonDesc, id: boxId+'-moon' },
+    { label:'Rising', value: p.rising ? p.rising : (p.hasBirthTime ? 'Calculating…' : 'Needs birth time'), emoji:'↑', dim: !p.rising },
     { label:'Life Path', value: p.lifePath ? p.lifePath + (p.lpTitle ? ' · ' + p.lpTitle : '') : '—', emoji:'✦' },
     { label:'Soul Card', value: p.soulCard ? p.soulCard.name : '—', emoji: p.soulCard ? p.soulCard.emoji : '◑' },
     { label:'Personal Year', value: p.personalYear || '—', emoji:'◎' },
     { label:'Chinese Zodiac', value: (p.czElement||'') + ' ' + (p.cz||'—') + (p.czYin ? ' · Yin' : ' · Yang'), emoji: p.czEmoji || '🐉' },
     { label:'Gene Key', value: p.geneKey ? p.geneKey + ' — Life\'s Work' : '—', emoji:'⬡' },
-    { label:'HD Type', value: p.hasBirthTime ? (p.hdType || 'See reading') : 'Needs birth time', emoji:'◎', dim: !p.hasBirthTime },
+    { label:'HD Type', value: p.hdType ? p.hdType : (p.hasBirthTime ? 'Calculating…' : 'Needs birth time'), emoji:'◎', dim: !p.hdType },
   ];
   return '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:4px;">'
-    + items.map(item => `<div style="padding:10px 12px;background:rgba(255,255,255,.02);border:1px solid rgba(201,185,154,.08);${item.dim?'opacity:.45':''}">
-        <div style="font-family:'Space Mono',monospace;font-size:.42rem;letter-spacing:.08em;text-transform:uppercase;color:rgba(201,185,154,.3);margin-bottom:3px;">${item.emoji} ${item.label}</div>
+    + items.map(item => {
+      const clickable = item.clickDesc;
+      const idAttr = item.id ? `id="${item.id}"` : '';
+      const cursor = clickable ? 'cursor:pointer;' : '';
+      const onclick = clickable ? `onclick="mirrorChartBoxExpand('${item.id}', '${item.clickDesc.replace(/'/g,'\'').replace(/"/g,'\"')}')"` : '';
+      return `<div ${idAttr} ${onclick} style="padding:10px 12px;background:rgba(255,255,255,.02);border:1px solid rgba(201,185,154,.08);${item.dim?'opacity:.45':''}${cursor}">
+        <div style="font-family:'Space Mono',monospace;font-size:.42rem;letter-spacing:.08em;text-transform:uppercase;color:rgba(201,185,154,.3);margin-bottom:3px;">${item.emoji} ${item.label}${clickable ? ' <span style=\"opacity:.35;font-size:.85em;\">▸</span>' : ''}</div>
         <div style="font-family:'Cormorant Garamond',serif;font-size:.88rem;color:rgba(240,235,224,.8);">${item.value}</div>
-      </div>`).join('')
+      </div>`;
+    }).join('')
     + '</div>'
     + (!p.hasBirthTime ? '<div style="font-family:\'Space Mono\',monospace;font-size:.42rem;color:rgba(201,185,154,.25);margin-top:4px;">* Moon may vary ±1 sign if born near sign boundary. Rising & HD require birth time.</div>' : '');
 }
@@ -21883,12 +21898,12 @@ function mirrorShadowLightHTML(sl) {
   if (!sl) return '';
   return `<div style="margin-bottom:12px;">
     <div style="font-family:'Space Mono',monospace;font-size:.46rem;letter-spacing:.12em;text-transform:uppercase;color:rgba(201,185,154,.3);margin-bottom:10px;">◑ Shadow & Light</div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
-      <div style="padding:12px 14px;background:rgba(201,168,76,.04);border:1px solid rgba(201,168,76,.15);border-top:2px solid rgba(201,168,76,.3);">
+    <div style="display:flex;flex-direction:column;gap:8px;">
+      <div style="padding:14px 16px;background:rgba(201,168,76,.04);border:1px solid rgba(201,168,76,.15);border-left:3px solid rgba(201,168,76,.4);">
         <div style="font-family:'Space Mono',monospace;font-size:.42rem;letter-spacing:.1em;text-transform:uppercase;color:rgba(201,168,76,.5);margin-bottom:8px;">✦ Light</div>
         <div style="font-family:'Cormorant Garamond',serif;font-size:.88rem;color:rgba(240,235,224,.75);line-height:1.7;">${sl.light}</div>
       </div>
-      <div style="padding:12px 14px;background:rgba(107,79,138,.04);border:1px solid rgba(107,79,138,.15);border-top:2px solid rgba(107,79,138,.3);">
+      <div style="padding:14px 16px;background:rgba(107,79,138,.04);border:1px solid rgba(107,79,138,.15);border-left:3px solid rgba(107,79,138,.4);">
         <div style="font-family:'Space Mono',monospace;font-size:.42rem;letter-spacing:.1em;text-transform:uppercase;color:rgba(155,107,171,.5);margin-bottom:8px;">◑ Shadow</div>
         <div style="font-family:'Cormorant Garamond',serif;font-size:.88rem;color:rgba(240,235,224,.75);line-height:1.7;">${sl.shadow}</div>
       </div>
@@ -21937,7 +21952,12 @@ async function mirrorGenerate() {
 
   const person = computePersonChart(name, dob, time, loc);
   const tiffContext = 'Tiff (the app owner): Libra Sun 17°, Aries Moon 6°, Capricorn Rising 28°, Scorpio stellium. Life Path 5 (The Hierophant). Soul Card: The Hierophant. Personal Year ' + getNumerologyNumbers().personalYear + '. Chinese Zodiac: Water Monkey. HD: Pure Generator 4/6, Sacral authority. Gene Keys: primary sphere channels 10:34/11:56/25:51/03:60. Primary clairs: claircognizance, clairsentience.';
-  const personContext = name + ': Sun in ' + person.sunSign + ', Moon in ' + person.moonSign + (person.hasBirthTime ? ' (confirmed)' : ' (estimated)') + '. Life Path ' + person.lifePath + ' (' + (person.lpTitle||'') + '). Soul Card: ' + (person.soulCard ? person.soulCard.name : '?') + '. Personal Year ' + person.personalYear + '. Chinese Zodiac: ' + person.czElement + ' ' + person.cz + ' (' + (person.czYin?'Yin':'Yang') + '). Gene Key ' + person.geneKey + ' (Life\'s Work).' + (person.hasBirthTime ? ' Birth time provided — include rising/HD interpretation if you can infer from context.' : '');
+  const personContext = name + ': Sun in ' + person.sunSign + ', Moon in ' + person.moonSign + (person.hasBirthTime ? ' (confirmed)' : ' (estimated)') + '. Life Path ' + person.lifePath + ' (' + (person.lpTitle||'') + '). Soul Card: ' + (person.soulCard ? person.soulCard.name : '?') + '. Personal Year ' + person.personalYear + '. Chinese Zodiac: ' + person.czElement + ' ' + person.cz + ' (' + (person.czYin?'Yin':'Yang') + '). Gene Key ' + person.geneKey + ' (Life\'s Work).' + (person.risingNote ? ' ' + person.risingNote + ' — please calculate and include their Rising sign and HD type in the relate reading.' : '');
+
+  const hasFullBirthData = !!(person.birthTime && person.birthTime.trim() && person.birthLocation && person.birthLocation.trim());
+  const risingField = hasFullBirthData
+    ? ',\n  "rising": "calculate the Whole Sign Ascendant/Rising sign for this person born at ' + person.birthTime + ' in ' + person.birthLocation + ' on ' + person.dob + ' — return just the sign name e.g. Scorpio",\n  "hdType": "calculate approximate Human Design type for this birth data — Generator/Manifesting Generator/Projector/Manifestor/Reflector"'
+    : '';
 
   const prompt = `You are a deeply skilled astrologer, numerologist, and spiritual guide synthesizing chart data for a relationship reading. Write with poetic precision — specific, not generic.
 
@@ -21950,13 +21970,13 @@ Return ONLY a JSON object with this exact structure (no markdown, no preamble):
     "light": "2-3 sentences on how these two charts illuminate each other — what gifts the connection activates, where their energies harmonize or complement",
     "shadow": "2-3 sentences on where they might trigger each other — what wounds could get poked, what growth edges the relationship holds, what to watch for"
   },
-  "relate": "3-4 sentences of practical, specific guidance for Tiff on how to best navigate and relate to this person given both their charts — what to lean into, what to be mindful of, how to meet them where they are"
+  "relate": {"tips": ["2-4 word tip 1", "2-4 word tip 2", "2-4 word tip 3"], "full": "3-4 sentences of practical specific guidance for Tiff"}${risingField}
 }
 
 Be specific to these actual charts. Avoid generic platitudes.`;
 
   try {
-    const data = await claudeAPI(apiKey, { model:'claude-sonnet-4-6', max_tokens:800, messages:[{role:'user', content:prompt}] });
+    const data = await claudeAPI(apiKey, { model:'claude-sonnet-4-6', max_tokens:1000, messages:[{role:'user', content:prompt}] });
     if (data.error) throw new Error(data.error.message || 'API error');
     const raw = (data.content?.find(c => c.type==='text')?.text || '').trim();
     const clean = raw.replace(/```json|```/g,'').trim();
@@ -21965,11 +21985,11 @@ Be specific to these actual charts. Avoid generic platitudes.`;
 
     person.shadowLight = reflections.shadowLight;
     person.relate = reflections.relate;
+    if (reflections.rising) person.rising = reflections.rising;
+    if (reflections.hdType) person.hdType = reflections.hdType;
 
-    // Save person
-    var people = getMirrorPeople().filter(p => p.name !== name);
-    people.push(person);
-    saveMirrorPeople(people);
+    // Store pending person for optional save
+    window._mirrorPending = person;
 
     // Show result inline
     if (result) {
@@ -21985,13 +22005,77 @@ Be specific to these actual charts. Avoid generic platitudes.`;
           ${mirrorChartGrid(person)}
           <div style="margin-top:14px;">${mirrorShadowLightHTML(person.shadowLight)}</div>
           <div style="margin-top:10px;">${mirrorRelateHTML(person.relate)}</div>
-          <div style="margin-top:14px;font-family:'Space Mono',monospace;font-size:.5rem;color:rgba(107,155,107,.5);display:flex;align-items:center;gap:6px;">✓ Saved to Established</div>
+          <div style="margin-top:16px;display:flex;gap:8px;">
+            <button id="mirror-save-btn" onclick="mirrorSavePending()" style="font-family:'Space Mono',monospace;font-size:.5rem;letter-spacing:.08em;padding:9px 18px;background:rgba(107,155,107,.08);border:1px solid rgba(107,155,107,.3);color:rgba(107,180,107,.7);cursor:pointer;">✓ Save to Established</button>
+            <button onclick="document.getElementById('mirror-result').innerHTML=''" style="font-family:'Space Mono',monospace;font-size:.5rem;letter-spacing:.08em;padding:9px 18px;background:transparent;border:1px solid rgba(201,185,154,.15);color:rgba(201,185,154,.4);cursor:pointer;">✕ Discard</button>
+          </div>
         </div>`;
     }
   } catch(err) {
     console.error('Mirror error:', err);
     if (result) result.innerHTML = '<div style="font-family:\'Space Mono\',monospace;font-size:.55rem;color:rgba(201,185,154,.35);padding:12px 0;">Error: ' + (err.message||'unknown') + '</div>';
   }
+}
+
+function mirrorSavePending() {
+  const person = window._mirrorPending;
+  if (!person) return;
+  var people = getMirrorPeople().filter(p => p.name !== person.name);
+  people.push(person);
+  saveMirrorPeople(people);
+  window._mirrorPending = null;
+  const btn = document.getElementById('mirror-save-btn');
+  if (btn) { btn.textContent = '✓ Saved'; btn.disabled = true; btn.style.color = 'rgba(107,180,107,.4)'; }
+  // Refresh established count in header
+  const dest = document.getElementById('gt-content');
+  if (dest) {
+    const eb = dest.querySelector('#mirror-btn-established');
+    if (eb) { const n = getMirrorPeople().length; eb.textContent = '◑ Established' + (n ? ' ('+n+')' : ''); }
+  }
+}
+
+// Chart box descriptions for click-to-expand
+const CHART_BOX_DESCRIPTIONS = {
+  Sun: {
+    Aries:'Bold initiator, ruled by Mars. Aries Sun brings courage and directness but can rush past others.',
+    Taurus:'Steadfast and sensory, ruled by Venus. Taurus Sun values security and beauty; can be immovable.',
+    Gemini:'Curious and dual-natured, ruled by Mercury. Gemini Sun is quick-minded, adaptive, sometimes scattered.',
+    Cancer:'Emotionally deep, ruled by the Moon. Cancer Sun is intuitive and protective; feels everything.',
+    Leo:'Radiant and generous, ruled by the Sun. Leo Sun craves creative expression and genuine recognition.',
+    Virgo:'Discerning and service-oriented, ruled by Mercury. Virgo Sun refines and improves; can over-criticize.',
+    Libra:'Balanced and relational, ruled by Venus. Libra Sun seeks harmony and fairness; avoids confrontation.',
+    Scorpio:'Transformative and intense, ruled by Pluto. Scorpio Sun dives deep; power and truth are central.',
+    Sagittarius:'Expansive and truth-seeking, ruled by Jupiter. Sag Sun needs freedom and meaning; can be blunt.',
+    Capricorn:'Ambitious and structural, ruled by Saturn. Capricorn Sun builds to last; can be cold under pressure.',
+    Aquarius:'Visionary and unconventional, ruled by Uranus. Aquarius Sun serves the collective; can be detached.',
+    Pisces:'Boundless and empathic, ruled by Neptune. Pisces Sun feels everything; the boundary between self and other is thin.',
+  },
+  Moon: {
+    Aries:'Aries Moon processes emotion through action. Feelings arrive fast and hot — this person needs to move, not stew.',
+    Taurus:'Taurus Moon needs physical comfort and stability to feel safe. Soothing and loyal but slow to shift emotionally.',
+    Gemini:'Gemini Moon processes emotion through talking and thinking. Feelings are expressed through words; needs variety.',
+    Cancer:'Cancer Moon is the most emotionally sensitive placement. Deep nurturer; home and belonging are everything.',
+    Leo:'Leo Moon needs to feel seen and appreciated to feel loved. Warm and generous, but pride can make them retreat.',
+    Virgo:'Virgo Moon processes emotion by analyzing and helping. Feels best when useful; anxiety arrives when things feel chaotic.',
+    Libra:'Libra Moon needs harmony and fairness in their close bonds. Dislikes conflict intensely; may suppress to keep peace.',
+    Scorpio:'Scorpio Moon feels deeply and holds long. Emotional intensity runs underground — loyalty and betrayal mean everything.',
+    Sagittarius:'Sagittarius Moon needs freedom and meaning to feel okay. Philosophy and travel feed the soul; feels caged by obligation.',
+    Capricorn:'Capricorn Moon is stoic and self-contained. Emotions are managed, not displayed; reliability is how love is shown.',
+    Aquarius:'Aquarius Moon processes emotion through ideas and detachment. Needs space; can seem cool but cares deeply for the collective.',
+    Pisces:'Pisces Moon is boundlessly empathic. Absorbs the emotions of others easily; needs time alone to return to themselves.',
+  },
+};
+
+function mirrorChartBoxExpand(boxId, content) {
+  const existing = document.getElementById(boxId + '-detail');
+  if (existing) { existing.remove(); return; }
+  const box = document.getElementById(boxId);
+  if (!box) return;
+  const detail = document.createElement('div');
+  detail.id = boxId + '-detail';
+  detail.style.cssText = 'padding:10px 12px 12px;background:rgba(107,79,138,.06);border-top:1px solid rgba(107,79,138,.15);font-family:Cormorant Garamond,serif;font-size:.88rem;color:rgba(240,235,224,.7);line-height:1.7;';
+  detail.textContent = content;
+  box.appendChild(detail);
 }
 
 async function mirrorRefreshReflections(name) {
@@ -22008,7 +22092,7 @@ async function mirrorRefreshReflections(name) {
 
   const tiffContext = 'Tiff: Libra Sun 17°, Aries Moon 6°, Capricorn Rising 28°. Life Path 5. Soul Card: The Hierophant. Chinese Zodiac: Water Monkey. HD: Pure Generator 4/6.';
   const personContext = name + ': Sun ' + person.sunSign + ', Moon ' + person.moonSign + ', Life Path ' + person.lifePath + ', Soul Card: ' + (person.soulCard ? person.soulCard.name : '?') + ', ' + person.czElement + ' ' + person.cz + ', Gene Key ' + person.geneKey + '.';
-  const prompt = `Astrologer/spiritual guide. Write with poetic precision.\n\n${tiffContext}\n${personContext}\n\nReturn ONLY JSON:\n{"shadowLight":{"light":"2-3 sentences","shadow":"2-3 sentences"},"relate":"3-4 sentences of practical guidance for Tiff"}`;
+  const prompt = `Astrologer/spiritual guide. Write with poetic precision.\n\n${tiffContext}\n${personContext}\n\nReturn ONLY JSON:\n{"shadowLight":{"light":"2-3 sentences","shadow":"2-3 sentences"},"relate":{"tips":["2-4 word tip","2-4 word tip","2-4 word tip"],"full":"3-4 sentences of practical guidance for Tiff"}}`;
 
   try {
     const data = await claudeAPI(apiKey, { model:'claude-sonnet-4-6', max_tokens:600, messages:[{role:'user', content:prompt}] });
