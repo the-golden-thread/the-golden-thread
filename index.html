@@ -21785,15 +21785,9 @@ function renderMirror(dest) {
       <div style="font-family:'Cormorant Garamond',serif;font-size:1.1rem;font-style:italic;color:rgba(240,235,224,.6);margin-bottom:20px;">Enter someone's details to reveal how your charts meet.</div>
 
       <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:20px;">
-        <div style="display:grid;grid-template-columns:2fr 1fr;gap:10px;">
-          <div>
-            <div style="font-family:'Space Mono',monospace;font-size:.46rem;letter-spacing:.1em;text-transform:uppercase;color:rgba(201,185,154,.35);margin-bottom:5px;">Name</div>
-            <input id="mirror-name" type="text" placeholder="e.g. Jenna" style="width:100%;box-sizing:border-box;background:rgba(255,255,255,.04);border:1px solid rgba(201,185,154,.2);color:rgba(240,235,224,.9);font-family:'Cormorant Garamond',serif;font-size:1rem;padding:10px 14px;outline:none;">
-          </div>
-          <div>
-            <div style="font-family:'Space Mono',monospace;font-size:.46rem;letter-spacing:.1em;text-transform:uppercase;color:rgba(201,185,154,.25);margin-bottom:5px;">Pronouns</div>
-            <input id="mirror-pronouns" type="text" placeholder="she/her" style="width:100%;box-sizing:border-box;background:rgba(255,255,255,.04);border:1px solid rgba(201,185,154,.12);color:rgba(240,235,224,.8);font-family:'Cormorant Garamond',serif;font-size:.95rem;padding:10px 14px;outline:none;">
-          </div>
+        <div>
+          <div style="font-family:'Space Mono',monospace;font-size:.46rem;letter-spacing:.1em;text-transform:uppercase;color:rgba(201,185,154,.35);margin-bottom:5px;">Name</div>
+          <input id="mirror-name" type="text" placeholder="e.g. Jenna" style="width:100%;box-sizing:border-box;background:rgba(255,255,255,.04);border:1px solid rgba(201,185,154,.2);color:rgba(240,235,224,.9);font-family:'Cormorant Garamond',serif;font-size:1rem;padding:10px 14px;outline:none;">
         </div>
         <div>
           <div style="font-family:'Space Mono',monospace;font-size:.46rem;letter-spacing:.1em;text-transform:uppercase;color:rgba(201,185,154,.35);margin-bottom:5px;">Birthdate</div>
@@ -21811,15 +21805,6 @@ function renderMirror(dest) {
         </div>
       </div>
 
-      <div style="margin-bottom:20px;">
-        <div style="font-family:'Space Mono',monospace;font-size:.46rem;letter-spacing:.1em;text-transform:uppercase;color:rgba(201,185,154,.35);margin-bottom:8px;">Relationship Type</div>
-        <div style="display:flex;gap:6px;flex-wrap:wrap;" id="mirror-rel-btns">
-          ${['Romantic','Friendship','Family','Colleague','Mentor','Other'].map(t =>
-            `<button onclick="mirrorSetRelType(this,'${t}')" style="font-family:'Space Mono',monospace;font-size:.48rem;letter-spacing:.06em;padding:6px 12px;background:transparent;border:1px solid rgba(201,185,154,.18);color:rgba(201,185,154,.45);cursor:pointer;">${t}</button>`
-          ).join('')}
-        </div>
-        <input type="hidden" id="mirror-rel-type" value="Friendship">
-      </div>
       <button onclick="mirrorGenerate()" style="width:100%;font-family:'Space Mono',monospace;font-size:.55rem;letter-spacing:.1em;text-transform:uppercase;padding:14px;background:rgba(107,79,138,.08);border:1px solid rgba(107,79,138,.3);color:rgba(155,107,171,.7);cursor:pointer;margin-bottom:24px;">✦ Generate Mirror</button>
 
       <div id="mirror-result"></div>
@@ -21856,13 +21841,13 @@ function mirrorPersonCard(person, expanded) {
         <div style="font-size:1.4rem;">${person.czEmoji || '◑'}</div>
         <div>
           <div style="font-family:'Cormorant Garamond',serif;font-size:1.05rem;color:rgba(240,235,224,.9);">${person.name}</div>
-          <div style="font-family:'Space Mono',monospace;font-size:.44rem;color:rgba(201,185,154,.35);letter-spacing:.06em;margin-top:2px;">${person.pronouns ? person.pronouns+' · ' : ''}☀ ${person.sunSign || '?'} · 🌙 ${person.moonSign || '?'} · LP ${person.lifePath || '?'}</div>
+          <div style="font-family:'Space Mono',monospace;font-size:.44rem;color:rgba(201,185,154,.35);letter-spacing:.06em;margin-top:2px;">☀ ${person.sunSign || '?'} · 🌙 ${person.moonSign || '?'} · LP ${person.lifePath || '?'}</div>
         </div>
       </div>
       <div style="font-family:'Space Mono',monospace;font-size:.6rem;color:rgba(201,185,154,.3);" id="${id}-chevron">▸</div>
     </div>
     <div id="${id}" style="display:${expanded?'block':'none'};padding:0 16px 16px;">
-      <div id="mpc-${person.name.replace(/\s+/g, '_')}-grid">${mirrorChartGrid(person)}</div>
+      ${mirrorChartGrid(person)}
       <div id="${id}-shadow" style="margin-top:16px;">${person.shadowLight ? mirrorShadowLightHTML(person.shadowLight) : ''}</div>
       <div id="${id}-relate" style="margin-top:12px;">${person.relate ? mirrorRelateHTML(person.relate) : ''}</div>
       <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap;">
@@ -21874,232 +21859,49 @@ function mirrorPersonCard(person, expanded) {
 }
 
 function mirrorChartGrid(p) {
-  const bid = 'mcb-' + (p.name||'x').replace(/\s+/g,'_');
-
-  // Per-sign descriptions
-  const SUN_DESCS = {
-    Aries:'Bold initiator ruled by Mars — brings courage, directness, and raw instinctual drive. Needs to act first and feel second.',
-    Taurus:'Steadfast and sensory, ruled by Venus — values security, beauty, and embodied pleasure. Can be immovable under pressure.',
-    Gemini:'Quick-minded and dual-natured, ruled by Mercury — adapts fast, communicates brilliantly, craves variety and connection.',
-    Cancer:'Emotionally deep and protective, ruled by the Moon — feels everything; home and belonging are at the center of self.',
-    Leo:'Radiant and generous, ruled by the Sun — needs to create, express, and be genuinely witnessed. Heart is enormous.',
-    Virgo:'Discerning and service-oriented, ruled by Mercury — refines, analyzes, and improves; can over-criticize self and others.',
-    Libra:'Relational and fairness-seeking, ruled by Venus — needs harmony, dislikes confrontation, weighs everything carefully.',
-    Scorpio:'Transformative and intense, ruled by Pluto — goes deep, holds nothing lightly; power, truth, and depth are central.',
-    Sagittarius:'Expansive and truth-seeking, ruled by Jupiter — needs freedom and meaning; follows the arrow wherever it points.',
-    Capricorn:'Ambitious and structural, ruled by Saturn — builds to last, earns everything; can be cold under pressure.',
-    Aquarius:'Visionary and unconventional, ruled by Uranus — serves the collective; emotionally detached but deeply principled.',
-    Pisces:'Boundless and empathic, ruled by Neptune — the boundary between self and other is thin; feels the whole ocean.',
-  };
-  const MOON_DESCS = {
-    Aries:'Processes emotion through action — feelings arrive hot and fast. Needs to move, not stew. Impulsive emotional reactions that pass quickly.',
-    Taurus:'Needs physical comfort and stability to feel safe — soothing, loyal, slow to shift emotionally. Groundedness is home.',
-    Gemini:'Processes emotion through talking and thinking — needs to narrate feelings to understand them. Variety soothes anxiety.',
-    Cancer:'Most emotionally sensitive placement — deep nurturer who absorbs everything. Home and belonging are the emotional baseline.',
-    Leo:'Needs to feel seen and appreciated to feel loved — warm and generous, but pride makes them retreat when hurt.',
-    Virgo:'Processes emotion by analyzing and helping — feels best when useful, anxious when things feel chaotic or unresolved.',
-    Libra:'Needs harmony and fairness in close bonds — dislikes conflict intensely, may suppress feelings to keep the peace.',
-    Scorpio:'Feels deeply and holds long — emotional intensity runs underground. Loyalty and betrayal mean everything here.',
-    Sagittarius:'Needs freedom and meaning to feel okay — philosophy and space feed the soul. Feels caged by emotional obligation.',
-    Capricorn:'Stoic and self-contained — emotions are managed, not displayed. Reliability and consistency are how love is shown.',
-    Aquarius:'Processes emotion through ideas and healthy detachment — needs space; cares deeply for the collective but can seem cool.',
-    Pisces:'Boundlessly empathic — absorbs the emotions of others without a filter. Needs solitude to return to themselves.',
-  };
-  const RISING_DESCS = {
-    Aries:'Cancer Rising: The crab shell — soft inside, hard outside. They present as nurturing and protective, but the real self takes time to emerge. People feel emotionally held in their presence.',
-    Taurus:'Taurus Rising: Calm, grounded, and unhurried on the outside. Projects stability and sensory ease. People feel safe and comfortable around them.',
-    Gemini:'Gemini Rising: Quick, curious, expressive. They light up rooms with wit and adaptability. First impression is lively, intellectual, and slightly restless.',
-    Cancer:'Cancer Rising: Warm, receptive, and protective on first meeting. They feel like home. The shell is real — trust opens slowly.',
-    Leo:'Leo Rising: Radiant and commanding — impossible to miss. They enter a room and something shifts. Natural performers who lead with heart.',
-    Virgo:'Virgo Rising: Precise, helpful, and somewhat reserved. They assess before committing. First impression is capable and quietly attentive.',
-    Libra:'Libra Rising: Charming, graceful, and socially effortless. They make everyone feel considered. The scales are always running in the background.',
-    Scorpio:'Scorpio Rising: Intense and magnetic. People sense depth before a word is spoken. Privacy is a given; they reveal on their own terms.',
-    Sagittarius:'Sagittarius Rising: Enthusiastic, open, and expansive. Projects optimism and adventure. First meeting feels like a conversation that could go anywhere.',
-    Capricorn:'Capricorn Rising: Composed, authoritative, and deliberate. Projects competence and quiet gravity. The warmth is there — it just takes time.',
-    Aquarius:'Aquarius Rising: Distinctly themselves — unusual, friendly, and a little detached. Projects originality. People sense they operate by their own code.',
-    Pisces:'Pisces Rising: Dreamy, gentle, and hard to pin down. Projects sensitivity and imagination. People feel seen and accepted — the edges between you dissolve.',
-  };
-  const GK_DESCS = {
-    1:'GK 1 — Freshness (shadow: Entropy / gift: Freshness / siddhi: Beauty). Life\'s work is to embody creative renewal — to bring something genuinely new into the world rather than repeat old forms.',
-    2:'GK 2 — Letting Be (shadow: Dislocation / gift: Orientation / siddhi: Unity). Life\'s work is inner alignment — the gift of knowing which direction is true and helping others find their own.',
-    3:'GK 3 — Innovation (shadow: Chaos / gift: Innovation / siddhi: Innocence). Life\'s work is navigating chaos creatively — transforming disorder into breakthroughs.',
-    4:'GK 4 — Understanding (shadow: Intolerance / gift: Understanding / siddhi: Forgiveness). Life\'s work is developing true comprehension that dissolves judgment.',
-    5:'GK 5 — Patience (shadow: Impatience / gift: Patience / siddhi: Timelessness). Life\'s work is mastering right timing — acting from rhythm rather than urgency.',
-    6:'GK 6 — Diplomacy (shadow: Conflict / gift: Diplomacy / siddhi: Peace). Life\'s work is bringing peace through authentic relating — not avoidance, but genuine meeting.',
-    7:'GK 7 — Guidance (shadow: Division / gift: Guidance / siddhi: Virtue). Life\'s work is leadership from virtue — guiding through integrity, not authority.',
-    8:'GK 8 — Style (shadow: Mediocrity / gift: Style / siddhi: Exquisiteness). Life\'s work is authentic self-expression — the courage to be unmistakably oneself.',
-    9:'GK 9 — Determination (shadow: Inertia / gift: Determination / siddhi: Invincibility). Life\'s work is mastering focus — bringing everything to the one true thing.',
-    10:'GK 10 — Naturalness (shadow: Self-Obsession / gift: Naturalness / siddhi: Being). Life\'s work is self-love as spiritual practice — being fully, naturally oneself.',
-    11:'GK 11 — Idealism (shadow: Obscurity / gift: Idealism / siddhi: Light). Life\'s work is holding and transmitting inspired vision — ideas as seeds of new worlds.',
-    12:'GK 12 — Discrimination (shadow: Vanity / gift: Discrimination / siddhi: Purity). Life\'s work is discernment — knowing what to express, what to hold, and when.',
-    13:'GK 13 — Empathy (shadow: Discord / gift: Empathy / siddhi: Discernment). Life\'s work is to be a vessel for others\' stories — a witness without judgment who holds the full range of human experience.',
-    14:'GK 14 — Competence (shadow: Compromise / gift: Competence / siddhi: Bounteousness). Life\'s work is mastering a craft and using that mastery in service of life.',
-    15:'GK 15 — Magnetism (shadow: Dullness / gift: Magnetism / siddhi: Florescence). Life\'s work is authentic rhythm — not performing aliveness but actually living it.',
-    16:'GK 16 — Versatility (shadow: Indifference / gift: Versatility / siddhi: Mastery). Life\'s work is enthusiasm as a way of being — genuine interest that becomes mastery.',
-    17:'GK 17 — Far-Sightedness (shadow: Opinion / gift: Far-Sightedness / siddhi: Omniscience). Life\'s work is seeing patterns across time and transmitting that vision.',
-    18:'GK 18 — Integrity (shadow: Judgment / gift: Integrity / siddhi: Perfection). Life\'s work is healing through discernment — finding and correcting what is out of alignment.',
-    19:'GK 19 — Sensitivity (shadow: Co-Dependence / gift: Sensitivity / siddhi: Sacrifice). Life\'s work is refined attunement — feeling into what is needed and responding from love.',
-    20:'GK 20 — Presence (shadow: Superficiality / gift: Presence / siddhi: Awakening). Life\'s work is being fully here — right now, this moment, nothing withheld.',
-    21:'GK 21 — Authority (shadow: Control / gift: Authority / siddhi: Valour). Life\'s work is empowered leadership — not dominance but courageous right action.',
-    22:'GK 22 — Graciousness (shadow: Dishonour / gift: Graciousness / siddhi: Grace). Life\'s work is social alchemy — transforming environments through presence and openness.',
-    23:'GK 23 — Simplicity (shadow: Complexity / gift: Simplicity / siddhi: Quintessence). Life\'s work is distilling truth into essence — making the complex beautifully simple.',
-    24:'GK 24 — Invention (shadow: Addiction / gift: Invention / siddhi: Silence). Life\'s work is the creative pause — finding breakthroughs through stillness and return.',
-    25:'GK 25 — Acceptance (shadow: Constriction / gift: Acceptance / siddhi: Universal Love). Life\'s work is loving what is — radical acceptance as a healing force.',
-    26:'GK 26 — Artfulness (shadow: Pride / gift: Artfulness / siddhi: Invisibility). Life\'s work is integrity in influence — the art of moving others without manipulation.',
-    27:'GK 27 — Altruism (shadow: Selfishness / gift: Altruism / siddhi: Selflessness). Life\'s work is nourishment — caring for others as a natural overflow of inner fullness.',
-    28:'GK 28 — Totality (shadow: Purposelessness / gift: Totality / siddhi: Immortality). Life\'s work is finding meaning through risk — going all the way in.',
-    29:'GK 29 — Commitment (shadow: Half-Heartedness / gift: Commitment / siddhi: Devotion). Life\'s work is saying yes fully — whole-hearted devotion as a way of being.',
-    30:'GK 30 — Lightness (shadow: Desire / gift: Lightness / siddhi: Rapture). Life\'s work is emotional alchemy — turning longing into liberation.',
-    31:'GK 31 — Humility (shadow: Arrogance / gift: Leadership / siddhi: Humility). Life\'s work is democratic leadership — leading through example and service.',
-    32:'GK 32 — Veneration (shadow: Failure / gift: Preservation / siddhi: Veneration). Life\'s work is knowing what deserves to endure — preserving true value.',
-    33:'GK 33 — Mindfulness (shadow: Forgetting / gift: Mindfulness / siddhi: Revelation). Life\'s work is the art of remembering — mining the past for wisdom.',
-    34:'GK 34 — Strength (shadow: Force / gift: Strength / siddhi: Majesty). Life\'s work is pure power in service — life force expressed through authentic action.',
-    35:'GK 35 — Adventure (shadow: Hunger / gift: Adventure / siddhi: Boundlessness). Life\'s work is wide-ranging experience — gathering and transmitting the full spectrum.',
-    36:'GK 36 — Compassion (shadow: Turbulence / gift: Compassion / siddhi: Tenderness). Life\'s work is emotional depth as medicine — holding darkness without flinching.',
-    37:'GK 37 — Tenderness (shadow: Weakness / gift: Tenderness / siddhi: Equality). Life\'s work is family and community — the sacred bonds that hold life together.',
-    38:'GK 38 — Perseverance (shadow: Struggle / gift: Perseverance / siddhi: Honour). Life\'s work is fighting for what matters — unwavering integrity under pressure.',
-    39:'GK 39 — Dynamism (shadow: Provocation / gift: Dynamism / siddhi: Liberation). Life\'s work is emotional alchemy — turning friction into creative fire.',
-    40:'GK 40 — Resolve (shadow: Exhaustion / gift: Resolve / siddhi: Divine Will). Life\'s work is knowing when to rest and when to act — sustainable willpower.',
-    41:'GK 41 — Anticipation (shadow: Fantasy / gift: Anticipation / siddhi: Emanation). Life\'s work is initiating new cycles — the first spark before anything begins.',
-    42:'GK 42 — Detachment (shadow: Expectation / gift: Detachment / siddhi: Celebration). Life\'s work is completing cycles fully — beginning, middle, end, release.',
-    43:'GK 43 — Insight (shadow: Deafness / gift: Insight / siddhi: Epiphany). Life\'s work is inner knowing — flashes of understanding that arrive whole.',
-    44:'GK 44 — Teamwork (shadow: Interference / gift: Teamwork / siddhi: Synarchy). Life\'s work is instinctual pattern recognition — knowing who belongs in which role.',
-    45:'GK 45 — Synergy (shadow: Dominance / gift: Synergy / siddhi: Communion). Life\'s work is gathering people around shared purpose and creating true community.',
-    46:'GK 46 — Delight (shadow: Seriousness / gift: Delight / siddhi: Ecstasy). Life\'s work is embodiment — the sacred yes to physical life and its pleasures.',
-    47:'GK 47 — Transmutation (shadow: Oppression / gift: Transmutation / siddhi: Transfiguration). Life\'s work is alchemy — transforming the most painful material into wisdom.',
-    48:'GK 48 — Resourcefulness (shadow: Inadequacy / gift: Resourcefulness / siddhi: Wisdom). Life\'s work is depth — trusting that the answer is already within.',
-    49:'GK 49 — Revolution (shadow: Reaction / gift: Revolution / siddhi: Rebirth). Life\'s work is principled transformation — changing what must change without destroying what must stay.',
-    50:'GK 50 — Equilibrium (shadow: Corruption / gift: Equilibrium / siddhi: Harmony). Life\'s work is being a container for others — holding the field stable so others can grow.',
-    51:'GK 51 — Initiative (shadow: Agitation / gift: Initiative / siddhi: Awakening). Life\'s work is courage as catalyst — the shock that opens others to a new level.',
-    52:'GK 52 — Restraint (shadow: Stress / gift: Restraint / siddhi: Stillness). Life\'s work is the art of stopping — the power of the pause.',
-    53:'GK 53 — Expansion (shadow: Immaturity / gift: Expansion / siddhi: Superabundance). Life\'s work is initiating new cycles of growth — spiraling ever wider.',
-    54:'GK 54 — Aspiration (shadow: Greed / gift: Aspiration / siddhi: Ascension). Life\'s work is transformed ambition — rising through service rather than accumulation.',
-    55:'GK 55 — Freedom (shadow: Victimisation / gift: Freedom / siddhi: Freedom). Life\'s work is emotional sovereignty — liberating oneself and others from inherited suffering.',
-    56:'GK 56 — Enrichment (shadow: Distraction / gift: Enrichment / siddhi: Intoxication). Life\'s work is storytelling as medicine — transmuting experience into meaning.',
-    57:'GK 57 — Intuition (shadow: Unease / gift: Intuition / siddhi: Clarity). Life\'s work is refined instinct — knowing what is true before the mind catches up.',
-    58:'GK 58 — Vitality (shadow: Dissatisfaction / gift: Vitality / siddhi: Bliss). Life\'s work is joy as a practice — aliveness brought to everything.',
-    59:'GK 59 — Intimacy (shadow: Dishonesty / gift: Intimacy / siddhi: Transparency). Life\'s work is breaking through barriers to true closeness.',
-    60:'GK 60 — Realism (shadow: Limitation / gift: Realism / siddhi: Justice). Life\'s work is working with constraints creatively — structure as a doorway to freedom.',
-    61:'GK 61 — Inspiration (shadow: Psychosis / gift: Inspiration / siddhi: Sanctity). Life\'s work is channeling inner truth — bringing what lies beyond language into form.',
-    62:'GK 62 — Impeccability (shadow: Intellectualism / gift: Impeccability / siddhi: Invisibility). Life\'s work is precision — doing things correctly, in the right order, with care.',
-    63:'GK 63 — Truth-Seeking (shadow: Doubt / gift: Inquiry / siddhi: Truth). Life\'s work is the honest question — following doubt all the way to bedrock.',
-    64:'GK 64 — Imagination (shadow: Confusion / gift: Imagination / siddhi: Illumination). Life\'s work is holding the unresolved — sitting with confusion until clarity emerges.',
-  };
-  const HD_DESCS = {
-    Generator: 'Generators respond and find satisfaction through sustainable, enlivening work. They have consistent life force. Frustration is the signal they are not in alignment.',
-    'Manifesting Generator': 'Manifesting Generators are multi-passionate, fast-moving responders. They need to visualize before leaping. Frustration and anger signal when to pivot.',
-    Projector: 'Projectors guide and direct others energy. They are here to see and be seen. Bitterness arrives when offering wisdom without being invited.',
-    Manifestor: 'Manifestors initiate and begin things others cannot. Their superpower is starting. Informing others before acting neutralizes unconscious resistance they generate.',
-    Reflector: 'Reflectors are rare mirrors of their community, sampling all nine energy centers. They need a full lunar cycle before major decisions; they reflect the health of their environment.',
-  };
-
-  const sunDesc   = (SUN_DESCS[p.sunSign] || '');
-  const moonDesc  = (MOON_DESCS[p.moonSign] || '');
-  const risingDesc = p.rising ? (RISING_DESCS[p.rising] || ('Cancer Rising is curious and protective, approaching the world with a soft touch that conceals real inner depth.')) : '';
-  const lpDesc    = p.lifePath && NUMEROLOGY_MEANINGS[p.lifePath] ? NUMEROLOGY_MEANINGS[p.lifePath].essence : '';
-  const scDesc    = p.soulCard ? p.soulCard.essence : '';
-  const czDesc    = p.cz ? (() => { const cz = CHINESE_ZODIAC[p.cz]; return cz ? 'The ' + (p.czElement||'') + ' ' + p.cz + ' is ' + (p.czYin?'Yin':'Yang') + ', fixed element ' + (cz.element_fixed||'') + '. Gifts: ' + cz.traits.join(', ') + '. Shadows: ' + cz.shadow.join(', ') + '.' : ''; })() : '';
-  const gkDesc    = p.geneKey ? (GK_DESCS[p.geneKey] || ('Gene Key ' + p.geneKey + ' — Life\'s Work sphere: the core gift this person is here to express in the world.')) : '';
-  const pyDesc    = p.personalYear ? 'Personal Year ' + p.personalYear + ': ' + ({1:'New beginnings — planting seeds, initiating, stepping into fresh territory.',2:'Patience and partnership — relationships deepen, collaboration is key.',3:'Creative expression — joy, communication, and expansion.',4:'Building and foundation — disciplined work, structure, long-term effort.',5:'Change and freedom — unexpected shifts, movement, new experiences.',6:'Love and responsibility — home, family, service, and harmony.',7:'Inner work and reflection — solitude, spiritual deepening, seeking truth.',8:'Power and abundance — material mastery, ambition, and recognition.',9:'Completion and release — endings, closure, and preparing for a new cycle.'}[p.personalYear]||'') : '';
-  const hdDesc    = p.hdType ? (HD_DESCS[p.hdType] || 'Human Design type reveals strategy and authority for navigating life correctly.') : '';
-
   const items = [
-    { label:'Sun',           emoji:'☀',  id:bid+'-sun',    value: p.sunSign||'—',                                                        desc: sunDesc },
-    { label:'Moon',          emoji:'🌙', id:bid+'-moon',   value: (p.moonSign||'—')+(p.hasBirthTime?'':' *'),                            desc: moonDesc },
-    { label:'Rising',        emoji:'↑',  id:bid+'-rising', value: p.rising||(p.hasBirthTime?'↻ Tap Refresh':'Needs birth time'),          desc: risingDesc, dim: !p.rising },
-    { label:'Life Path',     emoji:'✦',  id:bid+'-lp',     value: p.lifePath?(p.lifePath+(p.lpTitle?' · '+p.lpTitle:'')):'—',            desc: lpDesc },
-    { label:'Soul Card',     emoji:'◑',  id:bid+'-sc',     value: p.soulCard?p.soulCard.name:'—',                                        desc: scDesc },
-    { label:'Personal Year', emoji:'◎',  id:bid+'-py',     value: String(p.personalYear||'—'),                                           desc: pyDesc },
-    { label:'Chinese Zodiac',emoji:'🐉', id:bid+'-cz',     value: (p.czElement||'')+' '+(p.cz||'—')+(p.czYin?' · Yin':' · Yang'),       desc: czDesc },
-    { label:'Gene Key',      emoji:'⬡',  id:bid+'-gk',     value: p.geneKey?p.geneKey+' — Life\'s Work':'—',                            desc: gkDesc },
-    { label:'HD Type',       emoji:'◎',  id:bid+'-hd',     value: p.hdType||(p.hasBirthTime?'↻ Tap Refresh':'Needs birth time'),          desc: hdDesc, dim: !p.hdType },
+    { label:'Sun', value: p.sunSign || '—', emoji:'☀' },
+    { label:'Moon', value: (p.moonSign || '—') + (p.hasBirthTime ? '' : ' *'), emoji:'🌙' },
+    { label:'Rising', value: p.hasBirthTime ? (p.rising || 'See reading') : 'Needs birth time', emoji:'↑', dim: !p.hasBirthTime },
+    { label:'Life Path', value: p.lifePath ? p.lifePath + (p.lpTitle ? ' · ' + p.lpTitle : '') : '—', emoji:'✦' },
+    { label:'Soul Card', value: p.soulCard ? p.soulCard.name : '—', emoji: p.soulCard ? p.soulCard.emoji : '◑' },
+    { label:'Personal Year', value: p.personalYear || '—', emoji:'◎' },
+    { label:'Chinese Zodiac', value: (p.czElement||'') + ' ' + (p.cz||'—') + (p.czYin ? ' · Yin' : ' · Yang'), emoji: p.czEmoji || '🐉' },
+    { label:'Gene Key', value: p.geneKey ? p.geneKey + ' — Life\'s Work' : '—', emoji:'⬡' },
+    { label:'HD Type', value: p.hasBirthTime ? (p.hdType || 'See reading') : 'Needs birth time', emoji:'◎', dim: !p.hasBirthTime },
   ];
-
-  function escAttr(s) { return (s||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/"/g,'&quot;'); }
-
   return '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:4px;">'
-    + items.map(item => {
-        const hasDesc = !!(item.desc);
-        const dimStyle = item.dim ? 'opacity:.45;' : '';
-        const cursorStyle = hasDesc ? 'cursor:pointer;' : '';
-        const onclickAttr = hasDesc ? ' onclick="mirrorChartBoxExpand(\'' + item.id + '\',\'' + escAttr(item.desc) + '\')"' : '';
-        const indicator = hasDesc ? ' <span style="opacity:.3;font-size:.8em;">▸</span>' : '';
-        return '<div id="' + item.id + '"' + onclickAttr + ' style="padding:10px 12px;background:rgba(255,255,255,.02);border:1px solid rgba(201,185,154,.08);' + dimStyle + cursorStyle + '">'
-          + '<div style="font-family:Space Mono,monospace;font-size:.42rem;letter-spacing:.08em;text-transform:uppercase;color:rgba(201,185,154,.3);margin-bottom:3px;">' + item.emoji + ' ' + item.label + indicator + '</div>'
-          + '<div style="font-family:Cormorant Garamond,serif;font-size:.88rem;color:rgba(240,235,224,.8);">' + item.value + '</div>'
-          + '</div>';
-      }).join('')
+    + items.map(item => `<div style="padding:10px 12px;background:rgba(255,255,255,.02);border:1px solid rgba(201,185,154,.08);${item.dim?'opacity:.45':''}">
+        <div style="font-family:'Space Mono',monospace;font-size:.42rem;letter-spacing:.08em;text-transform:uppercase;color:rgba(201,185,154,.3);margin-bottom:3px;">${item.emoji} ${item.label}</div>
+        <div style="font-family:'Cormorant Garamond',serif;font-size:.88rem;color:rgba(240,235,224,.8);">${item.value}</div>
+      </div>`).join('')
     + '</div>'
-    + (!p.hasBirthTime ? '<div style="font-family:Space Mono,monospace;font-size:.42rem;color:rgba(201,185,154,.25);margin-top:4px;">* Moon may vary near sign boundaries. Rising & HD require birth time.</div>' : '');
-}
-
-function mirrorChartBoxExpand(id, desc) {
-  const box = document.getElementById(id);
-  if (!box) return;
-  const existing = box.querySelector('.mcb-detail');
-  if (existing) { existing.remove(); return; }
-  const d = document.createElement('div');
-  d.className = 'mcb-detail';
-  d.style.cssText = 'margin-top:8px;padding:8px 10px;background:rgba(107,79,138,.06);border-top:1px solid rgba(107,79,138,.12);font-family:Cormorant Garamond,serif;font-size:.85rem;color:rgba(240,235,224,.68);line-height:1.7;';
-  d.textContent = desc;
-  box.appendChild(d);
+    + (!p.hasBirthTime ? '<div style="font-family:\'Space Mono\',monospace;font-size:.42rem;color:rgba(201,185,154,.25);margin-top:4px;">* Moon may vary ±1 sign if born near sign boundary. Rising & HD require birth time.</div>' : '');
 }
 
 function mirrorShadowLightHTML(sl) {
   if (!sl) return '';
-  return '<div style="margin-bottom:12px;">'
-    + '<div style="font-family:Space Mono,monospace;font-size:.46rem;letter-spacing:.12em;text-transform:uppercase;color:rgba(201,185,154,.3);margin-bottom:10px;">&#9680; Shadow &amp; Light</div>'
-    + '<div style="display:flex;flex-direction:column;gap:8px;">'
-    + '<div style="padding:14px 16px;background:rgba(201,168,76,.04);border:1px solid rgba(201,168,76,.15);border-left:3px solid rgba(201,168,76,.4);">'
-    + '<div style="font-family:Space Mono,monospace;font-size:.42rem;letter-spacing:.1em;text-transform:uppercase;color:rgba(201,168,76,.5);margin-bottom:8px;">&#10022; Light</div>'
-    + '<div style="font-family:Cormorant Garamond,serif;font-size:.92rem;color:rgba(240,235,224,.78);line-height:1.75;">' + (sl.light||'') + '</div>'
-    + '</div>'
-    + '<div style="padding:14px 16px;background:rgba(107,79,138,.04);border:1px solid rgba(107,79,138,.15);border-left:3px solid rgba(107,79,138,.4);">'
-    + '<div style="font-family:Space Mono,monospace;font-size:.42rem;letter-spacing:.1em;text-transform:uppercase;color:rgba(155,107,171,.5);margin-bottom:8px;">&#9680; Shadow</div>'
-    + '<div style="font-family:Cormorant Garamond,serif;font-size:.92rem;color:rgba(240,235,224,.78);line-height:1.75;">' + (sl.shadow||'') + '</div>'
-    + '</div>'
-    + '</div></div>';
+  return `<div style="margin-bottom:12px;">
+    <div style="font-family:'Space Mono',monospace;font-size:.46rem;letter-spacing:.12em;text-transform:uppercase;color:rgba(201,185,154,.3);margin-bottom:10px;">◑ Shadow & Light</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+      <div style="padding:12px 14px;background:rgba(201,168,76,.04);border:1px solid rgba(201,168,76,.15);border-top:2px solid rgba(201,168,76,.3);">
+        <div style="font-family:'Space Mono',monospace;font-size:.42rem;letter-spacing:.1em;text-transform:uppercase;color:rgba(201,168,76,.5);margin-bottom:8px;">✦ Light</div>
+        <div style="font-family:'Cormorant Garamond',serif;font-size:.88rem;color:rgba(240,235,224,.75);line-height:1.7;">${sl.light}</div>
+      </div>
+      <div style="padding:12px 14px;background:rgba(107,79,138,.04);border:1px solid rgba(107,79,138,.15);border-top:2px solid rgba(107,79,138,.3);">
+        <div style="font-family:'Space Mono',monospace;font-size:.42rem;letter-spacing:.1em;text-transform:uppercase;color:rgba(155,107,171,.5);margin-bottom:8px;">◑ Shadow</div>
+        <div style="font-family:'Cormorant Garamond',serif;font-size:.88rem;color:rgba(240,235,224,.75);line-height:1.7;">${sl.shadow}</div>
+      </div>
+    </div>
+  </div>`;
 }
 
 function mirrorRelateHTML(relate) {
   if (!relate) return '';
-  var tips = [], full = '';
-  if (typeof relate === 'object' && relate !== null) {
-    tips = Array.isArray(relate.tips) ? relate.tips : [];
-    full = relate.full || '';
-  } else { full = String(relate); }
-  var tipsHTML = tips.length
-    ? '<div style="display:flex;flex-direction:column;gap:5px;margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid rgba(107,155,201,.12);">'
-      + tips.map(function(t){ return '<div style="display:flex;gap:8px;align-items:flex-start;"><span style="color:rgba(107,155,201,.6);flex-shrink:0;">&#9678;</span><span style="font-family:Space Mono,monospace;font-size:.52rem;color:rgba(201,185,154,.65);letter-spacing:.03em;line-height:1.5;">' + t + '</span></div>'; }).join('')
-      + '</div>' : '';
-  return '<div style="padding:14px 16px;background:rgba(107,155,201,.04);border:1px solid rgba(107,155,201,.15);border-left:3px solid rgba(107,155,201,.3);">'
-    + '<div style="font-family:Space Mono,monospace;font-size:.44rem;letter-spacing:.1em;text-transform:uppercase;color:rgba(107,155,201,.5);margin-bottom:10px;">&#9678; How to Relate</div>'
-    + tipsHTML
-    + '<div style="font-family:Cormorant Garamond,serif;font-size:.9rem;color:rgba(240,235,224,.8);line-height:1.8;">' + full + '</div>'
-    + '</div>';
-}
-
-function mirrorSetRelType(btn, type) {
-  if (document.getElementById('mirror-rel-type')) document.getElementById('mirror-rel-type').value = type;
-  var btns = document.querySelectorAll('#mirror-rel-btns button');
-  btns.forEach(function(b) { b.style.background='transparent'; b.style.borderColor='rgba(201,185,154,.18)'; b.style.color='rgba(201,185,154,.45)'; });
-  btn.style.background='rgba(107,79,138,.1)'; btn.style.borderColor='rgba(107,79,138,.35)'; btn.style.color='rgba(155,107,171,.8)';
-}
-
-function mirrorSavePending() {
-  var person = window._mirrorPending;
-  if (!person) return;
-  var people = getMirrorPeople().filter(function(p){ return p.name !== person.name; });
-  people.push(person);
-  saveMirrorPeople(people);
-  window._mirrorPending = null;
-  var btn = document.getElementById('mirror-save-btn');
-  if (btn) { btn.textContent = '✓ Saved'; btn.disabled = true; btn.style.color = 'rgba(107,180,107,.4)'; }
-  var dest = document.getElementById('gt-content');
-  if (dest) {
-    var eb = dest.querySelector('#mirror-btn-established');
-    if (eb) { var n = getMirrorPeople().length; eb.textContent = '◑ Established' + (n ? ' (' + n + ')' : ''); }
-  }
+  return `<div style="padding:14px 16px;background:rgba(107,155,201,.04);border:1px solid rgba(107,155,201,.15);border-left:3px solid rgba(107,155,201,.3);">
+    <div style="font-family:'Space Mono',monospace;font-size:.44rem;letter-spacing:.1em;text-transform:uppercase;color:rgba(107,155,201,.5);margin-bottom:8px;">◎ How to Relate</div>
+    <div style="font-family:'Cormorant Garamond',serif;font-size:.9rem;color:rgba(240,235,224,.8);line-height:1.8;">${relate}</div>
+  </div>`;
 }
 
 function mirrorToggle(id) {
@@ -22134,16 +21936,18 @@ async function mirrorGenerate() {
   if (result) result.innerHTML = '<div style="font-family:\'Space Mono\',monospace;font-size:.55rem;color:rgba(201,185,154,.3);display:flex;align-items:center;gap:10px;padding:16px 0;"><div class="astro-spinner"></div> Weaving the mirror…</div>';
 
   const person = computePersonChart(name, dob, time, loc);
-  const tiffContext = 'Tiff (the app owner): Libra Sun 17°, Aries Moon 6°, Capricorn Rising 28°, Scorpio stellium. Life Path 5 (The Hierophant). Soul Card: The Hierophant. Personal Year ' + getNumerologyNumbers().personalYear + '. Chinese Zodiac: Water Monkey. HD: Pure Generator 4/6, Sacral authority. Gene Keys: primary sphere channels 10:34/11:56/25:51/03:60. Primary clairs: claircognizance, clairsentience.';
-  const personContext = name + ': Sun in ' + person.sunSign + ', Moon in ' + person.moonSign + (person.hasBirthTime ? ' (confirmed)' : ' (estimated)') + '. Life Path ' + person.lifePath + ' (' + (person.lpTitle||'') + '). Soul Card: ' + (person.soulCard ? person.soulCard.name : '?') + '. Personal Year ' + person.personalYear + '. Chinese Zodiac: ' + person.czElement + ' ' + person.cz + ' (' + (person.czYin?'Yin':'Yang') + '). Gene Key ' + person.geneKey + ' (Life\'s Work).' + (person.hasBirthTime ? ' Birth time provided — include rising/HD interpretation if you can infer from context.' : '');
+  person.pronouns = pronouns || 'they/them';
+  person.relType = relType;
 
-  const relType = (document.getElementById('mirror-rel-type')?.value || 'connection');
   const hasFullBirthData = !!(person.birthTime && person.birthTime.trim() && person.birthLocation && person.birthLocation.trim());
   const genRisingField = hasFullBirthData
-    ? ',\n  "rising": "calculate the Whole Sign Ascendant for this person born at ' + person.birthTime + ' in ' + person.birthLocation + ' on ' + person.dob + ' — return just the sign name e.g. Cancer",\n  "hdType": "calculate approximate Human Design type for this birth data — Generator/Manifesting Generator/Projector/Manifestor/Reflector"'
+    ? ',\n  "rising": "calculate the Whole Sign Ascendant for this person born at ' + person.birthTime + ' in ' + person.birthLocation + ' on ' + person.dob + ' — return just the sign name e.g. Cancer",\n  "hdType": "calculate approximate Human Design type — Generator/Manifesting Generator/Projector/Manifestor/Reflector"'
     : '';
 
-  const prompt = 'You are a deeply skilled astrologer, numerologist, and spiritual guide. This is a ' + relType + ' relationship. Write with poetic precision — specific, not generic. Use correct pronouns throughout.\n\n' + tiffContext + '\n' + personContext + '\n\nReturn ONLY a JSON object (no markdown, no preamble):\n{\n  "shadowLight": {\n    "light": "2-3 sentences on how these two charts illuminate each other",\n    "shadow": "2-3 sentences on where they might trigger each other"\n  },\n  "relate": {"tips": ["2-4 word tip", "2-4 word tip", "2-4 word tip"], "full": "3-4 sentences of practical specific guidance for Tiff"}' + genRisingField + '\n}\n\nBe specific to these actual charts. Avoid generic platitudes.';
+  const tiffContext = 'TIFF (she/her): Libra Sun 17°, Aries Moon 6°, Capricorn Rising 28°, Scorpio stellium. Life Path 5 — The Hierophant. Personal Year ' + getNumerologyNumbers().personalYear + '. Water Monkey. Pure Generator 4/6, Sacral authority.';
+  const personContext = name.toUpperCase() + ' (' + person.pronouns + '): Sun ' + person.sunSign + ', Moon ' + person.moonSign + (person.hasBirthTime ? ' (confirmed)' : ' (estimated)') + '. Life Path ' + person.lifePath + ' (' + (person.lpTitle||'') + '). Soul Card: ' + (person.soulCard ? person.soulCard.name : '?') + '. Personal Year ' + person.personalYear + '. ' + (person.czElement||'') + ' ' + person.cz + '. Gene Key ' + person.geneKey + '.';
+
+  const prompt = 'You are a skilled astrologer and spiritual guide. This is a ' + relType + ' relationship between Tiff and ' + name + '.\n\nPRONOUN RULES — follow exactly:\n- Tiff = she/her\n- ' + name + ' = ' + person.pronouns + '\n\n' + tiffContext + '\n' + personContext + '\n\nReturn ONLY JSON (no markdown):\n{\n  "shadowLight": {"light": "2-3 sentences", "shadow": "2-3 sentences"},\n  "relate": {"tips": ["2-4 word tip", "2-4 word tip", "2-4 word tip"], "full": "3-4 sentences of practical guidance for Tiff"}' + genRisingField + '\n}\n\nBe specific to these actual charts. Avoid platitudes.';
 
   try {
     const data = await claudeAPI(apiKey, { model:'claude-sonnet-4-6', max_tokens:1000, messages:[{role:'user', content:prompt}] });
@@ -22158,8 +21962,10 @@ async function mirrorGenerate() {
     if (reflections.rising) person.rising = reflections.rising;
     if (reflections.hdType) person.hdType = reflections.hdType;
 
-    // Store pending — user must tap Save to persist
-    window._mirrorPending = person;
+    // Save person
+    var people = getMirrorPeople().filter(p => p.name !== name);
+    people.push(person);
+    saveMirrorPeople(people);
 
     // Show result inline
     if (result) {
@@ -22169,10 +21975,10 @@ async function mirrorGenerate() {
             <div style="font-size:1.6rem;">${person.czEmoji}</div>
             <div>
               <div style="font-family:'Cormorant Garamond',serif;font-size:1.15rem;color:rgba(240,235,224,.9);">${name}</div>
-              <div style="font-family:'Space Mono',monospace;font-size:.44rem;color:rgba(201,185,154,.35);margin-top:2px;">${person.pronouns ? person.pronouns+' · ' : ''}☀ ${person.sunSign} · 🌙 ${person.moonSign} · LP ${person.lifePath}</div>
+              <div style="font-family:'Space Mono',monospace;font-size:.44rem;color:rgba(201,185,154,.35);margin-top:2px;">☀ ${person.sunSign} · 🌙 ${person.moonSign} · LP ${person.lifePath}</div>
             </div>
           </div>
-          <div id="mpc-${person.name.replace(/\s+/g, '_')}-grid">${mirrorChartGrid(person)}</div>
+          ${mirrorChartGrid(person)}
           <div style="margin-top:14px;">${mirrorShadowLightHTML(person.shadowLight)}</div>
           <div style="margin-top:10px;">${mirrorRelateHTML(person.relate)}</div>
           <div style="margin-top:14px;font-family:'Space Mono',monospace;font-size:.5rem;color:rgba(107,155,107,.5);display:flex;align-items:center;gap:6px;">✓ Saved to Established</div>
@@ -22194,37 +22000,24 @@ async function mirrorRefreshReflections(name) {
   const id = 'mpc-' + name.replace(/\s+/g,'_');
   const shadowEl = document.getElementById(id + '-shadow');
   const relateEl = document.getElementById(id + '-relate');
-  if (shadowEl) shadowEl.innerHTML = '<div style="font-family:Space Mono,monospace;font-size:.52rem;color:rgba(201,185,154,.3);display:flex;align-items:center;gap:8px;padding:12px 0;"><div class="astro-spinner"></div> Refreshing…</div>';
+  if (shadowEl) shadowEl.innerHTML = '<div style="font-family:\'Space Mono\',monospace;font-size:.52rem;color:rgba(201,185,154,.3);display:flex;align-items:center;gap:8px;padding:12px 0;"><div class="astro-spinner"></div> Refreshing…</div>';
 
-  const relType = person.relType || 'connection';
-  const pronouns = person.pronouns || 'they/them';
-  const hasFullBirth = !!(person.birthTime && person.birthTime.trim() && person.birthLocation && person.birthLocation.trim());
-  const risingField = hasFullBirth
-    ? ',\\n  "rising": "calculate Whole Sign Ascendant for ' + person.dob + ' at ' + person.birthTime + ' in ' + person.birthLocation + '",\\n  "hdType": "calculate approximate Human Design type"'
-    : '';
-
-  const tiffContext = 'Tiff (she/her): Libra Sun 17°, Aries Moon 6°, Capricorn Rising 28°, Scorpio stellium. Life Path 5 — The Hierophant. Personal Year ' + getNumerologyNumbers().personalYear + '. Water Monkey. Pure Generator 4/6, Sacral authority.';
-  const personContext = name + ' (' + pronouns + '): Sun ' + person.sunSign + ', Moon ' + person.moonSign + (person.rising ? ', Rising ' + person.rising : '') + '. Life Path ' + person.lifePath + ' (' + (person.lpTitle||'') + '). Soul Card: ' + (person.soulCard ? person.soulCard.name : '?') + '. Personal Year ' + person.personalYear + '. ' + (person.czElement||'') + ' ' + person.cz + '. Gene Key ' + person.geneKey + '. ' + (person.hdType ? 'HD: ' + person.hdType + '.' : '') + ' Relationship type: ' + relType + '.';
-
-  const prompt = 'Astrologer and spiritual guide. Use correct pronouns. Write with poetic precision.\n\n' + tiffContext + '\n' + personContext + '\n\nReturn ONLY JSON:\n{\n  "shadowLight": {"light": "2-3 sentences", "shadow": "2-3 sentences"},\n  "relate": {"tips": ["2-4 word tip", "2-4 word tip", "2-4 word tip"], "full": "3-4 sentences of practical guidance for Tiff"}' + risingField + '\n}';
+  const tiffContext = 'Tiff (she/her, PRONOUNS: she/her): Libra Sun 17°, Aries Moon 6°, Capricorn Rising 28°, Scorpio stellium. Life Path 5 — The Hierophant. Water Monkey. Pure Generator 4/6, Sacral authority.';
+  const personContext = name + ' (PRONOUNS: ' + pronouns + '): Sun ' + person.sunSign + ', Moon ' + person.moonSign + (person.rising ? ', Rising ' + person.rising : '') + '. Life Path ' + person.lifePath + '. Soul Card: ' + (person.soulCard ? person.soulCard.name : '?') + '. ' + (person.czElement||'') + ' ' + person.cz + '. Gene Key ' + person.geneKey + '. ' + (person.hdType ? 'HD: ' + person.hdType + '.' : '');
+  const prompt = `Astrologer/spiritual guide. Write with poetic precision.\n\n${tiffContext}\n${personContext}\n\nReturn ONLY JSON:\n{"shadowLight":{"light":"2-3 sentences","shadow":"2-3 sentences"},"relate":"3-4 sentences of practical guidance for Tiff"}`;
 
   try {
-    const data = await claudeAPI(apiKey, { model:'claude-sonnet-4-6', max_tokens:800, messages:[{role:'user', content:prompt}] });
+    const data = await claudeAPI(apiKey, { model:'claude-sonnet-4-6', max_tokens:600, messages:[{role:'user', content:prompt}] });
     const raw = (data.content?.find(c=>c.type==='text')?.text||'').trim();
     const clean = raw.replace(/```json|```/g,'').trim();
     let r; try { r = JSON.parse(clean); } catch(e) { const m=clean.match(/\{[\s\S]*\}/); if(m) r=JSON.parse(m[0]); else throw e; }
     person.shadowLight = r.shadowLight;
     person.relate = r.relate;
-    if (r.rising) person.rising = r.rising;
-    if (r.hdType) person.hdType = r.hdType;
     saveMirrorPeople(people);
     if (shadowEl) shadowEl.innerHTML = mirrorShadowLightHTML(person.shadowLight);
     if (relateEl) relateEl.innerHTML = mirrorRelateHTML(person.relate);
-    // Re-render chart grid to show populated rising/HD
-    const gridEl = document.getElementById(id + '-grid');
-    if (gridEl) gridEl.innerHTML = mirrorChartGrid(person);
   } catch(err) {
-    if (shadowEl) shadowEl.innerHTML = '<div style="font-family:Space Mono,monospace;font-size:.52rem;color:rgba(180,100,100,.5);">Error: ' + (err.message||'unknown') + '</div>';
+    if (shadowEl) shadowEl.innerHTML = '<div style="font-family:\'Space Mono\',monospace;font-size:.52rem;color:rgba(180,100,100,.5);">Error refreshing: ' + (err.message||'unknown') + '</div>';
   }
 }
 
