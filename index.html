@@ -21785,9 +21785,15 @@ function renderMirror(dest) {
       <div style="font-family:'Cormorant Garamond',serif;font-size:1.1rem;font-style:italic;color:rgba(240,235,224,.6);margin-bottom:20px;">Enter someone's details to reveal how your charts meet.</div>
 
       <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:20px;">
-        <div>
-          <div style="font-family:'Space Mono',monospace;font-size:.46rem;letter-spacing:.1em;text-transform:uppercase;color:rgba(201,185,154,.35);margin-bottom:5px;">Name</div>
-          <input id="mirror-name" type="text" placeholder="e.g. Jenna" style="width:100%;box-sizing:border-box;background:rgba(255,255,255,.04);border:1px solid rgba(201,185,154,.2);color:rgba(240,235,224,.9);font-family:'Cormorant Garamond',serif;font-size:1rem;padding:10px 14px;outline:none;">
+        <div style="display:grid;grid-template-columns:2fr 1fr;gap:10px;">
+          <div>
+            <div style="font-family:'Space Mono',monospace;font-size:.46rem;letter-spacing:.1em;text-transform:uppercase;color:rgba(201,185,154,.35);margin-bottom:5px;">Name</div>
+            <input id="mirror-name" type="text" placeholder="e.g. Jenna" style="width:100%;box-sizing:border-box;background:rgba(255,255,255,.04);border:1px solid rgba(201,185,154,.2);color:rgba(240,235,224,.9);font-family:'Cormorant Garamond',serif;font-size:1rem;padding:10px 14px;outline:none;">
+          </div>
+          <div>
+            <div style="font-family:'Space Mono',monospace;font-size:.46rem;letter-spacing:.1em;text-transform:uppercase;color:rgba(201,185,154,.25);margin-bottom:5px;">Pronouns</div>
+            <input id="mirror-pronouns" type="text" placeholder="she/her" style="width:100%;box-sizing:border-box;background:rgba(255,255,255,.04);border:1px solid rgba(201,185,154,.12);color:rgba(240,235,224,.8);font-family:'Cormorant Garamond',serif;font-size:.95rem;padding:10px 14px;outline:none;">
+          </div>
         </div>
         <div>
           <div style="font-family:'Space Mono',monospace;font-size:.46rem;letter-spacing:.1em;text-transform:uppercase;color:rgba(201,185,154,.35);margin-bottom:5px;">Birthdate</div>
