@@ -21766,87 +21766,324 @@ function computePersonChart(name, dob, birthTime, birthLocation) {
 }
 
 // ── Main render ────────────────────────────────────────────────
+// ── CROSS-COMPARE STORE ─────────────────────────────────────
+const CROSS_STORE_KEY = 'gt_mirror_cross_v1';
+function getCrossCompares() {
+  try { return JSON.parse(localStorage.getItem(CROSS_STORE_KEY) || '[]'); } catch(e) { return []; }
+}
+function saveCrossCompares(arr) {
+  try { localStorage.setItem(CROSS_STORE_KEY, JSON.stringify(arr)); } catch(e) {}
+}
+
+// ── RENDER MIRROR (updated with mode toggle + cross-compare tab) ──
 function renderMirror(dest) {
-  var people = getMirrorPeople().sort(function(a,b){ return (a.name||'').localeCompare(b.name||''); });
-  var hasPeople = people.length > 0;
-  var estLabel = 'Established' + (hasPeople ? ' ('+people.length+')' : '');
+  var people  = getMirrorPeople().sort(function(a,b){ return (a.name||'').localeCompare(b.name||''); });
+  var crosses = getCrossCompares().sort(function(a,b){ return ((a.personA&&a.personA.name)||'').localeCompare((b.personA&&b.personA.name)||''); });
+  var mirrorCount = people.length, crossCount = crosses.length;
+  var totalEst = mirrorCount + crossCount;
+  var estLabel = 'Established' + (totalEst ? ' ('+totalEst+')' : '');
 
   dest.innerHTML = '<div style="max-width:700px;margin:0 auto;padding:20px 16px 60px;">'
+    // Header
     + '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;">'
     + '<div style="font-family:Space Mono,monospace;font-size:.52rem;color:rgba(201,185,154,.35);letter-spacing:.14em;text-transform:uppercase;">&#9680; Mirror</div>'
     + '<div style="display:flex;gap:8px;">'
     + '<button id="mirror-btn-new" onclick="mirrorShowPanel(\'new\')" style="font-family:Space Mono,monospace;font-size:.5rem;letter-spacing:.08em;padding:6px 14px;background:rgba(107,79,138,.1);border:1px solid rgba(107,79,138,.3);color:rgba(155,107,171,.7);cursor:pointer;">+ New</button>'
-    + '<button id="mirror-btn-established" onclick="mirrorShowPanel(\'established\')" style="font-family:Space Mono,monospace;font-size:.5rem;letter-spacing:.08em;padding:6px 14px;background:transparent;border:1px solid rgba(201,185,154,.15);color:rgba(201,185,154,.4);cursor:pointer;">&#9680; ' + estLabel + '</button>'
+    + '<button id="mirror-btn-established" onclick="mirrorShowPanel(\'established\')" style="font-family:Space Mono,monospace;font-size:.5rem;letter-spacing:.08em;padding:6px 14px;background:transparent;border:1px solid rgba(201,185,154,.15);color:rgba(201,185,154,.4);cursor:pointer;">&#9680; '+estLabel+'</button>'
     + '</div></div>'
 
-    // New panel
+    // ── NEW PANEL ──
     + '<div id="mirror-panel-new">'
-    + '<div style="font-family:Cormorant Garamond,serif;font-size:1.1rem;font-style:italic;color:rgba(240,235,224,.6);margin-bottom:20px;">Enter someone\'s details to reveal how your charts meet.</div>'
-    + '<div style="display:flex;flex-direction:column;gap:12px;margin-bottom:20px;">'
 
-    // Name + Pronouns row
-    + '<div style="display:grid;grid-template-columns:2fr 1fr;gap:10px;">'
-    + '<div><div style="font-family:Space Mono,monospace;font-size:.46rem;letter-spacing:.1em;text-transform:uppercase;color:rgba(201,185,154,.35);margin-bottom:5px;">Name</div>'
-    + '<input id="mirror-name" type="text" placeholder="e.g. Jenna" style="width:100%;box-sizing:border-box;background:rgba(255,255,255,.04);border:1px solid rgba(201,185,154,.2);color:rgba(240,235,224,.9);font-family:Cormorant Garamond,serif;font-size:1rem;padding:10px 14px;outline:none;"></div>'
-    + '<div><div style="font-family:Space Mono,monospace;font-size:.46rem;letter-spacing:.1em;text-transform:uppercase;color:rgba(201,185,154,.25);margin-bottom:5px;">Pronouns</div>'
-    + '<input id="mirror-pronouns" type="text" placeholder="she/her" style="width:100%;box-sizing:border-box;background:rgba(255,255,255,.04);border:1px solid rgba(201,185,154,.12);color:rgba(240,235,224,.8);font-family:Cormorant Garamond,serif;font-size:.95rem;padding:10px 14px;outline:none;"></div>'
+    // Mode toggle
+    + '<div style="display:flex;gap:0;margin-bottom:24px;border:1px solid rgba(201,185,154,.15);">'
+    + '<button id="mirror-mode-mine" onclick="mirrorSetMode(\'mine\')" style="flex:1;font-family:Space Mono,monospace;font-size:.5rem;letter-spacing:.07em;padding:9px;background:rgba(107,79,138,.1);border:none;border-right:1px solid rgba(201,185,154,.15);color:rgba(155,107,171,.8);cursor:pointer;">&#9680; My Mirror</button>'
+    + '<button id="mirror-mode-cross" onclick="mirrorSetMode(\'cross\')" style="flex:1;font-family:Space Mono,monospace;font-size:.5rem;letter-spacing:.07em;padding:9px;background:transparent;border:none;color:rgba(201,185,154,.4);cursor:pointer;">&#8646; Cross-Compare</button>'
     + '</div>'
+    + '<input type="hidden" id="mirror-mode" value="mine">'
 
-    // Birthdate
-    + '<div><div style="font-family:Space Mono,monospace;font-size:.46rem;letter-spacing:.1em;text-transform:uppercase;color:rgba(201,185,154,.35);margin-bottom:5px;">Birthdate</div>'
-    + '<input id="mirror-dob" type="date" style="width:100%;box-sizing:border-box;background:rgba(255,255,255,.04);border:1px solid rgba(201,185,154,.2);color:rgba(240,235,224,.9);font-family:Space Mono,monospace;font-size:.7rem;padding:10px 14px;outline:none;"></div>'
-
-    // Birth time + location
-    + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">'
-    + '<div><div style="font-family:Space Mono,monospace;font-size:.46rem;letter-spacing:.1em;text-transform:uppercase;color:rgba(201,185,154,.25);margin-bottom:5px;">Birth Time <span style="opacity:.5">(optional)</span></div>'
-    + '<input id="mirror-time" type="time" style="width:100%;box-sizing:border-box;background:rgba(255,255,255,.04);border:1px solid rgba(201,185,154,.12);color:rgba(240,235,224,.7);font-family:Space Mono,monospace;font-size:.7rem;padding:10px 14px;outline:none;"></div>'
-    + '<div><div style="font-family:Space Mono,monospace;font-size:.46rem;letter-spacing:.1em;text-transform:uppercase;color:rgba(201,185,154,.25);margin-bottom:5px;">Birth Location <span style="opacity:.5">(optional)</span></div>'
-    + '<input id="mirror-location" type="text" placeholder="City, State" style="width:100%;box-sizing:border-box;background:rgba(255,255,255,.04);border:1px solid rgba(201,185,154,.12);color:rgba(240,235,224,.7);font-family:Cormorant Garamond,serif;font-size:.95rem;padding:10px 14px;outline:none;"></div>'
-    + '</div>'
-    + '</div>'
-
-    // Relationship type
-    + '<div style="margin-bottom:20px;">'
-    + '<div style="font-family:Space Mono,monospace;font-size:.46rem;letter-spacing:.1em;text-transform:uppercase;color:rgba(201,185,154,.35);margin-bottom:8px;">Relationship Type</div>'
-    + '<div style="display:flex;gap:6px;flex-wrap:wrap;" id="mirror-rel-btns">'
-    + ['Romantic','Friendship','Family','Colleague','Mentor','Other'].map(function(t){
-        return '<button onclick="mirrorSetRelType(this,\''+t+'\')" style="font-family:Space Mono,monospace;font-size:.48rem;letter-spacing:.06em;padding:6px 12px;background:transparent;border:1px solid rgba(201,185,154,.18);color:rgba(201,185,154,.45);cursor:pointer;">'+t+'</button>';
-      }).join('')
-    + '</div>'
-    + '<input type="hidden" id="mirror-rel-type" value="Friendship">'
-    + '</div>'
-
+    // My Mirror form
+    + '<div id="mirror-form-mine">'
+    + '<div style="font-family:Cormorant Garamond,serif;font-size:1.05rem;font-style:italic;color:rgba(240,235,224,.55);margin-bottom:18px;">Compare someone to your chart.</div>'
+    + mirrorPersonForm('', false)
+    + mirrorRelTypeHTML()
     + '<button onclick="mirrorGenerate()" style="width:100%;font-family:Space Mono,monospace;font-size:.55rem;letter-spacing:.1em;text-transform:uppercase;padding:14px;background:rgba(107,79,138,.08);border:1px solid rgba(107,79,138,.3);color:rgba(155,107,171,.7);cursor:pointer;margin-bottom:24px;">&#10022; Generate Mirror</button>'
     + '<div id="mirror-result"></div>'
     + '</div>'
 
-    // Established panel
+    // Cross-Compare form
+    + '<div id="mirror-form-cross" style="display:none;">'
+    + '<div style="font-family:Cormorant Garamond,serif;font-size:1.05rem;font-style:italic;color:rgba(240,235,224,.55);margin-bottom:18px;">Compare any two people to each other.</div>'
+    + '<div style="font-family:Space Mono,monospace;font-size:.46rem;letter-spacing:.1em;text-transform:uppercase;color:rgba(201,185,154,.35);margin-bottom:10px;">Person A</div>'
+    + mirrorPersonForm('a', false)
+    + '<div style="border-top:1px solid rgba(201,185,154,.08);margin:18px 0;"></div>'
+    + '<div style="font-family:Space Mono,monospace;font-size:.46rem;letter-spacing:.1em;text-transform:uppercase;color:rgba(201,185,154,.35);margin-bottom:10px;">Person B</div>'
+    + mirrorPersonForm('b', false)
+    + mirrorRelTypeHTML('cross')
+    + '<button onclick="crossGenerate()" style="width:100%;font-family:Space Mono,monospace;font-size:.55rem;letter-spacing:.1em;text-transform:uppercase;padding:14px;background:rgba(107,155,201,.06);border:1px solid rgba(107,155,201,.25);color:rgba(107,155,201,.7);cursor:pointer;margin-bottom:24px;">&#8646; Generate Cross-Compare</button>'
+    + '<div id="cross-result"></div>'
+    + '</div>'
+    + '</div>'
+
+    // ── ESTABLISHED PANEL ──
     + '<div id="mirror-panel-established" style="display:none;">'
-    + (hasPeople ? people.map(function(p){ return mirrorPersonCard(p); }).join('') : '<div style="font-family:Cormorant Garamond,serif;font-size:.95rem;font-style:italic;color:rgba(201,185,154,.3);padding:20px 0;">No mirrors saved yet.</div>')
+    // Sub-tabs
+    + '<div style="display:flex;gap:0;margin-bottom:18px;border:1px solid rgba(201,185,154,.12);">'
+    + '<button id="est-tab-mirrors" onclick="mirrorEstTab(\'mirrors\')" style="flex:1;font-family:Space Mono,monospace;font-size:.48rem;letter-spacing:.07em;padding:8px;background:rgba(107,79,138,.08);border:none;border-right:1px solid rgba(201,185,154,.12);color:rgba(155,107,171,.7);cursor:pointer;">&#9680; My Mirrors'+(mirrorCount?' ('+mirrorCount+')':'')+'</button>'
+    + '<button id="est-tab-cross" onclick="mirrorEstTab(\'cross\')" style="flex:1;font-family:Space Mono,monospace;font-size:.48rem;letter-spacing:.07em;padding:8px;background:transparent;border:none;color:rgba(201,185,154,.4);cursor:pointer;">&#8646; Cross-Compares'+(crossCount?' ('+crossCount+')':'')+'</button>'
+    + '</div>'
+    + '<div id="est-panel-mirrors">'
+    + (mirrorCount ? people.map(function(p){ return mirrorPersonCard(p); }).join('') : '<div style="font-family:Cormorant Garamond,serif;font-size:.95rem;font-style:italic;color:rgba(201,185,154,.3);padding:16px 0;">No mirrors saved yet.</div>')
+    + '</div>'
+    + '<div id="est-panel-cross" style="display:none;">'
+    + (crossCount ? crosses.map(function(c){ return crossCompareCard(c); }).join('') : '<div style="font-family:Cormorant Garamond,serif;font-size:.95rem;font-style:italic;color:rgba(201,185,154,.3);padding:16px 0;">No cross-compares saved yet.</div>')
+    + '</div>'
     + '</div></div>';
 
   mirrorShowPanel('new');
 }
 
-function mirrorShowPanel(which) {
-  var np = document.getElementById('mirror-panel-new');
-  var ep = document.getElementById('mirror-panel-established');
-  var nb = document.getElementById('mirror-btn-new');
-  var eb = document.getElementById('mirror-btn-established');
-  if (!np || !ep) return;
-  np.style.display = which === 'new' ? '' : 'none';
-  ep.style.display = which === 'established' ? '' : 'none';
-  if (nb) { nb.style.background = which==='new'?'rgba(107,79,138,.1)':'transparent'; nb.style.borderColor=which==='new'?'rgba(107,79,138,.3)':'rgba(201,185,154,.15)'; nb.style.color=which==='new'?'rgba(155,107,171,.7)':'rgba(201,185,154,.4)'; }
-  if (eb) { eb.style.background = which==='established'?'rgba(107,79,138,.1)':'transparent'; eb.style.borderColor=which==='established'?'rgba(107,79,138,.3)':'rgba(201,185,154,.15)'; eb.style.color=which==='established'?'rgba(155,107,171,.7)':'rgba(201,185,154,.4)'; }
+// ── FORM BUILDER ────────────────────────────────────────────
+function mirrorPersonForm(prefix, compact) {
+  var p = prefix ? prefix+'-' : '';
+  return '<div style="display:flex;flex-direction:column;gap:10px;margin-bottom:16px;">'
+    + '<div style="display:grid;grid-template-columns:2fr 1fr;gap:10px;">'
+    + '<div><div style="font-family:Space Mono,monospace;font-size:.44rem;letter-spacing:.1em;text-transform:uppercase;color:rgba(201,185,154,.35);margin-bottom:4px;">Name</div>'
+    + '<input id="mirror-'+p+'name" type="text" placeholder="e.g. Jenna" style="width:100%;box-sizing:border-box;background:rgba(255,255,255,.04);border:1px solid rgba(201,185,154,.2);color:rgba(240,235,224,.9);font-family:Cormorant Garamond,serif;font-size:1rem;padding:9px 12px;outline:none;"></div>'
+    + '<div><div style="font-family:Space Mono,monospace;font-size:.44rem;letter-spacing:.1em;text-transform:uppercase;color:rgba(201,185,154,.25);margin-bottom:4px;">Pronouns</div>'
+    + '<input id="mirror-'+p+'pronouns" type="text" placeholder="she/her" style="width:100%;box-sizing:border-box;background:rgba(255,255,255,.04);border:1px solid rgba(201,185,154,.12);color:rgba(240,235,224,.8);font-family:Cormorant Garamond,serif;font-size:.95rem;padding:9px 12px;outline:none;"></div>'
+    + '</div>'
+    + '<div><div style="font-family:Space Mono,monospace;font-size:.44rem;letter-spacing:.1em;text-transform:uppercase;color:rgba(201,185,154,.35);margin-bottom:4px;">Birthdate</div>'
+    + '<input id="mirror-'+p+'dob" type="date" style="width:100%;box-sizing:border-box;background:rgba(255,255,255,.04);border:1px solid rgba(201,185,154,.2);color:rgba(240,235,224,.9);font-family:Space Mono,monospace;font-size:.7rem;padding:9px 12px;outline:none;"></div>'
+    + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">'
+    + '<div><div style="font-family:Space Mono,monospace;font-size:.44rem;letter-spacing:.1em;text-transform:uppercase;color:rgba(201,185,154,.25);margin-bottom:4px;">Birth Time <span style="opacity:.5">(opt)</span></div>'
+    + '<input id="mirror-'+p+'time" type="time" style="width:100%;box-sizing:border-box;background:rgba(255,255,255,.04);border:1px solid rgba(201,185,154,.12);color:rgba(240,235,224,.7);font-family:Space Mono,monospace;font-size:.7rem;padding:9px 12px;outline:none;"></div>'
+    + '<div><div style="font-family:Space Mono,monospace;font-size:.44rem;letter-spacing:.1em;text-transform:uppercase;color:rgba(201,185,154,.25);margin-bottom:4px;">Location <span style="opacity:.5">(opt)</span></div>'
+    + '<input id="mirror-'+p+'location" type="text" placeholder="City, State" style="width:100%;box-sizing:border-box;background:rgba(255,255,255,.04);border:1px solid rgba(201,185,154,.12);color:rgba(240,235,224,.7);font-family:Cormorant Garamond,serif;font-size:.95rem;padding:9px 12px;outline:none;"></div>'
+    + '</div>'
+    + '</div>';
 }
 
-function mirrorSetRelType(btn, type) {
-  var inp = document.getElementById('mirror-rel-type');
+function mirrorRelTypeHTML(suffix) {
+  var id = suffix ? 'mirror-rel-type-'+suffix : 'mirror-rel-type';
+  var btnId = suffix ? 'mirror-rel-btns-'+suffix : 'mirror-rel-btns';
+  return '<div style="margin-bottom:18px;">'
+    + '<div style="font-family:Space Mono,monospace;font-size:.44rem;letter-spacing:.1em;text-transform:uppercase;color:rgba(201,185,154,.35);margin-bottom:8px;">Relationship Type</div>'
+    + '<div style="display:flex;gap:6px;flex-wrap:wrap;" id="'+btnId+'">'
+    + ['Romantic','Friendship','Family','Colleague','Mentor','Other'].map(function(t){
+        return '<button onclick="mirrorSetRelType(this,\''+t+'\',\''+id+'\')" style="font-family:Space Mono,monospace;font-size:.48rem;letter-spacing:.06em;padding:6px 12px;background:transparent;border:1px solid rgba(201,185,154,.18);color:rgba(201,185,154,.45);cursor:pointer;">'+t+'</button>';
+      }).join('')
+    + '</div>'
+    + '<input type="hidden" id="'+id+'" value="Friendship">'
+    + '</div>';
+}
+
+// ── MODE / TAB SWITCHERS ─────────────────────────────────────
+function mirrorSetMode(mode) {
+  document.getElementById('mirror-mode').value = mode;
+  var isMine = mode === 'mine';
+  document.getElementById('mirror-form-mine').style.display  = isMine ? '' : 'none';
+  document.getElementById('mirror-form-cross').style.display = isMine ? 'none' : '';
+  var mb = document.getElementById('mirror-mode-mine');
+  var cb = document.getElementById('mirror-mode-cross');
+  if (mb) { mb.style.background=isMine?'rgba(107,79,138,.1)':'transparent'; mb.style.color=isMine?'rgba(155,107,171,.8)':'rgba(201,185,154,.4)'; }
+  if (cb) { cb.style.background=isMine?'transparent':'rgba(107,155,201,.08)'; cb.style.color=isMine?'rgba(201,185,154,.4)':'rgba(107,155,201,.8)'; }
+}
+
+function mirrorEstTab(tab) {
+  var isMirrors = tab === 'mirrors';
+  document.getElementById('est-panel-mirrors').style.display = isMirrors ? '' : 'none';
+  document.getElementById('est-panel-cross').style.display   = isMirrors ? 'none' : '';
+  var mb = document.getElementById('est-tab-mirrors');
+  var cb = document.getElementById('est-tab-cross');
+  if (mb) { mb.style.background=isMirrors?'rgba(107,79,138,.08)':'transparent'; mb.style.color=isMirrors?'rgba(155,107,171,.7)':'rgba(201,185,154,.4)'; }
+  if (cb) { cb.style.background=isMirrors?'transparent':'rgba(107,155,201,.06)'; cb.style.color=isMirrors?'rgba(201,185,154,.4)':'rgba(107,155,201,.7)'; }
+}
+
+// ── UPDATED mirrorSetRelType (accepts target input id) ────────
+function mirrorSetRelType(btn, type, inputId) {
+  var id = inputId || 'mirror-rel-type';
+  var inp = document.getElementById(id);
   if (inp) inp.value = type;
-  var btns = document.querySelectorAll('#mirror-rel-btns button');
-  btns.forEach(function(b){ b.style.background='transparent'; b.style.borderColor='rgba(201,185,154,.18)'; b.style.color='rgba(201,185,154,.45)'; });
+  // Reset all buttons in the same container
+  var container = btn.parentElement;
+  if (container) container.querySelectorAll('button').forEach(function(b){
+    b.style.background='transparent'; b.style.borderColor='rgba(201,185,154,.18)'; b.style.color='rgba(201,185,154,.45)';
+  });
   btn.style.background='rgba(107,79,138,.1)'; btn.style.borderColor='rgba(107,79,138,.35)'; btn.style.color='rgba(155,107,171,.8)';
 }
+
+// ── CROSS-COMPARE CARD ────────────────────────────────────────
+function crossCompareCard(cc, expanded) {
+  if (!cc || !cc.personA || !cc.personB) return '';
+  var id  = 'cc-' + (cc.id||Date.now());
+  var nameA = cc.personA.name||'Person A';
+  var nameB = cc.personB.name||'Person B';
+  var relType = cc.relType||'';
+  var subline = '\u2600 '+nameA+' & '+nameB+(relType?' \u00b7 '+relType:'');
+
+  var birthA = [cc.personA.dob, cc.personA.birthTime, cc.personA.birthLocation].filter(Boolean).join(' \u00b7 ');
+  var birthB = [cc.personB.dob, cc.personB.birthTime, cc.personB.birthLocation].filter(Boolean).join(' \u00b7 ');
+
+  return '<div style="border:1px solid rgba(107,155,201,.15);margin-bottom:10px;background:rgba(107,155,201,.02);">'
+    +'<div onclick="mirrorToggle(\''+id+'\')" style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;cursor:pointer;">'
+    +'<div>'
+    +'<div style="font-family:Cormorant Garamond,serif;font-size:1.05rem;color:rgba(240,235,224,.9);">&#8646; '+nameA+' & '+nameB+'</div>'
+    +'<div style="font-family:Space Mono,monospace;font-size:.44rem;color:rgba(107,155,201,.45);letter-spacing:.06em;margin-top:2px;">'+(cc.personA.pronouns||'')+' / '+(cc.personB.pronouns||'')+(relType?' \u00b7 '+relType:'')+'</div>'
+    +(birthA?'<div style="font-family:Space Mono,monospace;font-size:.4rem;color:rgba(201,185,154,.2);margin-top:2px;">A: '+birthA+'</div>':'')
+    +(birthB?'<div style="font-family:Space Mono,monospace;font-size:.4rem;color:rgba(201,185,154,.2);margin-top:1px;">B: '+birthB+'</div>':'')
+    +'</div>'
+    +'<div style="font-family:Space Mono,monospace;font-size:.6rem;color:rgba(201,185,154,.3);" id="'+id+'-chevron">&#9656;</div>'
+    +'</div>'
+    +'<div id="'+id+'" style="display:'+(expanded?'block':'none')+';padding:0 16px 16px;">'
+    // Two chart grids side by side label
+    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:4px;">'
+    +'<div style="font-family:Space Mono,monospace;font-size:.44rem;letter-spacing:.08em;text-transform:uppercase;color:rgba(201,185,154,.3);padding-bottom:6px;border-bottom:1px solid rgba(201,185,154,.08);">'+nameA+'</div>'
+    +'<div style="font-family:Space Mono,monospace;font-size:.44rem;letter-spacing:.08em;text-transform:uppercase;color:rgba(201,185,154,.3);padding-bottom:6px;border-bottom:1px solid rgba(201,185,154,.08);">'+nameB+'</div>'
+    +'</div>'
+    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;">'
+    +'<div id="'+id+'-grid-a">'+mirrorChartGrid(cc.personA)+'</div>'
+    +'<div id="'+id+'-grid-b">'+mirrorChartGrid(cc.personB)+'</div>'
+    +'</div>'
+    +'<div id="'+id+'-shadow" style="margin-top:4px;">'+(cc.shadowLight?mirrorShadowLightHTML(cc.shadowLight):'')+'</div>'
+    +'<div id="'+id+'-relate" style="margin-top:12px;">'+(cc.relate?mirrorRelateHTML(cc.relate):'')+'</div>'
+    +'<div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap;">'
+    +'<button onclick="crossRefresh(this.dataset.id)" data-id="'+id+'" style="font-family:Space Mono,monospace;font-size:.48rem;letter-spacing:.08em;padding:6px 12px;background:transparent;border:1px solid rgba(107,155,201,.2);color:rgba(107,155,201,.6);cursor:pointer;">&#8635; Refresh</button>'
+    +'<button onclick="crossDelete(this.dataset.id)" data-id="'+id+'" style="font-family:Space Mono,monospace;font-size:.48rem;letter-spacing:.08em;padding:6px 12px;background:transparent;border:1px solid rgba(180,80,80,.2);color:rgba(180,100,100,.5);cursor:pointer;">&#10005; Remove</button>'
+    +'</div></div></div>';
+}
+
+// ── CROSS-GENERATE ────────────────────────────────────────────
+async function crossGenerate() {
+  var nameA     = (document.getElementById('mirror-a-name')?.value||'').trim();
+  var pronounsA = (document.getElementById('mirror-a-pronouns')?.value||'they/them').trim();
+  var dobA      = (document.getElementById('mirror-a-dob')?.value||'').trim();
+  var timeA     = (document.getElementById('mirror-a-time')?.value||'').trim();
+  var locA      = (document.getElementById('mirror-a-location')?.value||'').trim();
+  var nameB     = (document.getElementById('mirror-b-name')?.value||'').trim();
+  var pronounsB = (document.getElementById('mirror-b-pronouns')?.value||'they/them').trim();
+  var dobB      = (document.getElementById('mirror-b-dob')?.value||'').trim();
+  var timeB     = (document.getElementById('mirror-b-time')?.value||'').trim();
+  var locB      = (document.getElementById('mirror-b-location')?.value||'').trim();
+  var relType   = (document.getElementById('mirror-rel-type-cross')?.value||'Friendship').trim();
+  var result    = document.getElementById('cross-result');
+  var apiKey    = getApiKey();
+
+  if (!nameA||!dobA||!nameB||!dobB) { if(result) result.innerHTML='<div style="font-family:Space Mono,monospace;font-size:.55rem;color:rgba(201,185,154,.4);">Both names and birthdates are required.</div>'; return; }
+  if (!apiKey) { if(result) result.innerHTML='<div style="font-family:Space Mono,monospace;font-size:.55rem;color:rgba(201,185,154,.4);">Add your API key in Settings first.</div>'; return; }
+
+  if (result) result.innerHTML='<div style="font-family:Space Mono,monospace;font-size:.55rem;color:rgba(201,185,154,.3);display:flex;align-items:center;gap:10px;padding:16px 0;"><div class="astro-spinner"></div> Weaving the comparison\u2026</div>';
+
+  var personA = computePersonChart(nameA, dobA, timeA, locA);
+  var personB = computePersonChart(nameB, dobB, timeB, locB);
+  personA.pronouns = pronounsA; personA.relType = relType;
+  personB.pronouns = pronounsB; personB.relType = relType;
+
+  var risingA = (timeA && locA) ? ' Birth time '+timeA+' in '+locA+' — calculate Rising.' : '';
+  var risingB = (timeB && locB) ? ' Birth time '+timeB+' in '+locB+' — calculate Rising.' : '';
+  var risingFields = (timeA&&locA)||(timeB&&locB)
+    ? ',\n  "risingA": "Whole Sign Ascendant for '+nameA+(timeA&&locA?' born '+dobA+' at '+timeA+' in '+locA:'')+'",\n  "risingB": "Whole Sign Ascendant for '+nameB+(timeB&&locB?' born '+dobB+' at '+timeB+' in '+locB:'')+'"'
+    : '';
+
+  var ctxA = nameA.toUpperCase()+' ('+pronounsA+'): Sun '+personA.sunSign+', Moon '+personA.moonSign+'. Life Path '+personA.lifePath+' - '+(personA.lpTitle||'')+'. Soul Card: '+(personA.soulCard?personA.soulCard.name:'?')+'. Personal Year '+personA.personalYear+'. '+(personA.czElement||'')+' '+personA.cz+'. Gene Key '+personA.geneKey+'.'+risingA;
+  var ctxB = nameB.toUpperCase()+' ('+pronounsB+'): Sun '+personB.sunSign+', Moon '+personB.moonSign+'. Life Path '+personB.lifePath+' - '+(personB.lpTitle||'')+'. Soul Card: '+(personB.soulCard?personB.soulCard.name:'?')+'. Personal Year '+personB.personalYear+'. '+(personB.czElement||'')+' '+personB.cz+'. Gene Key '+personB.geneKey+'.'+risingB;
+
+  var prompt = 'Astrologer and spiritual guide. Cross-compare between '+nameA+' and '+nameB+' — a '+relType+' relationship.\nPRONOUNS: '+nameA+'='+pronounsA+', '+nameB+'='+pronounsB+'. Use correct pronouns naturally.\n\n'+ctxA+'\n'+ctxB+'\n\nReturn ONLY valid JSON:\n{\n  "shadowLight":{"light":"2-3 sentences on how these two charts illuminate and gift each other","shadow":"2-3 sentences on where they might trigger each other"},\n  "relate":{"tips":["2-4 word tip","2-4 word tip","2-4 word tip"],"full":"3-4 sentences of neutral guidance for how these two might best navigate their relationship"}'+risingFields+'\n}\nBe specific to these charts. Avoid platitudes.';
+
+  try {
+    var data = await claudeAPI(apiKey, {model:'claude-sonnet-4-6', max_tokens:1000, messages:[{role:'user',content:prompt}]});
+    if (data.error) throw new Error(data.error.message||'API error');
+    var raw = (data.content?.find(function(c){return c.type==='text';})?.text||'').trim();
+    var clean = raw.replace(/```json|```/g,'').trim();
+    var r; try{r=JSON.parse(clean);}catch(pe){var m=clean.match(/\{[\s\S]*\}/);if(m)r=JSON.parse(m[0]);else throw pe;}
+
+    if (r.risingA) personA.rising = r.risingA;
+    if (r.risingB) personB.rising = r.risingB;
+
+    var cc = { id: 'cc_'+Date.now(), personA: personA, personB: personB, relType: relType, shadowLight: r.shadowLight, relate: r.relate };
+    window._crossPending = cc;
+
+    if (result) {
+      result.innerHTML = '<div style="border:1px solid rgba(107,155,201,.2);background:rgba(107,155,201,.03);padding:16px;margin-bottom:16px;">'
+        +'<div style="font-family:Cormorant Garamond,serif;font-size:1.1rem;color:rgba(240,235,224,.9);margin-bottom:4px;">&#8646; '+nameA+' & '+nameB+'</div>'
+        +'<div style="font-family:Space Mono,monospace;font-size:.44rem;color:rgba(107,155,201,.5);margin-bottom:14px;">'+pronounsA+' / '+pronounsB+' \u00b7 '+relType+'</div>'
+        +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:4px;">'
+        +'<div style="font-family:Space Mono,monospace;font-size:.44rem;text-transform:uppercase;color:rgba(201,185,154,.3);padding-bottom:6px;border-bottom:1px solid rgba(201,185,154,.08);">'+nameA+'</div>'
+        +'<div style="font-family:Space Mono,monospace;font-size:.44rem;text-transform:uppercase;color:rgba(201,185,154,.3);padding-bottom:6px;border-bottom:1px solid rgba(201,185,154,.08);">'+nameB+'</div>'
+        +'</div>'
+        +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;">'
+        +'<div>'+mirrorChartGrid(personA)+'</div>'
+        +'<div>'+mirrorChartGrid(personB)+'</div>'
+        +'</div>'
+        +'<div style="margin-top:4px;">'+mirrorShadowLightHTML(r.shadowLight)+'</div>'
+        +'<div style="margin-top:10px;">'+mirrorRelateHTML(r.relate)+'</div>'
+        +'<div style="margin-top:16px;display:flex;gap:8px;">'
+        +'<button id="cross-save-btn" onclick="crossSavePending()" style="font-family:Space Mono,monospace;font-size:.5rem;letter-spacing:.08em;padding:9px 18px;background:rgba(107,155,107,.08);border:1px solid rgba(107,155,107,.3);color:rgba(107,180,107,.7);cursor:pointer;">\u2713 Save to Established</button>'
+        +'<button onclick="clearCrossResult()" style="font-family:Space Mono,monospace;font-size:.5rem;letter-spacing:.08em;padding:9px 18px;background:transparent;border:1px solid rgba(201,185,154,.15);color:rgba(201,185,154,.4);cursor:pointer;">\u2715 Discard</button>'
+        +'</div></div>';
+    }
+  } catch(err) {
+    console.error('Cross error:', err);
+    if (result) result.innerHTML='<div style="font-family:Space Mono,monospace;font-size:.55rem;color:rgba(201,185,154,.35);padding:12px 0;">Error: '+(err.message||'unknown')+'</div>';
+  }
+}
+
+function crossSavePending() {
+  var cc = window._crossPending;
+  if (!cc) return;
+  var list = getCrossCompares().filter(function(x){ return x.id !== cc.id; });
+  list.push(cc);
+  saveCrossCompares(list);
+  window._crossPending = null;
+  var btn = document.getElementById('cross-save-btn');
+  if (btn) { btn.textContent='Saved'; btn.disabled=true; btn.style.color='rgba(107,180,107,.4)'; }
+  // Update established count
+  var dest = document.getElementById('gt-content');
+  if (dest) { var eb = dest.querySelector('#mirror-btn-established'); if(eb){ var n=getMirrorPeople().length+getCrossCompares().length; eb.textContent='&#9680; Established'+(n?' ('+n+')':''); } }
+}
+
+function clearCrossResult() {
+  var el = document.getElementById('cross-result');
+  if (el) el.innerHTML='';
+}
+
+async function crossRefresh(cardId) {
+  var apiKey = getApiKey();
+  if (!apiKey) { gtAlert('Add your API key in Settings first.'); return; }
+  var list = getCrossCompares();
+  var cc = list.find(function(x){ return ('cc-'+x.id) === cardId || x.id === cardId; });
+  if (!cc) return;
+  var shadowEl = document.getElementById(cardId+'-shadow');
+  var relateEl = document.getElementById(cardId+'-relate');
+  if (shadowEl) shadowEl.innerHTML='<div style="font-family:Space Mono,monospace;font-size:.52rem;color:rgba(201,185,154,.3);display:flex;align-items:center;gap:8px;padding:12px 0;"><div class="astro-spinner"></div> Refreshing\u2026</div>';
+
+  var A = cc.personA, B = cc.personB;
+  var ctxA = (A.name||'A').toUpperCase()+' ('+(A.pronouns||'they/them')+'): Sun '+A.sunSign+', Moon '+A.moonSign+(A.rising?', Rising '+A.rising:'')+'. Life Path '+A.lifePath+'. Soul Card: '+(A.soulCard?A.soulCard.name:'?')+'.';
+  var ctxB = (B.name||'B').toUpperCase()+' ('+(B.pronouns||'they/them')+'): Sun '+B.sunSign+', Moon '+B.moonSign+(B.rising?', Rising '+B.rising:'')+'. Life Path '+B.lifePath+'. Soul Card: '+(B.soulCard?B.soulCard.name:'?')+'.';
+  var prompt = 'Astrologer. Cross-compare '+(cc.relType||'connection')+' between '+(A.name||'A')+' and '+(B.name||'B')+'.\nPRONOUNS: '+(A.name||'A')+'='+(A.pronouns||'they/them')+', '+(B.name||'B')+'='+(B.pronouns||'they/them')+'. Use correctly.\n\n'+ctxA+'\n'+ctxB+'\n\nReturn ONLY JSON:\n{"shadowLight":{"light":"2-3 sentences","shadow":"2-3 sentences"},"relate":{"tips":["2-4 word tip","2-4 word tip","2-4 word tip"],"full":"3-4 sentences neutral guidance"}}';
+
+  try {
+    var data = await claudeAPI(apiKey,{model:'claude-sonnet-4-6',max_tokens:700,messages:[{role:'user',content:prompt}]});
+    var raw=(data.content?.find(function(c){return c.type==='text';})?.text||'').trim();
+    var clean=raw.replace(/```json|```/g,'').trim();
+    var r; try{r=JSON.parse(clean);}catch(e){var m=clean.match(/\{[\s\S]*\}/);if(m)r=JSON.parse(m[0]);else throw e;}
+    cc.shadowLight=r.shadowLight; cc.relate=r.relate;
+    saveCrossCompares(list);
+    if(shadowEl) shadowEl.innerHTML=mirrorShadowLightHTML(cc.shadowLight);
+    if(relateEl) relateEl.innerHTML=mirrorRelateHTML(cc.relate);
+  } catch(err) {
+    if(shadowEl) shadowEl.innerHTML='<div style="color:rgba(180,100,100,.5);font-family:Space Mono,monospace;font-size:.52rem;">Error: '+(err.message||'unknown')+'</div>';
+  }
+}
+
+function crossDelete(cardId) {
+  if (!confirm('Remove this cross-compare?')) return;
+  var list = getCrossCompares().filter(function(x){ return ('cc-'+x.id) !== cardId && x.id !== cardId; });
+  saveCrossCompares(list);
+  var dest = document.getElementById('gt-content');
+  if (dest) { renderMirror(dest); mirrorShowPanel('established'); mirrorEstTab('cross'); }
+}
+
 
 function mirrorSavePending() {
   var person = window._mirrorPending;
@@ -21870,13 +22107,11 @@ function mirrorPersonCard(person, expanded) {
   var id = 'mpc-' + (person.name||'').replace(/\s+/g,'_');
   var nm = person.name||'';
   var subline = (person.pronouns?person.pronouns+' \u00b7 ':'')+'\u2600 '+(person.sunSign||'?')+' \u00b7 \ud83c\udf19 '+(person.moonSign||'?')+' \u00b7 LP '+(person.lifePath||'?')+(person.relType?' \u00b7 '+person.relType:'');
-
   var birthParts = [];
   if (person.dob) birthParts.push(person.dob);
   if (person.birthTime) birthParts.push(person.birthTime);
   if (person.birthLocation) birthParts.push(person.birthLocation);
   var birthLine = birthParts.length ? '<div style="font-family:Space Mono,monospace;font-size:.42rem;color:rgba(201,185,154,.25);letter-spacing:.05em;margin-top:3px;">'+birthParts.join(' \u00b7 ')+'</div>' : '';
-
   return '<div style="border:1px solid rgba(201,185,154,.1);margin-bottom:10px;background:rgba(255,255,255,.02);">'
     +'<div onclick="mirrorToggle(\''+id+'\')" style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;cursor:pointer;">'
     +'<div style="display:flex;align-items:center;gap:12px;">'
@@ -21903,12 +22138,10 @@ function mirrorEditField(name, field) {
   var person = people.find(function(p){ return p.name === name; });
   if (!person) return;
   var labels = {rising:'Rising Sign', hdType:'HD Type'};
-  var current = person[field] || '';
-  var val = prompt('Edit ' + (labels[field]||field) + ' for ' + name + ':', current);
-  if (val === null) return; // cancelled
+  var val = prompt('Edit ' + (labels[field]||field) + ' for ' + name + ':', person[field]||'');
+  if (val === null) return;
   person[field] = val.trim();
   saveMirrorPeople(people);
-  // Re-render the card grid inline
   var id = 'mpc-' + name.replace(/\s+/g,'_');
   var gridEl = document.getElementById(id+'-grid');
   if (gridEl) gridEl.innerHTML = mirrorChartGrid(person);
@@ -22009,11 +22242,10 @@ function mirrorRelateHTML(relate) {
     +'</div>';
 }
 
-function mirrorToggle(elOrId) {
-  var el = (typeof elOrId === 'string') ? document.getElementById(elOrId) : elOrId;
+function mirrorToggle(id) {
+  var el = document.getElementById(id);
+  var ch = document.getElementById(id+'-chevron');
   if (!el) return;
-  var eid = el.id || '';
-  var ch = document.getElementById(eid+'-chevron');
   var open = el.style.display !== 'none';
   el.style.display = open ? 'none' : 'block';
   if (ch) ch.textContent = open ? '\u25b8' : '\u25be';
@@ -22055,7 +22287,7 @@ async function mirrorGenerate() {
   var tiffCtx = 'TIFF (she/her): Libra Sun 17deg, Aries Moon 6deg, Capricorn Rising 28deg, Scorpio stellium. Life Path 5 - The Hierophant. Personal Year ' + getNumerologyNumbers().personalYear + '. Water Monkey. Pure Generator 4/6.';
   var personCtx = name.toUpperCase() + ' (' + pronouns + '): Sun ' + person.sunSign + ', Moon ' + person.moonSign + (person.hasBirthTime?' (confirmed)':' (estimated)') + '. Life Path ' + person.lifePath + ' - ' + (person.lpTitle||'') + '. Soul Card: ' + (person.soulCard?person.soulCard.name:'?') + '. Personal Year ' + person.personalYear + '. ' + (person.czElement||'') + ' ' + person.cz + '. Gene Key ' + person.geneKey + '.';
 
-  var prompt = 'Astrologer and spiritual guide. ' + relType + ' relationship between Tiff and ' + name + '.\nUse correct pronouns naturally: Tiff=she/her, ' + name + '=' + pronouns + '.\n\n' + tiffCtx + '\n' + personCtx + '\n\nReturn ONLY valid JSON:\n{\n  "shadowLight":{"light":"2-3 sentences","shadow":"2-3 sentences"},\n  "relate":{"tips":["2-4 word tip","2-4 word tip","2-4 word tip"],"full":"3-4 sentences of practical guidance for Tiff"}' + risingExtra + '\n}\nBe specific. Avoid platitudes.';
+  var prompt = 'Astrologer and spiritual guide. ' + relType + ' relationship between Tiff and ' + name + '.\nPRONOUNS (use in every sentence): Tiff=she/her, ' + name + '=' + pronouns + '.\n\n' + tiffCtx + '\n' + personCtx + '\n\nReturn ONLY valid JSON:\n{\n  "shadowLight":{"light":"2-3 sentences","shadow":"2-3 sentences"},\n  "relate":{"tips":["2-4 word tip","2-4 word tip","2-4 word tip"],"full":"3-4 sentences of practical guidance for Tiff"}' + risingExtra + '\n}\nBe specific. Avoid platitudes.';
 
   try {
     var data = await claudeAPI(apiKey, {model:'claude-sonnet-4-6', max_tokens:1000, messages:[{role:'user',content:prompt}]});
@@ -22116,7 +22348,7 @@ async function mirrorRefreshReflections(name) {
   var tiffCtx = 'TIFF (she/her): Libra Sun 17deg, Aries Moon 6deg, Capricorn Rising 28deg, Scorpio stellium. Life Path 5 - The Hierophant. Personal Year ' + getNumerologyNumbers().personalYear + '. Water Monkey. Pure Generator 4/6.';
   var personCtx = name.toUpperCase() + ' (' + pronouns + '): Sun ' + person.sunSign + ', Moon ' + person.moonSign + (person.rising?', Rising '+person.rising:'') + '. Life Path ' + person.lifePath + '. Soul Card: ' + (person.soulCard?person.soulCard.name:'?') + '. Personal Year ' + person.personalYear + '. ' + (person.czElement||'') + ' ' + person.cz + '. Gene Key ' + person.geneKey + '. ' + (person.hdType?'HD: '+person.hdType+'.':'');
 
-  var prompt = 'Astrologer and spiritual guide. ' + relType + ' relationship between Tiff and ' + name + '.\nUse correct pronouns naturally: Tiff=she/her, ' + name + '=' + pronouns + '.\n\n' + tiffCtx + '\n' + personCtx + '\n\nReturn ONLY valid JSON:\n{\n  "shadowLight":{"light":"2-3 sentences","shadow":"2-3 sentences"},\n  "relate":{"tips":["2-4 word tip","2-4 word tip","2-4 word tip"],"full":"3-4 sentences of practical guidance for Tiff"}' + risingExtra + '\n}\nBe specific.';
+  var prompt = 'Astrologer and spiritual guide. ' + relType + ' relationship between Tiff and ' + name + '.\nPRONOUNS (use in every sentence): Tiff=she/her, ' + name + '=' + pronouns + '.\n\n' + tiffCtx + '\n' + personCtx + '\n\nReturn ONLY valid JSON:\n{\n  "shadowLight":{"light":"2-3 sentences","shadow":"2-3 sentences"},\n  "relate":{"tips":["2-4 word tip","2-4 word tip","2-4 word tip"],"full":"3-4 sentences of practical guidance for Tiff"}' + risingExtra + '\n}\nBe specific.';
 
   try {
     var data = await claudeAPI(apiKey, {model:'claude-sonnet-4-6', max_tokens:800, messages:[{role:'user',content:prompt}]});
