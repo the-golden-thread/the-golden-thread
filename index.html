@@ -21785,9 +21785,15 @@ function renderMirror(dest) {
       <div style="font-family:'Cormorant Garamond',serif;font-size:1.1rem;font-style:italic;color:rgba(240,235,224,.6);margin-bottom:20px;">Enter someone's details to reveal how your charts meet.</div>
 
       <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:20px;">
-        <div>
-          <div style="font-family:'Space Mono',monospace;font-size:.46rem;letter-spacing:.1em;text-transform:uppercase;color:rgba(201,185,154,.35);margin-bottom:5px;">Name</div>
-          <input id="mirror-name" type="text" placeholder="e.g. Jenna" style="width:100%;box-sizing:border-box;background:rgba(255,255,255,.04);border:1px solid rgba(201,185,154,.2);color:rgba(240,235,224,.9);font-family:'Cormorant Garamond',serif;font-size:1rem;padding:10px 14px;outline:none;">
+        <div style="display:grid;grid-template-columns:2fr 1fr;gap:10px;">
+          <div>
+            <div style="font-family:'Space Mono',monospace;font-size:.46rem;letter-spacing:.1em;text-transform:uppercase;color:rgba(201,185,154,.35);margin-bottom:5px;">Name</div>
+            <input id="mirror-name" type="text" placeholder="e.g. Jenna" style="width:100%;box-sizing:border-box;background:rgba(255,255,255,.04);border:1px solid rgba(201,185,154,.2);color:rgba(240,235,224,.9);font-family:'Cormorant Garamond',serif;font-size:1rem;padding:10px 14px;outline:none;">
+          </div>
+          <div>
+            <div style="font-family:'Space Mono',monospace;font-size:.46rem;letter-spacing:.1em;text-transform:uppercase;color:rgba(201,185,154,.25);margin-bottom:5px;">Pronouns</div>
+            <input id="mirror-pronouns" type="text" placeholder="she/her" style="width:100%;box-sizing:border-box;background:rgba(255,255,255,.04);border:1px solid rgba(201,185,154,.12);color:rgba(240,235,224,.8);font-family:'Cormorant Garamond',serif;font-size:.95rem;padding:10px 14px;outline:none;">
+          </div>
         </div>
         <div>
           <div style="font-family:'Space Mono',monospace;font-size:.46rem;letter-spacing:.1em;text-transform:uppercase;color:rgba(201,185,154,.35);margin-bottom:5px;">Birthdate</div>
@@ -21923,67 +21929,74 @@ function mirrorDelete(name) {
 }
 
 async function mirrorGenerate() {
-  var name     = (document.getElementById('mirror-name')?.value || '').trim();
-  var pronouns = (document.getElementById('mirror-pronouns')?.value || 'they/them').trim();
-  var dob      = (document.getElementById('mirror-dob')?.value || '').trim();
-  var time     = (document.getElementById('mirror-time')?.value || '').trim();
-  var loc      = (document.getElementById('mirror-location')?.value || '').trim();
-  var relType  = (document.getElementById('mirror-rel-type')?.value || 'connection').trim();
-  var result   = document.getElementById('mirror-result');
-  var apiKey   = getApiKey();
+  const name = (document.getElementById('mirror-name')?.value || '').trim();
+  const dob  = (document.getElementById('mirror-dob')?.value  || '').trim();
+  const time = (document.getElementById('mirror-time')?.value || '').trim();
+  const loc  = (document.getElementById('mirror-location')?.value || '').trim();
+  const result = document.getElementById('mirror-result');
+  const apiKey = getApiKey();
 
-  if (!name || !dob) { if (result) result.innerHTML = '<div style="font-family:Space Mono,monospace;font-size:.55rem;color:rgba(201,185,154,.4);">Name and birthdate are required.</div>'; return; }
-  if (!apiKey) { if (result) result.innerHTML = '<div style="font-family:Space Mono,monospace;font-size:.55rem;color:rgba(201,185,154,.4);">Add your API key in Settings first.</div>'; return; }
+  if (!name || !dob) { if (result) result.innerHTML = '<div style="font-family:\'Space Mono\',monospace;font-size:.55rem;color:rgba(201,185,154,.4);">Name and birthdate are required.</div>'; return; }
+  if (!apiKey) { if (result) result.innerHTML = '<div style="font-family:\'Space Mono\',monospace;font-size:.55rem;color:rgba(201,185,154,.4);">Add your API key in Settings first.</div>'; return; }
 
-  if (result) result.innerHTML = '<div style="font-family:Space Mono,monospace;font-size:.55rem;color:rgba(201,185,154,.3);display:flex;align-items:center;gap:10px;padding:16px 0;"><div class="astro-spinner"></div> Weaving the mirror...</div>';
+  if (result) result.innerHTML = '<div style="font-family:\'Space Mono\',monospace;font-size:.55rem;color:rgba(201,185,154,.3);display:flex;align-items:center;gap:10px;padding:16px 0;"><div class="astro-spinner"></div> Weaving the mirror…</div>';
 
-  var person = computePersonChart(name, dob, time, loc);
-  person.pronouns = pronouns;
-  person.relType  = relType;
+  const person = computePersonChart(name, dob, time, loc);
+  const tiffContext = 'Tiff (the app owner): Libra Sun 17°, Aries Moon 6°, Capricorn Rising 28°, Scorpio stellium. Life Path 5 (The Hierophant). Soul Card: The Hierophant. Personal Year ' + getNumerologyNumbers().personalYear + '. Chinese Zodiac: Water Monkey. HD: Pure Generator 4/6, Sacral authority. Gene Keys: primary sphere channels 10:34/11:56/25:51/03:60. Primary clairs: claircognizance, clairsentience.';
+  const personContext = name + ': Sun in ' + person.sunSign + ', Moon in ' + person.moonSign + (person.hasBirthTime ? ' (confirmed)' : ' (estimated)') + '. Life Path ' + person.lifePath + ' (' + (person.lpTitle||'') + '). Soul Card: ' + (person.soulCard ? person.soulCard.name : '?') + '. Personal Year ' + person.personalYear + '. Chinese Zodiac: ' + person.czElement + ' ' + person.cz + ' (' + (person.czYin?'Yin':'Yang') + '). Gene Key ' + person.geneKey + ' (Life\'s Work).' + (person.hasBirthTime ? ' Birth time provided — include rising/HD interpretation if you can infer from context.' : '');
 
-  var hasFullBirthData = !!(person.birthTime && person.birthTime.trim() && person.birthLocation && person.birthLocation.trim());
-  var risingExtra = hasFullBirthData
-    ? ',\n  "rising": "calculate Whole Sign Ascendant for ' + name + ' born ' + dob + ' at ' + time + ' in ' + loc + ' - return sign name only e.g. Cancer",\n  "hdType": "approximate HD type: Generator/Manifesting Generator/Projector/Manifestor/Reflector"'
-    : '';
+  const prompt = `You are a deeply skilled astrologer, numerologist, and spiritual guide synthesizing chart data for a relationship reading. Write with poetic precision — specific, not generic.
 
-  var tiffCtx = 'TIFF (she/her): Libra Sun 17deg, Aries Moon 6deg, Capricorn Rising 28deg, Scorpio stellium. Life Path 5 - The Hierophant. Personal Year ' + getNumerologyNumbers().personalYear + '. Water Monkey. Pure Generator 4/6.';
-  var personCtx = name.toUpperCase() + ' (' + pronouns + '): Sun ' + person.sunSign + ', Moon ' + person.moonSign + (person.hasBirthTime ? ' (confirmed)' : ' (estimated)') + '. Life Path ' + person.lifePath + ' - ' + (person.lpTitle||'unknown') + '. Soul Card: ' + (person.soulCard?person.soulCard.name:'?') + '. Personal Year ' + person.personalYear + '. ' + (person.czElement||'') + ' ' + person.cz + '. Gene Key ' + person.geneKey + '.';
+${tiffContext}
+${personContext}
 
-  var prompt = 'Astrologer and spiritual guide. ' + relType + ' relationship between Tiff and ' + name + '.\nPRONOUNS - use in every sentence: Tiff=she/her, ' + name + '=' + pronouns + '.\n\n' + tiffCtx + '\n' + personCtx + '\n\nReturn ONLY valid JSON:\n{\n  "shadowLight":{"light":"2-3 sentences","shadow":"2-3 sentences"},\n  "relate":{"tips":["2-4 word tip","2-4 word tip","2-4 word tip"],"full":"3-4 sentences of practical guidance for Tiff"}' + risingExtra + '\n}\nBe specific. Avoid platitudes.';
+Return ONLY a JSON object with this exact structure (no markdown, no preamble):
+{
+  "shadowLight": {
+    "light": "2-3 sentences on how these two charts illuminate each other — what gifts the connection activates, where their energies harmonize or complement",
+    "shadow": "2-3 sentences on where they might trigger each other — what wounds could get poked, what growth edges the relationship holds, what to watch for"
+  },
+  "relate": "3-4 sentences of practical, specific guidance for Tiff on how to best navigate and relate to this person given both their charts — what to lean into, what to be mindful of, how to meet them where they are"
+}
+
+Be specific to these actual charts. Avoid generic platitudes.`;
 
   try {
-    var data = await claudeAPI(apiKey, { model:'claude-sonnet-4-6', max_tokens:1000, messages:[{role:'user', content:prompt}] });
+    const data = await claudeAPI(apiKey, { model:'claude-sonnet-4-6', max_tokens:800, messages:[{role:'user', content:prompt}] });
     if (data.error) throw new Error(data.error.message || 'API error');
-    var raw = (data.content?.find(function(c){ return c.type==='text'; })?.text || '').trim();
-    var clean = raw.replace(/```json|```/g,'').trim();
-    var reflections;
-    try { reflections = JSON.parse(clean); } catch(pe) { var m=clean.match(/\{[\s\S]*\}/); if(m) reflections=JSON.parse(m[0]); else throw pe; }
+    const raw = (data.content?.find(c => c.type==='text')?.text || '').trim();
+    const clean = raw.replace(/```json|```/g,'').trim();
+    let reflections;
+    try { reflections = JSON.parse(clean); } catch(e) { const m = clean.match(/\{[\s\S]*\}/); if(m) reflections = JSON.parse(m[0]); else throw e; }
 
     person.shadowLight = reflections.shadowLight;
-    person.relate      = reflections.relate;
-    if (reflections.rising) person.rising = reflections.rising;
-    if (reflections.hdType) person.hdType = reflections.hdType;
+    person.relate = reflections.relate;
 
-    window._mirrorPending = person;
+    // Save person
+    var people = getMirrorPeople().filter(p => p.name !== name);
+    people.push(person);
+    saveMirrorPeople(people);
 
+    // Show result inline
     if (result) {
-      var subline = (pronouns ? pronouns+' - ' : '') + person.sunSign + ' Sun / ' + person.moonSign + ' Moon / LP ' + person.lifePath + (relType ? ' / ' + relType : '');
-      result.innerHTML = '<div style="border:1px solid rgba(107,79,138,.2);background:rgba(107,79,138,.04);padding:16px;margin-bottom:16px;">'
-        + '<div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">'
-        + '<div style="font-size:1.6rem;">'+(person.czEmoji||'')+'</div>'
-        + '<div><div style="font-family:Cormorant Garamond,serif;font-size:1.15rem;color:rgba(240,235,224,.9);">'+name+'</div>'
-        + '<div style="font-family:Space Mono,monospace;font-size:.44rem;color:rgba(201,185,154,.35);margin-top:2px;">'+subline+'</div></div></div>'
-        + '<div id="mirror-result-grid">'+mirrorChartGrid(person)+'</div>'
-        + '<div style="margin-top:14px;">'+mirrorShadowLightHTML(person.shadowLight)+'</div>'
-        + '<div style="margin-top:10px;">'+mirrorRelateHTML(person.relate)+'</div>'
-        + '<div style="margin-top:16px;display:flex;gap:8px;">'
-        + '<button id="mirror-save-btn" onclick="mirrorSavePending()" style="font-family:Space Mono,monospace;font-size:.5rem;letter-spacing:.08em;padding:9px 18px;background:rgba(107,155,107,.08);border:1px solid rgba(107,155,107,.3);color:rgba(107,180,107,.7);cursor:pointer;">Save to Established</button>'
-        + '<button onclick="clearMirrorResult()" style="font-family:Space Mono,monospace;font-size:.5rem;letter-spacing:.08em;padding:9px 18px;background:transparent;border:1px solid rgba(201,185,154,.15);color:rgba(201,185,154,.4);cursor:pointer;">Discard</button>'
-        + '</div></div>';
+      result.innerHTML = `
+        <div style="border:1px solid rgba(107,79,138,.2);background:rgba(107,79,138,.04);padding:16px;margin-bottom:16px;">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
+            <div style="font-size:1.6rem;">${person.czEmoji}</div>
+            <div>
+              <div style="font-family:'Cormorant Garamond',serif;font-size:1.15rem;color:rgba(240,235,224,.9);">${name}</div>
+              <div style="font-family:'Space Mono',monospace;font-size:.44rem;color:rgba(201,185,154,.35);margin-top:2px;">☀ ${person.sunSign} · 🌙 ${person.moonSign} · LP ${person.lifePath}</div>
+            </div>
+          </div>
+          ${mirrorChartGrid(person)}
+          <div style="margin-top:14px;">${mirrorShadowLightHTML(person.shadowLight)}</div>
+          <div style="margin-top:10px;">${mirrorRelateHTML(person.relate)}</div>
+          <div style="margin-top:14px;font-family:'Space Mono',monospace;font-size:.5rem;color:rgba(107,155,107,.5);display:flex;align-items:center;gap:6px;">✓ Saved to Established</div>
+        </div>`;
     }
   } catch(err) {
     console.error('Mirror error:', err);
-    if (result) result.innerHTML = '<div style="font-family:Space Mono,monospace;font-size:.55rem;color:rgba(201,185,154,.35);padding:12px 0;">Error: '+(err.message||'unknown')+'</div>';
+    if (result) result.innerHTML = '<div style="font-family:\'Space Mono\',monospace;font-size:.55rem;color:rgba(201,185,154,.35);padding:12px 0;">Error: ' + (err.message||'unknown') + '</div>';
   }
 }
 
@@ -21999,8 +22012,8 @@ async function mirrorRefreshReflections(name) {
   const relateEl = document.getElementById(id + '-relate');
   if (shadowEl) shadowEl.innerHTML = '<div style="font-family:\'Space Mono\',monospace;font-size:.52rem;color:rgba(201,185,154,.3);display:flex;align-items:center;gap:8px;padding:12px 0;"><div class="astro-spinner"></div> Refreshing…</div>';
 
-  const tiffContext = 'Tiff (she/her, PRONOUNS: she/her): Libra Sun 17°, Aries Moon 6°, Capricorn Rising 28°, Scorpio stellium. Life Path 5 — The Hierophant. Water Monkey. Pure Generator 4/6, Sacral authority.';
-  const personContext = name + ' (PRONOUNS: ' + pronouns + '): Sun ' + person.sunSign + ', Moon ' + person.moonSign + (person.rising ? ', Rising ' + person.rising : '') + '. Life Path ' + person.lifePath + '. Soul Card: ' + (person.soulCard ? person.soulCard.name : '?') + '. ' + (person.czElement||'') + ' ' + person.cz + '. Gene Key ' + person.geneKey + '. ' + (person.hdType ? 'HD: ' + person.hdType + '.' : '');
+  const tiffContext = 'Tiff: Libra Sun 17°, Aries Moon 6°, Capricorn Rising 28°. Life Path 5. Soul Card: The Hierophant. Chinese Zodiac: Water Monkey. HD: Pure Generator 4/6.';
+  const personContext = name + ': Sun ' + person.sunSign + ', Moon ' + person.moonSign + ', Life Path ' + person.lifePath + ', Soul Card: ' + (person.soulCard ? person.soulCard.name : '?') + ', ' + person.czElement + ' ' + person.cz + ', Gene Key ' + person.geneKey + '.';
   const prompt = `Astrologer/spiritual guide. Write with poetic precision.\n\n${tiffContext}\n${personContext}\n\nReturn ONLY JSON:\n{"shadowLight":{"light":"2-3 sentences","shadow":"2-3 sentences"},"relate":"3-4 sentences of practical guidance for Tiff"}`;
 
   try {
