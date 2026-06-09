@@ -21960,7 +21960,7 @@ function crossCompareCard(cc, expanded) {
   var birthB = [cc.personB.dob, cc.personB.birthTime, cc.personB.birthLocation].filter(Boolean).join(' \u00b7 ');
 
   return '<div style="border:1px solid rgba(107,155,201,.15);margin-bottom:10px;background:rgba(107,155,201,.02);">'
-    +'<div onclick="mirrorToggle(\''+id+'\')" style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;cursor:pointer;">'
+    +'<div onclick="mirrorToggle(&apos;'+id+'&apos;)" style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;cursor:pointer;">'
     +'<div>'
     +'<div style="font-family:Cormorant Garamond,serif;font-size:1.05rem;color:rgba(240,235,224,.9);">&#8646; '+nameA+' & '+nameB+'</div>'
     +'<div style="font-family:Space Mono,monospace;font-size:.44rem;color:rgba(107,155,201,.45);letter-spacing:.06em;margin-top:2px;">'+(cc.personA.pronouns||'')+' / '+(cc.personB.pronouns||'')+(relType?' \u00b7 '+relType:'')+'</div>'
@@ -22184,8 +22184,8 @@ function clearMirrorResult() {
 }
 
 function mirrorAction(action, cardId) {
-  // cardId is like 'mpc-Rain' — derive name from it
   var name = cardId.replace(/^mpc-/, '').replace(/_/g,' ');
+  console.log('[Mirror] action='+action+' cardId='+cardId+' name='+name);
   if (action === 'refresh') mirrorRefreshReflections(name);
   else if (action === 'rising') mirrorEditField(name, 'rising');
   else if (action === 'hdType') mirrorEditField(name, 'hdType');
@@ -22202,7 +22202,7 @@ function mirrorPersonCard(person, expanded) {
   if (person.birthLocation) birthParts.push(person.birthLocation);
   var birthLine = birthParts.length ? '<div style="font-family:Space Mono,monospace;font-size:.42rem;color:rgba(201,185,154,.25);letter-spacing:.05em;margin-top:3px;">'+birthParts.join(' \u00b7 ')+'</div>' : '';
   return '<div style="border:1px solid rgba(201,185,154,.1);margin-bottom:10px;background:rgba(255,255,255,.02);">'
-    +'<div onclick="mirrorToggle(\''+id+'\')" style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;cursor:pointer;">'
+    +'<div onclick="mirrorToggle(&apos;'+id+'&apos;)" style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;cursor:pointer;">'
     +'<div style="display:flex;align-items:center;gap:12px;">'
     +'<div style="font-size:1.4rem;">'+(person.czEmoji||'&#9680;')+'</div>'
     +'<div><div style="font-family:Cormorant Garamond,serif;font-size:1.05rem;color:rgba(240,235,224,.9);">'+nm+'</div>'
@@ -22215,10 +22215,10 @@ function mirrorPersonCard(person, expanded) {
     +'<div id="'+id+'-shadow" style="margin-top:16px;">'+(person.shadowLight?mirrorShadowLightHTML(person.shadowLight):'')+'</div>'
     +'<div id="'+id+'-relate" style="margin-top:12px;">'+(person.relate?mirrorRelateHTML(person.relate):'')+'</div>'
     +'<div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap;">'
-    +'<button onclick="mirrorAction(\'refresh\',\''+id+'\')" style="font-family:Space Mono,monospace;font-size:.48rem;letter-spacing:.08em;padding:6px 12px;background:transparent;border:1px solid rgba(107,79,138,.25);color:rgba(155,107,171,.6);cursor:pointer;">&#8635; Refresh</button>'
-    +'<button onclick="mirrorAction(\'rising\',\''+id+'\')" style="font-family:Space Mono,monospace;font-size:.48rem;letter-spacing:.08em;padding:6px 12px;background:transparent;border:1px solid rgba(201,185,154,.15);color:rgba(201,185,154,.4);cursor:pointer;">&#9998; Rising</button>'
-    +'<button onclick="mirrorAction(\'hdType\',\''+id+'\')" style="font-family:Space Mono,monospace;font-size:.48rem;letter-spacing:.08em;padding:6px 12px;background:transparent;border:1px solid rgba(201,185,154,.15);color:rgba(201,185,154,.4);cursor:pointer;">&#9998; HD</button>'
-    +'<button onclick="mirrorAction(\'delete\',\''+id+'\')" style="font-family:Space Mono,monospace;font-size:.48rem;letter-spacing:.08em;padding:6px 12px;background:transparent;border:1px solid rgba(180,80,80,.2);color:rgba(180,100,100,.5);cursor:pointer;">&#10005; Remove</button>'
+    +'<button onclick="mirrorAction(&apos;refresh&apos;,&apos;'+id+'&apos;)" style="font-family:Space Mono,monospace;font-size:.48rem;letter-spacing:.08em;padding:6px 12px;background:transparent;border:1px solid rgba(107,79,138,.25);color:rgba(155,107,171,.6);cursor:pointer;">&#8635; Refresh</button>'
+    +'<button onclick="mirrorAction(&apos;rising&apos;,&apos;'+id+'&apos;)" style="font-family:Space Mono,monospace;font-size:.48rem;letter-spacing:.08em;padding:6px 12px;background:transparent;border:1px solid rgba(201,185,154,.15);color:rgba(201,185,154,.4);cursor:pointer;">&#9998; Rising</button>'
+    +'<button onclick="mirrorAction(&apos;hdType&apos;,&apos;'+id+'&apos;)" style="font-family:Space Mono,monospace;font-size:.48rem;letter-spacing:.08em;padding:6px 12px;background:transparent;border:1px solid rgba(201,185,154,.15);color:rgba(201,185,154,.4);cursor:pointer;">&#9998; HD</button>'
+    +'<button onclick="mirrorAction(&apos;delete&apos;,&apos;'+id+'&apos;)" style="font-family:Space Mono,monospace;font-size:.48rem;letter-spacing:.08em;padding:6px 12px;background:transparent;border:1px solid rgba(180,80,80,.2);color:rgba(180,100,100,.5);cursor:pointer;">&#10005; Remove</button>'
     +'</div></div></div>';
 }
 
@@ -22415,11 +22415,14 @@ async function mirrorGenerate() {
 }
 
 async function mirrorRefreshReflections(name) {
+  console.log('[Mirror] refresh called for:', name);
   var apiKey = getApiKey();
   if (!apiKey) { gtAlert('Add your API key in Settings first.'); return; }
   var people = getMirrorPeople();
+  console.log('[Mirror] people in store:', people.map(function(p){return p.name;}));
   var person = people.find(function(p){ return p.name === name; });
-  if (!person) return;
+  if (!person) { console.log('[Mirror] person not found!'); gtAlert('Person not found in store: ' + name); return; }
+  console.log('[Mirror] person found, starting refresh');
 
   var id = 'mpc-' + name.replace(/\s+/g,'_');
   var shadowEl = document.getElementById(id+'-shadow');
