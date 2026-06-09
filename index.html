@@ -21850,7 +21850,7 @@ function mirrorPersonCard(person, expanded) {
         <div style="font-size:1.4rem;">${person.czEmoji || '◑'}</div>
         <div>
           <div style="font-family:'Cormorant Garamond',serif;font-size:1.05rem;color:rgba(240,235,224,.9);">${person.name}</div>
-          <div style="font-family:'Space Mono',monospace;font-size:.44rem;color:rgba(201,185,154,.35);letter-spacing:.06em;margin-top:2px;">☀ ${person.sunSign || '?'} · 🌙 ${person.moonSign || '?'} · LP ${person.lifePath || '?'}</div>
+          <div style="font-family:'Space Mono',monospace;font-size:.44rem;color:rgba(201,185,154,.35);letter-spacing:.06em;margin-top:2px;">${person.pronouns ? person.pronouns+' · ' : ''}☀ ${person.sunSign || '?'} · 🌙 ${person.moonSign || '?'} · LP ${person.lifePath || '?'}</div>
         </div>
       </div>
       <div style="font-family:'Space Mono',monospace;font-size:.6rem;color:rgba(201,185,154,.3);" id="${id}-chevron">▸</div>
@@ -22041,27 +22041,36 @@ function mirrorChartBoxExpand(id, desc) {
 
 function mirrorShadowLightHTML(sl) {
   if (!sl) return '';
-  return `<div style="margin-bottom:12px;">
-    <div style="font-family:'Space Mono',monospace;font-size:.46rem;letter-spacing:.12em;text-transform:uppercase;color:rgba(201,185,154,.3);margin-bottom:10px;">◑ Shadow & Light</div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
-      <div style="padding:12px 14px;background:rgba(201,168,76,.04);border:1px solid rgba(201,168,76,.15);border-top:2px solid rgba(201,168,76,.3);">
-        <div style="font-family:'Space Mono',monospace;font-size:.42rem;letter-spacing:.1em;text-transform:uppercase;color:rgba(201,168,76,.5);margin-bottom:8px;">✦ Light</div>
-        <div style="font-family:'Cormorant Garamond',serif;font-size:.88rem;color:rgba(240,235,224,.75);line-height:1.7;">${sl.light}</div>
-      </div>
-      <div style="padding:12px 14px;background:rgba(107,79,138,.04);border:1px solid rgba(107,79,138,.15);border-top:2px solid rgba(107,79,138,.3);">
-        <div style="font-family:'Space Mono',monospace;font-size:.42rem;letter-spacing:.1em;text-transform:uppercase;color:rgba(155,107,171,.5);margin-bottom:8px;">◑ Shadow</div>
-        <div style="font-family:'Cormorant Garamond',serif;font-size:.88rem;color:rgba(240,235,224,.75);line-height:1.7;">${sl.shadow}</div>
-      </div>
-    </div>
-  </div>`;
+  return '<div style="margin-bottom:12px;">'
+    + '<div style="font-family:Space Mono,monospace;font-size:.46rem;letter-spacing:.12em;text-transform:uppercase;color:rgba(201,185,154,.3);margin-bottom:10px;">&#9680; Shadow &amp; Light</div>'
+    + '<div style="display:flex;flex-direction:column;gap:8px;">'
+    + '<div style="padding:14px 16px;background:rgba(201,168,76,.04);border:1px solid rgba(201,168,76,.15);border-left:3px solid rgba(201,168,76,.4);">'
+    + '<div style="font-family:Space Mono,monospace;font-size:.42rem;letter-spacing:.1em;text-transform:uppercase;color:rgba(201,168,76,.5);margin-bottom:8px;">&#10022; Light</div>'
+    + '<div style="font-family:Cormorant Garamond,serif;font-size:.92rem;color:rgba(240,235,224,.78);line-height:1.75;">' + (sl.light||'') + '</div>'
+    + '</div>'
+    + '<div style="padding:14px 16px;background:rgba(107,79,138,.04);border:1px solid rgba(107,79,138,.15);border-left:3px solid rgba(107,79,138,.4);">'
+    + '<div style="font-family:Space Mono,monospace;font-size:.42rem;letter-spacing:.1em;text-transform:uppercase;color:rgba(155,107,171,.5);margin-bottom:8px;">&#9680; Shadow</div>'
+    + '<div style="font-family:Cormorant Garamond,serif;font-size:.92rem;color:rgba(240,235,224,.78);line-height:1.75;">' + (sl.shadow||'') + '</div>'
+    + '</div>'
+    + '</div></div>';
 }
 
 function mirrorRelateHTML(relate) {
   if (!relate) return '';
-  return `<div style="padding:14px 16px;background:rgba(107,155,201,.04);border:1px solid rgba(107,155,201,.15);border-left:3px solid rgba(107,155,201,.3);">
-    <div style="font-family:'Space Mono',monospace;font-size:.44rem;letter-spacing:.1em;text-transform:uppercase;color:rgba(107,155,201,.5);margin-bottom:8px;">◎ How to Relate</div>
-    <div style="font-family:'Cormorant Garamond',serif;font-size:.9rem;color:rgba(240,235,224,.8);line-height:1.8;">${relate}</div>
-  </div>`;
+  var tips = [], full = '';
+  if (typeof relate === 'object' && relate !== null) {
+    tips = Array.isArray(relate.tips) ? relate.tips : [];
+    full = relate.full || '';
+  } else { full = String(relate); }
+  var tipsHTML = tips.length
+    ? '<div style="display:flex;flex-direction:column;gap:5px;margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid rgba(107,155,201,.12);">'
+      + tips.map(function(t){ return '<div style="display:flex;gap:8px;align-items:flex-start;"><span style="color:rgba(107,155,201,.6);flex-shrink:0;">&#9678;</span><span style="font-family:Space Mono,monospace;font-size:.52rem;color:rgba(201,185,154,.65);letter-spacing:.03em;line-height:1.5;">' + t + '</span></div>'; }).join('')
+      + '</div>' : '';
+  return '<div style="padding:14px 16px;background:rgba(107,155,201,.04);border:1px solid rgba(107,155,201,.15);border-left:3px solid rgba(107,155,201,.3);">'
+    + '<div style="font-family:Space Mono,monospace;font-size:.44rem;letter-spacing:.1em;text-transform:uppercase;color:rgba(107,155,201,.5);margin-bottom:10px;">&#9678; How to Relate</div>'
+    + tipsHTML
+    + '<div style="font-family:Cormorant Garamond,serif;font-size:.9rem;color:rgba(240,235,224,.8);line-height:1.8;">' + full + '</div>'
+    + '</div>';
 }
 
 function mirrorSetRelType(btn, type) {
@@ -22137,7 +22146,7 @@ Return ONLY a JSON object with this exact structure (no markdown, no preamble):
   "relate": "3-4 sentences of practical, specific guidance for Tiff on how to best navigate and relate to this person given both their charts — what to lean into, what to be mindful of, how to meet them where they are"
 }
 
-Be specific to these actual charts. Avoid generic platitudes.`;
+Be specific to these actual charts. Avoid generic platitudes. Use the correct pronouns for each person throughout.`;
 
   try {
     const data = await claudeAPI(apiKey, { model:'claude-sonnet-4-6', max_tokens:800, messages:[{role:'user', content:prompt}] });
@@ -22163,7 +22172,7 @@ Be specific to these actual charts. Avoid generic platitudes.`;
             <div style="font-size:1.6rem;">${person.czEmoji}</div>
             <div>
               <div style="font-family:'Cormorant Garamond',serif;font-size:1.15rem;color:rgba(240,235,224,.9);">${name}</div>
-              <div style="font-family:'Space Mono',monospace;font-size:.44rem;color:rgba(201,185,154,.35);margin-top:2px;">☀ ${person.sunSign} · 🌙 ${person.moonSign} · LP ${person.lifePath}</div>
+              <div style="font-family:'Space Mono',monospace;font-size:.44rem;color:rgba(201,185,154,.35);margin-top:2px;">${person.pronouns ? person.pronouns+' · ' : ''}☀ ${person.sunSign} · 🌙 ${person.moonSign} · LP ${person.lifePath}</div>
             </div>
           </div>
           ${mirrorChartGrid(person)}
