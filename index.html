@@ -4729,11 +4729,13 @@ function _aRetros(d) {
     ['Mercury','2024-04-01','2024-04-25'],['Mercury','2024-08-05','2024-08-28'],
     ['Mercury','2024-11-25','2024-12-15'],['Mercury','2025-03-15','2025-04-07'],
     ['Mercury','2025-07-18','2025-08-11'],['Mercury','2025-11-09','2025-11-29'],
-    ['Mercury','2026-03-15','2026-03-20'],
-    ['Venus','2025-03-01','2025-04-12'],
-    ['Mars','2024-12-06','2025-02-23'],
-    ['Jupiter','2024-10-09','2025-02-04'],['Jupiter','2025-11-11','2026-03-10'],
-    ['Saturn','2024-06-29','2024-11-15'],['Saturn','2025-07-13','2025-11-27'],
+    ['Mercury','2026-03-15','2026-03-20'],['Mercury','2026-07-18','2026-08-11'],['Mercury','2026-11-11','2026-12-01'],
+    ['Venus','2025-03-01','2025-04-12'],['Venus','2026-07-22','2026-09-02'],
+    ['Mars','2024-12-06','2025-02-23'],['Mars','2027-02-01','2027-04-01'],
+    ['Jupiter','2024-10-09','2025-02-04'],['Jupiter','2025-11-11','2026-03-10'],['Jupiter','2026-12-01','2027-04-12'],
+    ['Saturn','2024-06-29','2024-11-15'],['Saturn','2025-07-13','2025-11-27'],['Saturn','2026-07-06','2026-11-18'],
+    ['Neptune','2026-07-01','2026-12-06'],
+    ['Uranus','2026-09-05','2027-02-14'],
   ].filter(r => ds >= r[1] && ds <= r[2]).map(r => r[0]).join(', ');
 }
 
@@ -12971,7 +12973,7 @@ function getNatalSummary() {
 // THE SANCTUM — DAILY READING
 // ══════════════════════════════════════════════
 
-const HORO_CACHE_KEY = 'gt_daily_horoscope_v1';
+const HORO_CACHE_KEY = 'gt_daily_horoscope_v2';
 
 async function generateDailyHoroscope(force) {
   const apiKey = getApiKey();
@@ -13004,9 +13006,9 @@ async function generateDailyHoroscope(force) {
   const prompt = 'You are a skilled astrologer and spiritual guide writing for Tiff — a Libra Sun, Aries Moon, Capricorn Rising. Today is ' + dateStr + '. Current sky: ' + astroNow.summary + '\n\n'
     + 'Return ONLY a JSON object with this exact structure, no markdown, no preamble:\n'
     + '{\n'
-    + '  "horoscope": { "icon": "♎", "title": "one evocative phrase (5-8 words)", "body": "1-2 short sentences for Libra today" },\n'
-    + '  "transit": { "icon": "⚡", "title": "Planet in Sign — one word quality", "body": "1-2 short sentences on the key planetary movement" },\n'
-    + '  "lunar": { "icon": "🌙", "title": "Moon phase + sign in 4 words", "body": "1-2 short sentences on what today\'s lunar energy invites" }\n'
+    + '  "horoscope": { "icon": "♎", "title": "one evocative phrase (5-8 words)", "body": "1 sentence for Libra today" },\n'
+    + '  "transit": { "icon": "⚡", "title": "Planet in Sign — one word quality", "body": "1 sentence on the key planetary movement" },\n'
+    + '  "lunar": { "icon": "🌙", "title": "Moon phase + sign in 4 words", "body": "1 sentence on what today\'s lunar energy invites" }\n'
     + '}\n\n'
     + 'Keep the tone poetic but grounded. Each body is 2-3 sentences max. Use the actual current sky conditions.';
 
