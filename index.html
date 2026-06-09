@@ -517,7 +517,7 @@ h1 em { display:block; font-style:italic; font-weight:300; font-size:.42em; lett
     <!-- ✦ DAILY HOROSCOPE CARDS ✦ -->
     <div id="sanctum-horoscope" style="margin-bottom:28px;">
       <div style="font-family:'Space Mono',monospace;font-size:.52rem;color:rgba(201,185,154,.4);letter-spacing:.12em;text-transform:uppercase;margin-bottom:14px;">✦ Today's Sky Notes</div>
-      <div id="sanctum-horoscope-inner" style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;">
+      <div id="sanctum-horoscope-inner" style="display:flex;flex-direction:column;gap:8px;">
         <div class="horo-card-loading">Loading…</div>
         <div class="horo-card-loading">Loading…</div>
         <div class="horo-card-loading">Loading…</div>
@@ -13004,9 +13004,9 @@ async function generateDailyHoroscope(force) {
   const prompt = 'You are a skilled astrologer and spiritual guide writing for Tiff — a Libra Sun, Aries Moon, Capricorn Rising. Today is ' + dateStr + '. Current sky: ' + astroNow.summary + '\n\n'
     + 'Return ONLY a JSON object with this exact structure, no markdown, no preamble:\n'
     + '{\n'
-    + '  "horoscope": { "icon": "♎", "title": "one evocative phrase (5-8 words)", "body": "2-3 sentences for Libra today" },\n'
-    + '  "transit": { "icon": "⚡", "title": "Planet in Sign — one word quality", "body": "2 sentences on the key planetary movement today and what it stirs" },\n'
-    + '  "lunar": { "icon": "🌙", "title": "Moon phase + sign in 4 words", "body": "2 sentences on what today\'s lunar energy invites" }\n'
+    + '  "horoscope": { "icon": "♎", "title": "one evocative phrase (5-8 words)", "body": "1-2 short sentences for Libra today" },\n'
+    + '  "transit": { "icon": "⚡", "title": "Planet in Sign — one word quality", "body": "1-2 short sentences on the key planetary movement" },\n'
+    + '  "lunar": { "icon": "🌙", "title": "Moon phase + sign in 4 words", "body": "1-2 short sentences on what today\'s lunar energy invites" }\n'
     + '}\n\n'
     + 'Keep the tone poetic but grounded. Each body is 2-3 sentences max. Use the actual current sky conditions.';
 
@@ -13043,11 +13043,15 @@ function renderHoroCards(container, cards) {
   ['horoscope','transit','lunar'].forEach(function(key) {
     var c = cards[key];
     if (!c) return;
-    html += '<div class="horo-card" style="border-color:' + ACCENTS[key] + ';">'
-      + '<div class="horo-card-label">' + LABELS[key] + '</div>'
-      + '<div class="horo-card-icon">' + (c.icon || '') + '</div>'
-      + '<div class="horo-card-title">' + (c.title || '') + '</div>'
+    html += '<div class="horo-card" style="border-color:' + ACCENTS[key] + ';flex-direction:row;align-items:flex-start;gap:12px;padding:12px 14px;">'
+      + '<div style="font-size:1.4rem;flex-shrink:0;line-height:1;padding-top:2px;">' + (c.icon || '') + '</div>'
+      + '<div style="flex:1;min-width:0;">'
+      + '<div style="display:flex;align-items:baseline;gap:8px;margin-bottom:4px;">'
+      + '<div class="horo-card-label" style="margin-bottom:0;">' + LABELS[key] + '</div>'
+      + '<div class="horo-card-title" style="font-size:.88rem;">' + (c.title || '') + '</div>'
+      + '</div>'
       + '<div class="horo-card-body">' + (c.body || '') + '</div>'
+      + '</div>'
       + '</div>';
   });
   container.innerHTML = html;
