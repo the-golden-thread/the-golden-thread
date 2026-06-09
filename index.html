@@ -21761,7 +21761,7 @@ function computePersonChart(name, dob, birthTime, birthLocation) {
     name, dob, birthTime: birthTime || '', birthLocation: birthLocation || '',
     sunSign, moonSign, moonPhase, risingNote,
     hasBirthTime: !!(birthTime && birthTime.trim()),
-    cz: cz.sign, czEmoji: cz.emoji, czElement: czEl, czFixed: cz.element_fixed, czYin: cz.yin,
+    cz: cz.sign, czEmoji: cz.emoji, czElement: czEl, czFixed: cz.element_fixed, czYin: cz.yin, czTraits: cz.traits, czShadow: cz.shadow,
     czTraits: cz.traits, czShadow: cz.shadow,
     lifePath, tarotNum, soulCard, lpTitle: lpMeaning ? lpMeaning.title : '',
     personalYear,
@@ -21868,16 +21868,31 @@ function mirrorChartGrid(p) {
   const sunDesc = (CHART_BOX_DESCRIPTIONS.Sun || {})[p.sunSign] || '';
   const moonDesc = (CHART_BOX_DESCRIPTIONS.Moon || {})[p.moonSign] || '';
   const boxId = 'mcb-' + (p.name||'').replace(/\s+/g,'_');
+  const risingDesc = p.rising ? 'The Rising sign (Ascendant) is the mask you wear and the energy you project into the world — how others first experience you before they know you.' : '';
+  const lpDesc = p.lifePath && NUMEROLOGY_MEANINGS[p.lifePath] ? NUMEROLOGY_MEANINGS[p.lifePath].essence : '';
+  const scDesc = p.soulCard ? p.soulCard.essence : '';
+  const pyDesc = p.personalYear ? 'Personal Year ' + p.personalYear + ' is a ' + (p.personalYear === 1 ? 'year of new beginnings — planting seeds, initiating, stepping into fresh territory.' : p.personalYear === 2 ? 'year of patience and partnership — relationships deepen, collaboration is key.' : p.personalYear === 3 ? 'year of creative expression — joy, communication, and expansion.' : p.personalYear === 4 ? 'year of building and foundation — disciplined work, structure, long-term effort.' : p.personalYear === 5 ? 'year of change and freedom — unexpected shifts, movement, new experiences.' : p.personalYear === 6 ? 'year of love and responsibility — home, family, service, and harmony.' : p.personalYear === 7 ? 'year of inner work and reflection — solitude, spiritual deepening, seeking truth.' : p.personalYear === 8 ? 'year of power and abundance — material mastery, ambition, and recognition.' : p.personalYear === 9 ? 'year of completion and release — endings, closure, and preparing for a new cycle.' : '') : '';
+  const czData = p.cz ? CHINESE_ZODIAC[p.cz] : null;
+  const czDesc = czData ? 'The ' + (p.czElement||'') + ' ' + p.cz + ' is ' + (p.czYin ? 'Yin' : 'Yang') + ', fixed element ' + (czData.element_fixed||'') + '. Known for: ' + czData.traits.join(', ') + '.' : '';
+  const gkDesc = p.geneKey ? 'Gene Key ' + p.geneKey + ' sits in the Sphere of Life\u2019s Work \u2014 the gift this person is here to express and embody in the world.' : '';
+  const hdDesc = p.hdType ? ({
+    'Generator': 'Generators are here to respond and find satisfaction through sustainable work. Life force is their gift; frustration signals misalignment.',
+    'Manifesting Generator': 'Manifesting Generators are multi-passionate responders who move fast. They need to visualize before acting; frustration and anger signal when to pivot.',
+    'Projector': 'Projectors guide and direct others energy. They thrive when invited; bitterness comes from offering wisdom without being asked.',
+    'Manifestor': 'Manifestors are here to initiate — to begin things others cannot. Informing before acting neutralizes the anger they can unconsciously generate.',
+    'Reflector': 'Reflectors are rare mirrors of their community, sampling all nine centers. They need a full lunar cycle before major decisions.',
+  }[p.hdType] || 'Human Design type reveals the strategy and authority for navigating life correctly.') : '';
+
   const items = [
     { label:'Sun', value: p.sunSign || '—', emoji:'☀', clickDesc: sunDesc, id: boxId+'-sun' },
     { label:'Moon', value: (p.moonSign || '—') + (p.hasBirthTime ? '' : ' *'), emoji:'🌙', clickDesc: moonDesc, id: boxId+'-moon' },
-    { label:'Rising', value: p.rising ? p.rising : (p.hasBirthTime ? 'Calculating…' : 'Needs birth time'), emoji:'↑', dim: !p.rising },
-    { label:'Life Path', value: p.lifePath ? p.lifePath + (p.lpTitle ? ' · ' + p.lpTitle : '') : '—', emoji:'✦' },
-    { label:'Soul Card', value: p.soulCard ? p.soulCard.name : '—', emoji: p.soulCard ? p.soulCard.emoji : '◑' },
-    { label:'Personal Year', value: p.personalYear || '—', emoji:'◎' },
-    { label:'Chinese Zodiac', value: (p.czElement||'') + ' ' + (p.cz||'—') + (p.czYin ? ' · Yin' : ' · Yang'), emoji: p.czEmoji || '🐉' },
-    { label:'Gene Key', value: p.geneKey ? p.geneKey + ' — Life\'s Work' : '—', emoji:'⬡' },
-    { label:'HD Type', value: p.hdType ? p.hdType : (p.hasBirthTime ? 'Calculating…' : 'Needs birth time'), emoji:'◎', dim: !p.hdType },
+    { label:'Rising', value: p.rising ? p.rising : (p.hasBirthTime ? 'Calculating…' : 'Needs birth time'), emoji:'↑', dim: !p.rising, clickDesc: risingDesc, id: boxId+'-rising' },
+    { label:'Life Path', value: p.lifePath ? p.lifePath + (p.lpTitle ? ' · ' + p.lpTitle : '') : '—', emoji:'✦', clickDesc: lpDesc, id: boxId+'-lp' },
+    { label:'Soul Card', value: p.soulCard ? p.soulCard.name : '—', emoji: p.soulCard ? p.soulCard.emoji : '◑', clickDesc: scDesc, id: boxId+'-sc' },
+    { label:'Personal Year', value: p.personalYear || '—', emoji:'◎', clickDesc: pyDesc, id: boxId+'-py' },
+    { label:'Chinese Zodiac', value: (p.czElement||'') + ' ' + (p.cz||'—') + (p.czYin ? ' · Yin' : ' · Yang'), emoji: p.czEmoji || '🐉', clickDesc: czDesc, id: boxId+'-cz' },
+    { label:'Gene Key', value: p.geneKey ? p.geneKey + ' — Life\'s Work' : '—', emoji:'⬡', clickDesc: gkDesc, id: boxId+'-gk' },
+    { label:'HD Type', value: p.hdType ? p.hdType : (p.hasBirthTime ? 'Calculating…' : 'Needs birth time'), emoji:'◎', dim: !p.hdType, clickDesc: hdDesc, id: boxId+'-hd' },
   ];
   return '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:4px;">'
     + items.map(item => {
@@ -21913,10 +21928,23 @@ function mirrorShadowLightHTML(sl) {
 
 function mirrorRelateHTML(relate) {
   if (!relate) return '';
-  return `<div style="padding:14px 16px;background:rgba(107,155,201,.04);border:1px solid rgba(107,155,201,.15);border-left:3px solid rgba(107,155,201,.3);">
-    <div style="font-family:'Space Mono',monospace;font-size:.44rem;letter-spacing:.1em;text-transform:uppercase;color:rgba(107,155,201,.5);margin-bottom:8px;">◎ How to Relate</div>
-    <div style="font-family:'Cormorant Garamond',serif;font-size:.9rem;color:rgba(240,235,224,.8);line-height:1.8;">${relate}</div>
-  </div>`;
+  let tips = [], full = '';
+  if (typeof relate === 'object' && relate !== null) {
+    tips = Array.isArray(relate.tips) ? relate.tips : [];
+    full = relate.full || '';
+  } else {
+    full = String(relate);
+  }
+  const tipsHTML = tips.length
+    ? '<div style="display:flex;flex-direction:column;gap:5px;margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid rgba(107,155,201,.12);">'
+      + tips.map(t => '<div style="display:flex;gap:8px;align-items:flex-start;"><span style="color:rgba(107,155,201,.6);flex-shrink:0;margin-top:1px;">◎</span><span style="font-family:Space Mono,monospace;font-size:.52rem;color:rgba(201,185,154,.65);letter-spacing:.03em;line-height:1.5;">' + t + '</span></div>').join('')
+      + '</div>'
+    : '';
+  return '<div style="padding:14px 16px;background:rgba(107,155,201,.04);border:1px solid rgba(107,155,201,.15);border-left:3px solid rgba(107,155,201,.3);">'
+    + '<div style="font-family:Space Mono,monospace;font-size:.44rem;letter-spacing:.1em;text-transform:uppercase;color:rgba(107,155,201,.5);margin-bottom:10px;">◎ How to Relate</div>'
+    + tipsHTML
+    + '<div style="font-family:Cormorant Garamond,serif;font-size:.9rem;color:rgba(240,235,224,.8);line-height:1.8;">' + full + '</div>'
+    + '</div>';
 }
 
 function mirrorToggle(id) {
