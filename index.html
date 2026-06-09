@@ -21983,6 +21983,10 @@ function crossCompareCard(cc, expanded) {
     +'<div id="'+id+'-relate" style="margin-top:12px;">'+(cc.relate?mirrorRelateHTML(cc.relate):'')+'</div>'
     +'<div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap;">'
     +'<button onclick="crossRefresh(this.dataset.id)" data-id="'+id+'" style="font-family:Space Mono,monospace;font-size:.48rem;letter-spacing:.08em;padding:6px 12px;background:transparent;border:1px solid rgba(107,155,201,.2);color:rgba(107,155,201,.6);cursor:pointer;">&#8635; Refresh</button>'
+    +'<button onclick="crossEditField(this.dataset.id,&apos;a&apos;,&apos;rising&apos;)" data-id="'+id+'" style="font-family:Space Mono,monospace;font-size:.48rem;letter-spacing:.08em;padding:6px 12px;background:transparent;border:1px solid rgba(201,185,154,.15);color:rgba(201,185,154,.4);cursor:pointer;">&#9998; '+nameA+' Rising</button>'
+    +'<button onclick="crossEditField(this.dataset.id,&apos;a&apos;,&apos;hdType&apos;)" data-id="'+id+'" style="font-family:Space Mono,monospace;font-size:.48rem;letter-spacing:.08em;padding:6px 12px;background:transparent;border:1px solid rgba(201,185,154,.15);color:rgba(201,185,154,.4);cursor:pointer;">&#9998; '+nameA+' HD</button>'
+    +'<button onclick="crossEditField(this.dataset.id,&apos;b&apos;,&apos;rising&apos;)" data-id="'+id+'" style="font-family:Space Mono,monospace;font-size:.48rem;letter-spacing:.08em;padding:6px 12px;background:transparent;border:1px solid rgba(201,185,154,.15);color:rgba(201,185,154,.4);cursor:pointer;">&#9998; '+nameB+' Rising</button>'
+    +'<button onclick="crossEditField(this.dataset.id,&apos;b&apos;,&apos;hdType&apos;)" data-id="'+id+'" style="font-family:Space Mono,monospace;font-size:.48rem;letter-spacing:.08em;padding:6px 12px;background:transparent;border:1px solid rgba(201,185,154,.15);color:rgba(201,185,154,.4);cursor:pointer;">&#9998; '+nameB+' HD</button>'
     +'<button onclick="crossDelete(this.dataset.id)" data-id="'+id+'" style="font-family:Space Mono,monospace;font-size:.48rem;letter-spacing:.08em;padding:6px 12px;background:transparent;border:1px solid rgba(180,80,80,.2);color:rgba(180,100,100,.5);cursor:pointer;">&#10005; Remove</button>'
     +'</div></div></div>';
 }
@@ -22117,6 +22121,23 @@ function crossSavePending() {
 function clearCrossResult() {
   var el = document.getElementById('cross-result');
   if (el) el.innerHTML='';
+}
+
+function crossEditField(cardId, person, field) {
+  var list = getCrossCompares();
+  var cc = list.find(function(x){ return ('cc-'+x.id)===cardId || x.id===cardId; });
+  if (!cc) return;
+  var p = person === 'a' ? cc.personA : cc.personB;
+  var labels = {rising:'Rising Sign', hdType:'HD Type'};
+  var nameLabel = (p.name||person) + ' ' + (labels[field]||field);
+  var val = prompt('Edit ' + nameLabel + ':', p[field]||'');
+  if (val === null) return;
+  p[field] = val.trim();
+  saveCrossCompares(list);
+  // Re-render the correct grid inline
+  var gridId = cardId + '-grid-' + person;
+  var gridEl = document.getElementById(gridId);
+  if (gridEl) gridEl.innerHTML = mirrorChartGrid(p);
 }
 
 async function crossRefresh(cardId) {
