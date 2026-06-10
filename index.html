@@ -22312,7 +22312,7 @@ function mirrorChartGrid(p) {
     {label:'HD Type',      emoji:'\u25ce', id:bid+'-hd',     value:p.hdType||(p.hasBirthTime?'\u21bb Tap Refresh':'Needs birth time'),        desc:hdDesc, dim:!p.hdType},
   ];
 
-  function esc(s){ return (s||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'"); }
+  function esc(s){ return (s||'').replace(/&/g,'&amp;').replace(/'/g,'&apos;').replace(/"/g,'&quot;'); }
 
   return '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:4px;">'
     + items.map(function(item){
