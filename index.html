@@ -1026,6 +1026,23 @@ h1 em { display:block; font-style:italic; font-weight:300; font-size:.42em; lett
         <div id="f-people-chips" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px;min-height:28px;"></div>
         <div id="scan-people-result" style="font-family:'Space Mono',monospace;font-size:.55rem;color:rgba(201,185,154,.4);line-height:1.7;"></div>
       </div>
+      <div class="form-field" id="f-place-field">
+        <label style="display:flex;justify-content:space-between;align-items:center;">
+          <span>Dream Place</span>
+          <button type="button" onclick="toggleDreamPlacePicker()" id="f-place-toggle-btn" style="font-family:'Space Mono',monospace;font-size:.5rem;letter-spacing:.07em;padding:4px 10px;border:1px solid rgba(58,107,107,.35);background:rgba(58,107,107,.08);color:rgba(80,160,160,.75);cursor:pointer;transition:all .2s;">◈ Pick Place</button>
+        </label>
+        <div id="f-place-selected" style="min-height:28px;margin-bottom:4px;"></div>
+        <div id="f-place-picker" style="display:none;max-height:220px;overflow-y:auto;padding:6px 0;">
+          <div id="f-place-chips" style="display:flex;flex-wrap:wrap;gap:6px;"></div>
+          <div style="margin-top:8px;display:flex;gap:6px;align-items:center;">
+            <input type="text" id="f-place-new-name" placeholder="Name a new place…"
+              style="flex:1;background:rgba(255,255,255,.03);border:1px solid rgba(201,185,154,.15);color:var(--parchment);font-family:'Cormorant Garamond',serif;font-size:.9rem;padding:5px 10px;outline:none;">
+            <button type="button" onclick="addNewDreamPlaceFromForm()"
+              style="font-family:'Space Mono',monospace;font-size:.5rem;letter-spacing:.06em;padding:5px 10px;border:1px solid rgba(201,185,154,.2);background:transparent;color:rgba(201,185,154,.5);cursor:pointer;white-space:nowrap;">+ Add</button>
+          </div>
+        </div>
+        <input type="hidden" id="f-place-id" value="">
+      </div>
       <div id="f-readings-area" style="display:none;margin-bottom:16px;">
         <div class="m-lbl" style="margin-bottom:10px;">Generated Readings</div>
         <div id="f-astro-reading-preview" style="display:none;margin-bottom:12px;">
@@ -1036,10 +1053,6 @@ h1 em { display:block; font-style:italic; font-weight:300; font-size:.42em; lett
           <div style="font-family:'Space Mono',monospace;font-size:.55rem;letter-spacing:.1em;color:var(--moon);text-transform:uppercase;margin-bottom:6px;">✦ Claude's Reading</div>
           <div class="m-claude" id="f-claude-reading-text"></div>
         </div>
-      </div>
-      <div id="f-place-area" style="display:none;margin-bottom:16px;">
-        <div class="m-lbl" style="margin-bottom:10px;">◈ Dream Place</div>
-        <div id="f-place-result"></div>
       </div>
       <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px;">
         <button class="astro-gen-btn" id="f-gen-btn" onclick="generateDreamReadings()" style="flex:1;justify-content:center;">✦ Generate Readings</button>
@@ -11015,6 +11028,19 @@ function openDream(d){
       </div>
       <div id="dream-beings-display-${d.id}">${ppl || '<span style="font-family:\'Space Mono\',monospace;font-size:.55rem;color:rgba(201,185,154,.3);">None tagged yet</span>'}</div>
     </div>
+    ${(()=>{
+      // Find any places that link to this dream
+      const _linkedPlaces = (typeof getDreamPlaces==='function') ? getDreamPlaces().filter(p=>(p.dreamIds||[]).some(did=>String(did)===String(d.id))) : [];
+      if (!_linkedPlaces.length) return '';
+      return '<div class="m-sec" style="margin-bottom:10px;">'
+        + '<div class="m-lbl" style="display:flex;justify-content:space-between;align-items:center;"><span>Dream Place</span></div>'
+        + '<div style="display:flex;flex-wrap:wrap;gap:6px;">'
+        + _linkedPlaces.map(p => {
+            const col = (DP_NATURE_COLORS&&DP_NATURE_COLORS[p.nature]) || 'var(--teal)';
+            return `<span onclick="closeView();setTimeout(()=>{switchTab('dreams',document.getElementById('tab-btn-dreams'));setTimeout(()=>{switchDreams('dreamplaces');setTimeout(()=>openDreamPlace('${p.id}'),150);},100);},50);" style="font-family:'Space Mono',monospace;font-size:.52rem;padding:3px 10px;border:1px solid ${col};color:${col};cursor:pointer;transition:all .2s;" onmouseover="this.style.background='rgba(255,255,255,.06)'" onmouseout="this.style.background='transparent'">◈ ${p.name}</span>`;
+          }).join('')
+        + '</div></div>';
+    })()}
     <div class="m-sec"><div class="m-lbl">The Dream</div><div class="m-body">${_safeBody.split('\n\n').map(p=>`<p>${p}</p>`).join('')}</div></div>
     ${d.interp?`<div class="m-sec"><div class="m-lbl">Original Interpretation (journal)</div><div class="m-interp">${_safeInterp}</div></div>`:''}
     <div class="m-sec">
@@ -11835,36 +11861,35 @@ function addDream(){
   var _moonStr = (_cAstro && _cAstro.moon) ? _cAstro.moon : '';
   dreams.push({id:_newId,date,title,moon:_moonStr,ctx,body,interp,claude:claudeReading,astroReading:_astroReadingText||undefined,cats,people:_people,viv,userAdded:true,astro:_cAstro||undefined});
   saveUserDreams();
-  // Apply confirmed dream place if any
-  const _addOv = document.getElementById('add-ov');
-  const _confirmedPlaceId = _addOv ? _addOv.dataset.confirmedPlaceId : null;
-  if (_confirmedPlaceId) {
+  // Link dream to selected place
+  const _selectedPlaceId = (document.getElementById('f-place-id')||{}).value || '';
+  if (_selectedPlaceId) {
     const _dpList = getDreamPlaces();
-    const _dpIdx = _dpList.findIndex(p => p.id === _confirmedPlaceId);
+    const _dpIdx = _dpList.findIndex(p => p.id === _selectedPlaceId);
     if (_dpIdx > -1) {
       const _dp = _dpList[_dpIdx];
       if (!(_dp.dreamIds||[]).some(did => String(did) === String(_newId))) {
         _dp.dreamIds = [...(_dp.dreamIds||[]), String(_newId)];
         _dp.visitCount = (_dp.visitCount||1) + 1;
-        // Update firstVisited if this dream is earlier
         if (date && (!_dp.firstVisited || date < _dp.firstVisited)) _dp.firstVisited = date;
         _dpList[_dpIdx] = _dp;
         saveDreamPlaces(_dpList);
       }
     }
-    delete _addOv.dataset.confirmedPlaceId;
   }
-  if (_addOv) delete _addOv.dataset.pendingNewPlace;
   document.getElementById('add-ov').classList.remove('open');
   const _pChips = document.getElementById('f-people-chips'); if(_pChips) _pChips.innerHTML='';
   const _pResult = document.getElementById('scan-people-result'); if(_pResult) _pResult.textContent='';
+  // Reset place picker
+  const _fpid = document.getElementById('f-place-id'); if(_fpid) _fpid.value='';
+  const _fpsel = document.getElementById('f-place-selected'); if(_fpsel) _fpsel.innerHTML='';
+  const _fppick = document.getElementById('f-place-picker'); if(_fppick) _fppick.style.display='none';
+  const _fptbtn = document.getElementById('f-place-toggle-btn'); if(_fptbtn) _fptbtn.textContent='◈ Pick Place';
   ['f-title','f-date','f-ctx','f-body','f-interp'].forEach(id=>{const el=document.getElementById(id);if(el){el.value='';el.style.color='';el.style.fontStyle='';delete el.dataset.manuallyEdited;}});
   const _aOv=document.getElementById('add-ov');if(_aOv)delete _aOv.dataset.computedAstro;
   const ra=document.getElementById('f-readings-area'); if(ra) ra.style.display='none';
   const at=document.getElementById('f-astro-reading-preview'); if(at) at.style.display='none';
   const ct=document.getElementById('f-claude-reading-preview'); if(ct) ct.style.display='none';
-  const pa=document.getElementById('f-place-area'); if(pa) pa.style.display='none';
-  const pr=document.getElementById('f-place-result'); if(pr) pr.innerHTML='';
   document.getElementById('f-viv').value=5; document.getElementById('f-viv-val').textContent='5';
   document.getElementById('f-viv-dots').innerHTML=renderVivBar(5);
   renderDreams();
@@ -14383,11 +14408,10 @@ async function generateDreamReadings() {
   const _dmoon = (function(){ try { return date ? getAstroForDate(date).moon : ''; } catch(e){ return ''; } })();
   const dreamContext = `Dream title: "${title}"\nDate: ${date||'unknown'}\n${_dmoon?'Moon: '+_dmoon+'\n':''}${ctx?'Life context: '+ctx+'\n':''}\nDream:\n${body}`;
 
-  // Run all three in parallel
+  // Run both in parallel
   await Promise.all([
     generateFormAstroReading(dreamContext, _dmoon, apiKey),
-    generateFormClaudeReading(dreamContext, apiKey),
-    detectDreamPlace(title, body, date, apiKey)
+    generateFormClaudeReading(dreamContext, apiKey)
   ]);
 
   if (btn) { btn.disabled = false; btn.textContent = '✦ Regenerate Readings'; }
@@ -18209,7 +18233,7 @@ function archiveStat(label, val) {
 // DREAM PLACES
 // ══════════════════════════════════════════════
 const DREAM_PLACES_KEY = 'gt_dream_places';
-let _dpNatureFilter = 'all'; // slicer state
+let _dpNatureFilter = 'all';
 
 function getDreamPlaces() {
   try { return JSON.parse(localStorage.getItem(DREAM_PLACES_KEY) || '[]'); } catch(e) { return []; }
@@ -18220,7 +18244,7 @@ function saveDreamPlaces(list) {
 
 function initDreamPlaces() {
   if (getDreamPlaces().length > 0) return;
-  const seed = [{"id":"dp_whale_vortex","name":"The Whale Vortex Chamber","nature":"locational","archetypes":["water","cosmic","liminal","vessel"],"feltQuality":"A glass chamber within a larger tank housing a humpback whale. Spiraling bubbles, buoyant water, seated meditation. Has its own protocol — close your eyes, an hour in the inner chamber. The most architecturally specific and coherent non-ordinary location in the dreamscape.","navigationNotes":"Arrived via Salve Regina campus wandering. The opulent marble building was the approach. Inner chamber accessed through the outer fish tank. Entry seems to require surrender rather than force.","personalNotes":"","firstVisited":"2026-05-03","visitCount":1,"dreamIds":["167"]},{"id":"dp_underwater_house","name":"Underwater House","nature":"locational","archetypes":["water","home","underground","liminal"],"feltQuality":"A fully habitable domestic space beneath water. A very large man seated on a throne. A dolphin companion following through the rooms. Feels like an audience chamber in the unconscious depths — inhabited and purposeful.","navigationNotes":"Arrived in a school bus and realized mid-entry I was dreaming. The emergency exit door at the back of the bus may be a recurring entry point worth noting.","personalNotes":"","firstVisited":"2026-05-08","visitCount":1,"dreamIds":["172"]},{"id":"dp_gas_station_reunion","name":"The Old Gas Station of Reunion","nature":"locational","archetypes":["threshold","liminal","community"],"feltQuality":"A humble roadside waypoint outside ordinary time. Grammy's car, Bumpa driving, an old matching car waiting. A man who reads the heart center with his hands. Aunt Ruthie became younger. People from different eras queued to walk into an iridescent portal mid-street. Tender and extraordinary — a true thin place.","navigationNotes":"Arrived in the back seat of Grammy's car with Bumpa driving. The portal was across the street — people falling through it in pairs. Ancestral entry point.","personalNotes":"","firstVisited":"2025-03-15","visitCount":1,"dreamIds":["39"]},{"id":"dp_2d_portal_field","name":"The 2D Portal Field","nature":"locational","archetypes":["cosmic","liminal","wilderness","threshold"],"feltQuality":"A world beyond a bathroom mirror portal. Everything flat and dead — hay, dirt rows, nothing alive. Ran barefoot. Its own physical laws. Arrived with two companions. The deadness is its texture, not a flaw.","navigationNotes":"Entered through a bathroom mirror portal. Was with two other people. Ran barefoot through dead agricultural flatland. The portal appeared in a house being left via garage.","personalNotes":"","firstVisited":"2022-12-21","visitCount":1,"dreamIds":["103"]},{"id":"dp_compound_life_doors","name":"The Compound of Life Doors","nature":"locational","archetypes":["institutional","threshold","liminal","community"],"feltQuality":"A controlled compound where each door opens onto someone else's intimate life event — a birthday party, moments from real lives. A courtyard between the doors. Two maintenance workers on a platform. Feels like a place that holds the full arc of human experience under observation.","navigationNotes":"Arrived walking with mother. Entered through successive doors into different people's life moments. The courtyard between doors is the staging ground.","personalNotes":"","firstVisited":"2024-02-25","visitCount":1,"dreamIds":["8"]},{"id":"dp_galaxy_bathroom","name":"The Galaxy Bathroom","nature":"locational","archetypes":["cosmic","liminal","underground","threshold"],"feltQuality":"A cosmically themed space that expands impossibly beyond its container. Lockers, overflowing toilets, ice machines, a woman throwing ice, a window showing a princess cruise ad. An underworld accessed through a mundane corporate door. Chaotic, excessive, with hidden luxury.","navigationNotes":"Accessed through a door marked 'galaxy themed bathroom' down a hallway from a work meeting. Spent a long time navigating its geography before finding the window.","personalNotes":"","firstVisited":"2026-04-02","visitCount":1,"dreamIds":["139"]},{"id":"dp_ceiling_aquarium","name":"The Ceiling Aquarium","nature":"locational","archetypes":["water","institutional","liminal","cosmic"],"feltQuality":"Fish swimming on the ceiling without water, inverting natural order entirely. Women in sparkly dresses herding the fish ceremonially between rooms. The impossibility of it feels like a feature — a place operating under different laws.","navigationNotes":"Arrived as part of a group task — herding fish between rooms. The group were all women in formal attire. The aquarium occupied the ceiling throughout.","personalNotes":"","firstVisited":"2024-02-07","visitCount":1,"dreamIds":["129"]},{"id":"dp_black_mansion_beach","name":"Black Mansion on the Beach","nature":"locational","archetypes":["home","water","threshold","liminal","elevated"],"feltQuality":"A grand dark structure on the beach with a detached deck. Grief and ceremony. The separation between the main building and the deck amplifies a feeling of disconnection and mourning. Feels like it exists somewhere specific in non-ordinary space.","navigationNotes":"Arrived at the beach in the evening. The party remnants were already there — tissue paper, streamers. Was called to the water first, then the mansion.","personalNotes":"","firstVisited":"2024-10-30","visitCount":1,"dreamIds":["40"]},{"id":"dp_beach_landing_ships","name":"The Beach of Landing Ships","nature":"locational","archetypes":["water","threshold","cosmic"],"feltQuality":"A shoreline that becomes a landing zone. First a white phallic spaceship soaring out of the sky and landing. Then a black one. A place where the cosmic breaks through the terrestrial with sequential, purposeful arrivals.","navigationNotes":"Observed from a tall crumbling building on a skateboard, hovering. Floated down toward Rain's outdoor restaurant after witnessing the landings.","personalNotes":"","firstVisited":"2026-04-17","visitCount":1,"dreamIds":["152"]},{"id":"dp_space_station","name":"The Space Station of Floating Rooms","nature":"locational","archetypes":["celestial","vessel","elevated","cosmic"],"feltQuality":"A weightless institutional space. Zero gravity — floating through rooms each holding a scientist at private work. The dissolution of ordinary constraints through weightlessness. Arrived daily via charter bus and space plane before being blocked.","navigationNotes":"Reached via a landing pad and space plane from a scientists' compound. Took a charter bus each day. Access was eventually revoked by authority at the landing pad.","personalNotes":"","firstVisited":"2025-03-14","visitCount":1,"dreamIds":["46"]},{"id":"dp_dance_floor_reunion","name":"The Dance Floor of Reunion","nature":"locational","archetypes":["performance","community","liminal"],"feltQuality":"A space where seeing a lost face clearly becomes ordinary — grief dissolved into ease. Outside of time. Felt like a real meeting place rather than a processing stage. Where the impossible becomes possible without explanation.","navigationNotes":"No clear entry memory — arrived there already in motion.","personalNotes":"","firstVisited":"2026-03-18","visitCount":1,"dreamIds":["28"]},{"id":"dp_glass_pyramid_hotel","name":"The Glass Pyramid Hotel","nature":"locational","archetypes":["elevated","cosmic","threshold","vessel"],"feltQuality":"A three-story glass pyramid with an inverted elevator, reached during an apocalyptic event. Its geometric crystalline form is both sanctuary and riddle — safety requiring a surreal toll to access. Sits in a Boston plaza under falling missiles.","navigationNotes":"Ran toward it from an open plaza after witnessing missile strikes on factory chimneys. The inverted elevator was the entry challenge.","personalNotes":"","firstVisited":"2026-04-01","visitCount":1,"dreamIds":["138"]},{"id":"dp_floating_couch_skies","name":"The Floating Couch Beneath Strange Skies","nature":"locational","archetypes":["celestial","vessel","elevated","cosmic","liminal"],"feltQuality":"A domestic couch adrift between earth and sky, witnessing cosmic strangeness alongside a parental figure. Intimate safety suspended within vast unknowable forces. The couch as vessel in a liminal sky-space.","navigationNotes":"Arrived already seated on the couch with dad. Sky above was strange. Quiet witnessing rather than active navigation.","personalNotes":"","firstVisited":"2026-03-17","visitCount":1,"dreamIds":["16"]},{"id":"dp_victorian_other_mother","name":"The Victorian Other Mother's Domain","nature":"locational","archetypes":["domestic","liminal","cosmic","underground"],"feltQuality":"A space belonging to a mythic larger-than-life feminine figure in Victorian dress. Observed as if through a screen. Dark fertility ritual energy — archaic, unseeable, slightly nauseating. A real figure's space, not a projection.","navigationNotes":"Witnessed from observer position, not fully entered. The screen-like distance suggests this place may need to be approached differently to enter.","personalNotes":"","firstVisited":"2026-03-18","visitCount":1,"dreamIds":["29"]},{"id":"dp_blue_birthing_room","name":"The Blue Birthing Room","nature":"locational","archetypes":["threshold","liminal","domestic","institutional"],"feltQuality":"A candlelit room of arrival, softened by blue and ritual. Peeked into before entered, as if the right to be there wasn't certain. Holds the mystery of new life on the threshold between non-existence and personhood.","navigationNotes":"Was at a birthing place and peeked into the room before entering. People were lighting candles inside. A flat blue couch and candlelight.","personalNotes":"","firstVisited":"2026-01-24","visitCount":1,"dreamIds":["17"]},{"id":"dp_mermaid_deep","name":"The Mermaid Deep","nature":"locational","archetypes":["water","underground","liminal","cosmic"],"feltQuality":"An underwater realm where identity transforms. Found another mermaid. Desire freely expressed. The ocean as unconscious depth where one becomes something other than human. Liberation and erotic fluidity. Had a lucid quality.","navigationNotes":"Arrived after beach stinging and office scenes. Became lucid as a mermaid. The dream shifted into the deep intentionally.","personalNotes":"","firstVisited":"2023-01-01","visitCount":1,"dreamIds":["108"]},{"id":"dp_dock_ocean_floor","name":"The Dock at the Bottom of the Ocean","nature":"locational","archetypes":["water","underground","threshold","liminal"],"feltQuality":"An accidental descent into the deep transformed into an act of rescue and return. The ocean floor is not death but terrifying intimacy and will to survive. An actual place with structure — a dock — not open void.","navigationNotes":"Arrived by falling in while jumping off the ship. Di came down with me. Pulled her back up. Entry was accidental — may need intentional descent.","personalNotes":"","firstVisited":"2025-06-10","visitCount":1,"dreamIds":["58"]},{"id":"dp_small_river_serpent","name":"The Small River with the Hidden Serpent","nature":"locational","archetypes":["water","wilderness","threshold","liminal"],"feltQuality":"A modest waterway concealing a massive prehistoric creature within. The smallness of the river is deceptive — it holds overwhelming depths. Entered in search of wonder, found something ancient and enormous instead.","navigationNotes":"Waded in from a nearby area. The creature was hidden beneath until approached. The smallness of the entry point is part of the place's character.","personalNotes":"","firstVisited":"2024-01-29","visitCount":1,"dreamIds":["74"]},{"id":"dp_nighttime_beach","name":"The Nighttime Beach","nature":"ambiguous","archetypes":["water","threshold","liminal","wilderness"],"feltQuality":"Recurs with consistent darkness and waves that grow overwhelming on approach. Sometimes a place of anticipation, sometimes of terror. The dark water and the enormous waves may be the same place approached from different readiness levels.","navigationNotes":"Multiple arrivals. Usually at night, often with others. The waves feel different each time — sometimes containable, sometimes catastrophic. The approach matters.","personalNotes":"","firstVisited":"2025-01-13","visitCount":3,"dreamIds":["71","55","187"]},{"id":"dp_never_ending_house","name":"The Never-Ending House","nature":"ambiguous","archetypes":["home","domestic","underground","threshold"],"feltQuality":"An enormous parental home that keeps revealing new rooms as explored. Starts in the basement, ascends. Party room with booths and arcade games, a movie theater attached. The house as psyche — but consistent and specific enough across dreams that it may also be a real inner landscape.","navigationNotes":"Arrived living in the basement with Rain. Ascended through the house discovering rooms. The upper floors revealed as exploration deepened.","personalNotes":"","firstVisited":"2026-06-02","visitCount":1,"dreamIds":["186"]},{"id":"dp_looping_alaska_hotel","name":"The Looping Hotel Room in Alaska","nature":"ambiguous","archetypes":["threshold","liminal","vessel","domestic"],"feltQuality":"A room that resets and cycles back to the same moment of decision — a very specific non-ordinary mechanic. The Alaskan context adds remoteness and isolation. A persistent humanoid man with gray skin and piercing blue eyes, softly coercive. Eventually sat with him after many resets.","navigationNotes":"Kept being funneled back to the beginning of the loop. Eventually stopped resisting and sat. The sitting may be the key to moving through this place.","personalNotes":"","firstVisited":"2022-10-15","visitCount":1,"dreamIds":["13"]},{"id":"dp_manmade_fountain","name":"The Manmade Fountain","nature":"ambiguous","archetypes":["water","liminal","threshold","performance"],"feltQuality":"Inside a water fountain that was clearly manmade but with natural elements. Nervous about not being supposed to be there — in water up to the knees. Tess was there going deeper, getting her whole dress wet, performing what looked like a ritual. Sacred transgression quality.","navigationNotes":"Entered from inside the fountain structure. Was in up to the knees, Tess went deeper. The question of permission was central.","personalNotes":"","firstVisited":"2026-04-30","visitCount":1,"dreamIds":["161"]},{"id":"dp_kitchen_golden_child","name":"The Kitchen with the Golden Child","nature":"ambiguous","archetypes":["domestic","home","threshold"],"feltQuality":"Rain and I had a little boy with golden wispy hair, toddling around the kitchen naked. Animated by the arrival of new life — gold-haired and uncontainable. Could be precognitive, symbolic of creative potential, or a real encounter with a future self or child.","navigationNotes":"Arrived already in the domestic scene. No specific entry noted.","personalNotes":"","firstVisited":"2025-06-15","visitCount":1,"dreamIds":["60"]},{"id":"dp_school_of_return","name":"The School of Return","nature":"symbolic","archetypes":["institutional","liminal","threshold"],"feltQuality":"The recurring return-to-school anxiety dream in many variations — lost schedule, no locker combination, wrong classroom, running late. Tracks inadequacy, systems, credentials, and the fear of being permanently behind.","navigationNotes":"","personalNotes":"","firstVisited":"2024-06-28","visitCount":4,"dreamIds":["89","120","170","169"]},{"id":"dp_theater_backstage","name":"The Theater Backstage","nature":"symbolic","archetypes":["performance","liminal","threshold"],"feltQuality":"Archetypal unpreparedness — arriving backstage not knowing the role, the lines, the cue. The stage is the psyche's recurring set for performance anxiety and identity exposure. The show about to begin without you ready.","navigationNotes":"","personalNotes":"","firstVisited":"2026-01-29","visitCount":4,"dreamIds":["18","98","143","177"]},{"id":"dp_melting_island","name":"The Melting Island of Lakeville","nature":"symbolic","archetypes":["water","liminal","threshold","wilderness"],"feltQuality":"Lakeville revealed as an island losing its frozen bridges to the outside world — isolation made literal by thaw. The terror is not the ice but the closing window of escape. Processes themes of entrapment and the narrowing of options.","navigationNotes":"","personalNotes":"","firstVisited":"2026-03-18","visitCount":1,"dreamIds":["27"]},{"id":"dp_renovated_ex_house","name":"The Renovated House of the Ex","nature":"symbolic","archetypes":["home","domestic","threshold","liminal"],"feltQuality":"Former home transformed beyond recognition — divided into cubicles, gaming lounge, new backyard with pool and mini golf, hot tub gone. Entry still possible with old key but belonging is gone. Tracks displacement, estrangement, and the grief of a life rewritten by someone else.","navigationNotes":"","personalNotes":"","firstVisited":"2024-06-22","visitCount":2,"dreamIds":["85","117"]},{"id":"dp_squalor_apartment","name":"The Apartment of Squalor and Old Enemies","nature":"symbolic","archetypes":["home","domestic","urban","underground"],"feltQuality":"A dwelling populated by shadow figures from the past, the assigned room broken and degraded. Humiliation, entrapment, the withholding of basic dignity. A shadow processing space — the psyche's holding cell for unintegrated past relationships.","navigationNotes":"","personalNotes":"","firstVisited":"2024-11-06","visitCount":1,"dreamIds":["31"]},{"id":"dp_hotel_of_signs","name":"The Hotel of Signs","nature":"symbolic","archetypes":["liminal","vessel","threshold","institutional"],"feltQuality":"A hotel saturated with directional arrows pointing everywhere and nowhere. Paralysis rather than guidance. The stag-men watching are the more significant element — the hotel itself is the psyche's image for the confusion of too many directions at once.","navigationNotes":"","personalNotes":"","firstVisited":"2024-02-18","visitCount":1,"dreamIds":["7"]},{"id":"dp_flooded_boat","name":"The Flooded Adventure Boat","nature":"symbolic","archetypes":["vessel","water","liminal","wilderness"],"feltQuality":"A boat meant to carry toward dolphin-riding wonder that gets overwhelmed by a catastrophic wave. Processes themes of failed safe passage and unconscious forces overtaking intentions. The dolphin never reached.","navigationNotes":"","personalNotes":"","firstVisited":"2023-03-08","visitCount":1,"dreamIds":["114"]}];
+  const seed = [{"id":"dp_whale_vortex","name":"The Whale Vortex Chamber","nature":"locational","archetypes":["water","cosmic","liminal","vessel"],"feltQuality":"A glass chamber within a larger tank housing a humpback whale. Spiraling bubbles, buoyant water, seated meditation. Has its own protocol — close your eyes, an hour in the inner chamber. The most architecturally specific and coherent non-ordinary location in the dreamscape.","navigationNotes":"Arrived via Salve Regina campus wandering. The opulent marble building was the approach. Inner chamber accessed through the outer fish tank. Entry seems to require surrender rather than force.","personalNotes":"","firstVisited":"2026-05-03","visitCount":1,"dreamIds":["167"]},{"id":"dp_underwater_house","name":"Underwater House","nature":"locational","archetypes":["water","home","underground","liminal"],"feltQuality":"A fully habitable domestic space beneath water. A very large man seated on a throne. A dolphin companion following through the rooms. Feels like an audience chamber in the unconscious depths — inhabited and purposeful.","navigationNotes":"Arrived in a school bus and realized mid-entry I was dreaming. The emergency exit door at the back of the bus may be a recurring entry point worth noting.","personalNotes":"","firstVisited":"2026-05-08","visitCount":1,"dreamIds":["172"]},{"id":"dp_gas_station_reunion","name":"The Old Gas Station of Reunion","nature":"locational","archetypes":["threshold","liminal","community"],"feltQuality":"A humble roadside waypoint outside ordinary time. Grammy's car, Bumpa driving, an old matching car waiting. A man who reads the heart center with his hands. Aunt Ruthie became younger. People from different eras queued to walk into an iridescent portal mid-street. Tender and extraordinary — a true thin place.","navigationNotes":"Arrived in the back seat of Grammy's car with Bumpa driving. The portal was across the street — people falling through it in pairs. Ancestral entry point.","personalNotes":"","firstVisited":"2025-03-15","visitCount":1,"dreamIds":["39"]},{"id":"dp_2d_portal_field","name":"The 2D Portal Field","nature":"locational","archetypes":["cosmic","liminal","wilderness","threshold"],"feltQuality":"A world beyond a bathroom mirror portal. Everything flat and dead — hay, dirt rows, nothing alive. Ran barefoot. Its own physical laws. Arrived with two companions. The deadness is its texture, not a flaw.","navigationNotes":"Entered through a bathroom mirror portal. Was with two other people. Ran barefoot through dead agricultural flatland. The portal appeared in a house being left via garage.","personalNotes":"","firstVisited":"2022-12-21","visitCount":1,"dreamIds":["103"]},{"id":"dp_compound_life_doors","name":"The Compound of Life Doors","nature":"locational","archetypes":["institutional","threshold","liminal","community"],"feltQuality":"A controlled compound where each door opens onto someone else's intimate life event — a birthday party, moments from real lives. A courtyard between the doors. Two maintenance workers on a platform. Feels like a place that holds the full arc of human experience under observation.","navigationNotes":"Arrived walking with mother. Entered through successive doors into different people's life moments. The courtyard between doors is the staging ground.","personalNotes":"","firstVisited":"2024-02-25","visitCount":1,"dreamIds":["8"]},{"id":"dp_galaxy_bathroom","name":"The Galaxy Bathroom","nature":"locational","archetypes":["cosmic","liminal","underground","threshold"],"feltQuality":"A cosmically themed space that expands impossibly beyond its container. Lockers, overflowing toilets, ice machines, a woman throwing ice, a window showing a princess cruise ad. An underworld accessed through a mundane corporate door. Chaotic, excessive, with hidden luxury.","navigationNotes":"Accessed through a door marked 'galaxy themed bathroom' down a hallway from a work meeting. Spent a long time navigating its geography before finding the window.","personalNotes":"","firstVisited":"2026-04-02","visitCount":1,"dreamIds":["139"]},{"id":"dp_ceiling_aquarium","name":"The Ceiling Aquarium","nature":"locational","archetypes":["water","institutional","liminal","cosmic"],"feltQuality":"Fish swimming on the ceiling without water, inverting natural order entirely. Women in sparkly dresses herding the fish ceremonially between rooms. The impossibility of it feels like a feature — a place operating under different laws.","navigationNotes":"Arrived as part of a group task — herding fish between rooms. The group were all women in formal attire. The aquarium occupied the ceiling throughout.","personalNotes":"","firstVisited":"2024-02-07","visitCount":1,"dreamIds":["129"]},{"id":"dp_black_mansion_beach","name":"Black Mansion on the Beach","nature":"locational","archetypes":["home","water","threshold","liminal","elevated"],"feltQuality":"A grand dark structure on the beach with a detached deck. Grief and ceremony. The separation between the main building and the deck amplifies a feeling of disconnection and mourning. Feels like it exists somewhere specific in non-ordinary space.","navigationNotes":"Arrived at the beach in the evening. The party remnants were already there — tissue paper, streamers. Was called to the water first, then the mansion.","personalNotes":"","firstVisited":"2024-10-30","visitCount":1,"dreamIds":["40"]},{"id":"dp_beach_landing_ships","name":"The Beach of Landing Ships","nature":"locational","archetypes":["water","threshold","cosmic"],"feltQuality":"A shoreline that becomes a landing zone. First a white phallic spaceship soaring out of the sky and landing. Then a black one. A place where the cosmic breaks through the terrestrial with sequential, purposeful arrivals.","navigationNotes":"Observed from a tall crumbling building on a skateboard, hovering. Floated down toward Rain's outdoor restaurant after witnessing the landings.","personalNotes":"","firstVisited":"2026-04-17","visitCount":1,"dreamIds":["152"]},{"id":"dp_space_station","name":"The Space Station of Floating Rooms","nature":"locational","archetypes":["celestial","vessel","elevated","cosmic"],"feltQuality":"A weightless institutional space. Zero gravity — floating through rooms each holding a scientist at private work. The dissolution of ordinary constraints through weightlessness. Arrived daily via charter bus and space plane before being blocked.","navigationNotes":"Reached via a landing pad and space plane from a scientists' compound. Took a charter bus each day. Access was eventually revoked by authority at the landing pad.","personalNotes":"","firstVisited":"2025-03-14","visitCount":1,"dreamIds":["46"]},{"id":"dp_dance_floor_reunion","name":"The Dance Floor of Reunion","nature":"locational","archetypes":["performance","community","liminal"],"feltQuality":"A space where seeing a lost face clearly becomes ordinary — grief dissolved into ease. Outside of time. Felt like a real meeting place rather than a processing stage. Where the impossible becomes possible without explanation.","navigationNotes":"No clear entry memory — arrived there already in motion.","personalNotes":"","firstVisited":"2026-03-28","visitCount":1,"dreamIds":["132"]},{"id":"dp_glass_pyramid_hotel","name":"The Glass Pyramid Hotel","nature":"locational","archetypes":["elevated","cosmic","threshold","vessel"],"feltQuality":"A three-story glass pyramid with an inverted elevator, reached during an apocalyptic event. Its geometric crystalline form is both sanctuary and riddle — safety requiring a surreal toll to access. Sits in a Boston plaza under falling missiles.","navigationNotes":"Ran toward it from an open plaza after witnessing missile strikes on factory chimneys. The inverted elevator was the entry challenge.","personalNotes":"","firstVisited":"2026-04-01","visitCount":1,"dreamIds":["138"]},{"id":"dp_floating_couch_skies","name":"The Floating Couch Beneath Strange Skies","nature":"locational","archetypes":["celestial","vessel","elevated","cosmic","liminal"],"feltQuality":"A domestic couch adrift between earth and sky, witnessing cosmic strangeness alongside a parental figure. Intimate safety suspended within vast unknowable forces. The couch as vessel in a liminal sky-space.","navigationNotes":"Arrived already seated on the couch with dad. Sky above was strange. Quiet witnessing rather than active navigation.","personalNotes":"","firstVisited":"2026-03-17","visitCount":1,"dreamIds":[]},{"id":"dp_victorian_other_mother","name":"The Victorian Other Mother's Domain","nature":"locational","archetypes":["domestic","liminal","cosmic","underground"],"feltQuality":"A space belonging to a mythic larger-than-life feminine figure in Victorian dress. Observed as if through a screen. Dark fertility ritual energy — archaic, unseeable, slightly nauseating. A real figure's space, not a projection.","navigationNotes":"Witnessed from observer position, not fully entered. The screen-like distance suggests this place may need to be approached differently to enter.","personalNotes":"","firstVisited":"2026-03-18","visitCount":1,"dreamIds":["29"]},{"id":"dp_blue_birthing_room","name":"The Blue Birthing Room","nature":"locational","archetypes":["threshold","liminal","domestic","institutional"],"feltQuality":"A candlelit room of arrival, softened by blue and ritual. Peeked into before entered, as if the right to be there wasn't certain. Holds the mystery of new life on the threshold between non-existence and personhood.","navigationNotes":"Was at a birthing place and peeked into the room before entering. People were lighting candles inside. A flat blue couch and candlelight.","personalNotes":"","firstVisited":"2026-01-24","visitCount":1,"dreamIds":["17"]},{"id":"dp_mermaid_deep","name":"The Mermaid Deep","nature":"locational","archetypes":["water","underground","liminal","cosmic"],"feltQuality":"An underwater realm where identity transforms. Found another mermaid. Desire freely expressed. The ocean as unconscious depth where one becomes something other than human. Liberation and erotic fluidity. Had a lucid quality.","navigationNotes":"Arrived after beach stinging and office scenes. Became lucid as a mermaid. The dream shifted into the deep intentionally.","personalNotes":"","firstVisited":"2023-01-01","visitCount":1,"dreamIds":["108"]},{"id":"dp_dock_ocean_floor","name":"The Dock at the Bottom of the Ocean","nature":"locational","archetypes":["water","underground","threshold","liminal"],"feltQuality":"An accidental descent into the deep transformed into an act of rescue and return. The ocean floor is not death but terrifying intimacy and will to survive. An actual place with structure — a dock — not open void.","navigationNotes":"Arrived by falling in while jumping off the ship. Di came down with me. Pulled her back up. Entry was accidental — may need intentional descent.","personalNotes":"","firstVisited":"2025-06-10","visitCount":1,"dreamIds":["58"]},{"id":"dp_small_river_serpent","name":"The Small River with the Hidden Serpent","nature":"locational","archetypes":["water","wilderness","threshold","liminal"],"feltQuality":"A modest waterway concealing a massive prehistoric creature within. The smallness of the river is deceptive — it holds overwhelming depths. Entered in search of wonder, found something ancient and enormous instead.","navigationNotes":"Waded in from a nearby area. The creature was hidden beneath until approached. The smallness of the entry point is part of the place's character.","personalNotes":"","firstVisited":"2024-01-29","visitCount":1,"dreamIds":[]},{"id":"dp_nighttime_beach","name":"The Nighttime Beach","nature":"ambiguous","archetypes":["water","threshold","liminal","wilderness"],"feltQuality":"Recurs with consistent darkness and waves that grow overwhelming on approach. Sometimes a place of anticipation, sometimes of terror. The dark water and the enormous waves may be the same place approached from different readiness levels.","navigationNotes":"Multiple arrivals. Usually at night, often with others. The waves feel different each time — sometimes containable, sometimes catastrophic. The approach matters.","personalNotes":"","firstVisited":"2025-01-13","visitCount":3,"dreamIds":["71","55","187"]},{"id":"dp_never_ending_house","name":"The Never-Ending House","nature":"ambiguous","archetypes":["home","domestic","underground","threshold"],"feltQuality":"An enormous parental home that keeps revealing new rooms as explored. Starts in the basement, ascends. Party room with booths and arcade games, a movie theater attached. The house as psyche — but consistent and specific enough across dreams that it may also be a real inner landscape.","navigationNotes":"Arrived living in the basement with Rain. Ascended through the house discovering rooms. The upper floors revealed as exploration deepened.","personalNotes":"","firstVisited":"2026-06-02","visitCount":1,"dreamIds":["186"]},{"id":"dp_looping_alaska_hotel","name":"The Looping Hotel Room in Alaska","nature":"ambiguous","archetypes":["threshold","liminal","vessel","domestic"],"feltQuality":"A room that resets and cycles back to the same moment of decision — a very specific non-ordinary mechanic. The Alaskan context adds remoteness and isolation. A persistent humanoid man with gray skin and piercing blue eyes, softly coercive. Eventually sat with him after many resets.","navigationNotes":"Kept being funneled back to the beginning of the loop. Eventually stopped resisting and sat. The sitting may be the key to moving through this place.","personalNotes":"","firstVisited":"2022-10-15","visitCount":1,"dreamIds":["13"]},{"id":"dp_manmade_fountain","name":"The Manmade Fountain","nature":"ambiguous","archetypes":["water","liminal","threshold","performance"],"feltQuality":"Inside a water fountain that was clearly manmade but with natural elements. Nervous about not being supposed to be there — in water up to the knees. Tess was there going deeper, getting her whole dress wet, performing what looked like a ritual. Sacred transgression quality.","navigationNotes":"Entered from inside the fountain structure. Was in up to the knees, Tess went deeper. The question of permission was central.","personalNotes":"","firstVisited":"2026-04-30","visitCount":1,"dreamIds":["161"]},{"id":"dp_kitchen_golden_child","name":"The Kitchen with the Golden Child","nature":"ambiguous","archetypes":["domestic","home","threshold"],"feltQuality":"Rain and I had a little boy with golden wispy hair, toddling around the kitchen naked. Animated by the arrival of new life — gold-haired and uncontainable. Could be precognitive, symbolic of creative potential, or a real encounter with a future self or child.","navigationNotes":"Arrived already in the domestic scene. No specific entry noted.","personalNotes":"","firstVisited":"2025-06-15","visitCount":1,"dreamIds":["60"]},{"id":"dp_school_of_return","name":"The School of Return","nature":"symbolic","archetypes":["institutional","liminal","threshold"],"feltQuality":"The recurring return-to-school anxiety dream in many variations — lost schedule, no locker combination, wrong classroom, running late. Tracks inadequacy, systems, credentials, and the fear of being permanently behind.","navigationNotes":"","personalNotes":"","firstVisited":"2024-06-28","visitCount":4,"dreamIds":["89","120","170","169"]},{"id":"dp_theater_backstage","name":"The Theater Backstage","nature":"symbolic","archetypes":["performance","liminal","threshold"],"feltQuality":"Archetypal unpreparedness — arriving backstage not knowing the role, the lines, the cue. The stage is the psyche's recurring set for performance anxiety and identity exposure. The show about to begin without you ready.","navigationNotes":"","personalNotes":"","firstVisited":"2026-01-29","visitCount":4,"dreamIds":["18","98","143","177"]},{"id":"dp_melting_island","name":"The Melting Island of Lakeville","nature":"symbolic","archetypes":["water","liminal","threshold","wilderness"],"feltQuality":"Lakeville revealed as an island losing its frozen bridges to the outside world — isolation made literal by thaw. The terror is not the ice but the closing window of escape. Processes themes of entrapment and the narrowing of options.","navigationNotes":"","personalNotes":"","firstVisited":"2026-03-18","visitCount":1,"dreamIds":["27"]},{"id":"dp_renovated_ex_house","name":"The Renovated House of the Ex","nature":"symbolic","archetypes":["home","domestic","threshold","liminal"],"feltQuality":"Former home transformed beyond recognition — divided into cubicles, gaming lounge, new backyard with pool and mini golf, hot tub gone. Entry still possible with old key but belonging is gone. Tracks displacement, estrangement, and the grief of a life rewritten by someone else.","navigationNotes":"","personalNotes":"","firstVisited":"2024-06-22","visitCount":1,"dreamIds":["85"]},{"id":"dp_squalor_apartment","name":"The Apartment of Squalor and Old Enemies","nature":"symbolic","archetypes":["home","domestic","urban","underground"],"feltQuality":"A dwelling populated by shadow figures from the past, the assigned room broken and degraded. Humiliation, entrapment, the withholding of basic dignity. A shadow processing space — the psyche's holding cell for unintegrated past relationships.","navigationNotes":"","personalNotes":"","firstVisited":"2024-11-06","visitCount":1,"dreamIds":["31"]},{"id":"dp_hotel_of_signs","name":"The Hotel of Signs","nature":"symbolic","archetypes":["liminal","vessel","threshold","institutional"],"feltQuality":"A hotel saturated with directional arrows pointing everywhere and nowhere. Paralysis rather than guidance. The stag-men watching are the more significant element — the hotel itself is the psyche's image for the confusion of too many directions at once.","navigationNotes":"","personalNotes":"","firstVisited":"2024-02-18","visitCount":1,"dreamIds":["7"]},{"id":"dp_flooded_boat","name":"The Flooded Adventure Boat","nature":"symbolic","archetypes":["vessel","water","liminal","wilderness"],"feltQuality":"A boat meant to carry toward dolphin-riding wonder that gets overwhelmed by a catastrophic wave. Processes themes of failed safe passage and unconscious forces overtaking intentions. The dolphin never reached.","navigationNotes":"","personalNotes":"","firstVisited":"2023-03-08","visitCount":1,"dreamIds":["114"]}];
   saveDreamPlaces(seed);
 }
 
@@ -18237,15 +18261,16 @@ const DP_NATURE_LABELS = {
 
 function setDpNatureFilter(val) {
   _dpNatureFilter = val;
-  // Update slicer button styles
   ['all','locational','ambiguous','symbolic'].forEach(k => {
     const b = document.getElementById('dp-filter-' + k);
     if (!b) return;
     const isActive = val === k;
-    const col = k === 'all' ? 'rgba(201,185,154,.6)' : (DP_NATURE_COLORS[k] || 'rgba(201,185,154,.6)');
-    b.style.borderColor  = isActive ? col : 'rgba(201,185,154,.15)';
-    b.style.color        = isActive ? col : 'rgba(201,185,154,.4)';
-    b.style.background   = isActive ? (k === 'all' ? 'rgba(201,185,154,.07)' : col.replace('var(--teal)','rgba(58,107,107,.15)').replace('var(--gold)','rgba(201,168,76,.12)').replace('var(--mariam)','rgba(155,107,171,.12)')) : 'transparent';
+    const colMap = { locational: 'rgba(58,107,107,.85)', ambiguous: 'rgba(201,168,76,.85)', symbolic: 'rgba(155,107,171,.85)' };
+    const bgMap  = { locational: 'rgba(58,107,107,.12)', ambiguous: 'rgba(201,168,76,.10)', symbolic: 'rgba(155,107,171,.12)' };
+    const col = colMap[k] || 'rgba(201,185,154,.7)';
+    b.style.borderColor = isActive ? col : 'rgba(201,185,154,.15)';
+    b.style.color       = isActive ? col : 'rgba(201,185,154,.4)';
+    b.style.background  = isActive ? (bgMap[k] || 'rgba(201,185,154,.07)') : 'transparent';
   });
   renderDreamPlacesList();
 }
@@ -18257,38 +18282,35 @@ function renderDreamPlaces(container) {
   places.forEach(p => { if (counts[p.nature] !== undefined) counts[p.nature]++; });
 
   container.innerHTML = `
-    <div style="padding:20px 16px 10px;">
-      <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:14px;">
-        <div style="font-family:'Cormorant Garamond',serif;font-size:1.55rem;font-weight:300;font-style:italic;color:rgba(240,235,224,.88);">Dream Places</div>
-        <button onclick="openDreamPlaceEdit(null)" style="font-family:'Space Mono',monospace;font-size:.52rem;letter-spacing:.08em;padding:6px 12px;background:transparent;border:1px solid rgba(201,185,154,.2);color:rgba(201,185,154,.55);cursor:pointer;">+ Add Place</button>
-      </div>
-
-      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px;">
-        <button id="dp-filter-all" onclick="setDpNatureFilter('all')"
-          style="font-family:'Space Mono',monospace;font-size:.52rem;letter-spacing:.07em;text-transform:uppercase;padding:5px 11px;background:rgba(201,185,154,.07);border:1px solid rgba(201,185,154,.6);color:rgba(201,185,154,.6);cursor:pointer;transition:all .2s;">
-          All <span style="opacity:.55">${places.length}</span>
-        </button>
-        <button id="dp-filter-locational" onclick="setDpNatureFilter('locational')"
-          style="font-family:'Space Mono',monospace;font-size:.52rem;letter-spacing:.07em;text-transform:uppercase;padding:5px 11px;background:transparent;border:1px solid rgba(201,185,154,.15);color:rgba(201,185,154,.4);cursor:pointer;transition:all .2s;">
-          Locational <span style="opacity:.55">${counts.locational}</span>
-        </button>
-        <button id="dp-filter-ambiguous" onclick="setDpNatureFilter('ambiguous')"
-          style="font-family:'Space Mono',monospace;font-size:.52rem;letter-spacing:.07em;text-transform:uppercase;padding:5px 11px;background:transparent;border:1px solid rgba(201,185,154,.15);color:rgba(201,185,154,.4);cursor:pointer;transition:all .2s;">
-          Ambiguous <span style="opacity:.55">${counts.ambiguous}</span>
-        </button>
-        <button id="dp-filter-symbolic" onclick="setDpNatureFilter('symbolic')"
-          style="font-family:'Space Mono',monospace;font-size:.52rem;letter-spacing:.07em;text-transform:uppercase;padding:5px 11px;background:transparent;border:1px solid rgba(201,185,154,.15);color:rgba(201,185,154,.4);cursor:pointer;transition:all .2s;">
-          Symbolic <span style="opacity:.55">${counts.symbolic}</span>
-        </button>
+    <div style="padding:16px 16px 10px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          <button id="dp-filter-all" onclick="setDpNatureFilter('all')"
+            style="font-family:'Space Mono',monospace;font-size:.52rem;letter-spacing:.07em;text-transform:uppercase;padding:5px 11px;background:rgba(201,185,154,.07);border:1px solid rgba(201,185,154,.7);color:rgba(201,185,154,.7);cursor:pointer;transition:all .2s;">
+            All <span style="opacity:.6">${places.length}</span>
+          </button>
+          <button id="dp-filter-locational" onclick="setDpNatureFilter('locational')"
+            style="font-family:'Space Mono',monospace;font-size:.52rem;letter-spacing:.07em;text-transform:uppercase;padding:5px 11px;background:transparent;border:1px solid rgba(201,185,154,.15);color:rgba(201,185,154,.4);cursor:pointer;transition:all .2s;">
+            Locational <span style="opacity:.6">${counts.locational}</span>
+          </button>
+          <button id="dp-filter-ambiguous" onclick="setDpNatureFilter('ambiguous')"
+            style="font-family:'Space Mono',monospace;font-size:.52rem;letter-spacing:.07em;text-transform:uppercase;padding:5px 11px;background:transparent;border:1px solid rgba(201,185,154,.15);color:rgba(201,185,154,.4);cursor:pointer;transition:all .2s;">
+            Ambiguous <span style="opacity:.6">${counts.ambiguous}</span>
+          </button>
+          <button id="dp-filter-symbolic" onclick="setDpNatureFilter('symbolic')"
+            style="font-family:'Space Mono',monospace;font-size:.52rem;letter-spacing:.07em;text-transform:uppercase;padding:5px 11px;background:transparent;border:1px solid rgba(201,185,154,.15);color:rgba(201,185,154,.4);cursor:pointer;transition:all .2s;">
+            Symbolic <span style="opacity:.6">${counts.symbolic}</span>
+          </button>
+        </div>
+        <button onclick="openDreamPlaceEdit(null)" style="font-family:'Space Mono',monospace;font-size:.52rem;letter-spacing:.08em;padding:6px 12px;background:transparent;border:1px solid rgba(201,185,154,.2);color:rgba(201,185,154,.55);cursor:pointer;white-space:nowrap;">+ Add</button>
       </div>
 
       <input type="text" id="dp-search" placeholder="search places, archetypes, felt quality…"
-        style="width:100%;box-sizing:border-box;background:rgba(255,255,255,.03);border:1px solid rgba(201,185,154,.12);color:var(--parchment);font-family:'Cormorant Garamond',serif;font-size:.95rem;padding:9px 14px;outline:none;margin-bottom:22px;"
+        style="width:100%;box-sizing:border-box;background:rgba(255,255,255,.03);border:1px solid rgba(201,185,154,.12);color:var(--parchment);font-family:'Cormorant Garamond',serif;font-size:.95rem;padding:9px 14px;outline:none;margin-bottom:20px;"
         oninput="renderDreamPlacesList()">
       <div id="dp-list"></div>
     </div>
   `;
-  // Re-apply active slicer state
   setDpNatureFilter(_dpNatureFilter);
 }
 
@@ -18298,9 +18320,7 @@ function renderDreamPlacesList() {
   const q = (document.getElementById('dp-search')?.value || '').toLowerCase();
   let places = getDreamPlaces();
 
-  if (_dpNatureFilter !== 'all') {
-    places = places.filter(p => p.nature === _dpNatureFilter);
-  }
+  if (_dpNatureFilter !== 'all') places = places.filter(p => p.nature === _dpNatureFilter);
   if (q) {
     places = places.filter(p =>
       (p.name||'').toLowerCase().includes(q) ||
@@ -18317,57 +18337,43 @@ function renderDreamPlacesList() {
     return;
   }
 
-  // When filtering to a single nature, show flat list; otherwise group by nature
-  if (_dpNatureFilter !== 'all') {
-    const color = DP_NATURE_COLORS[_dpNatureFilter] || 'var(--moon)';
-    list.innerHTML = places.map((p, i) => `
-      <div class="spirit-card" style="animation-delay:${i*0.04}s;--cc:${color};" onclick="openDreamPlace('${p.id}')">
-        <div class="spirit-card-date" style="display:flex;align-items:center;gap:8px;">
-          <span style="font-family:'Space Mono',monospace;font-size:.46rem;padding:2px 8px;border:1px solid ${color};color:${color};letter-spacing:.07em;text-transform:uppercase;">${DP_NATURE_LABELS[p.nature]}</span>
-          <span>first visited ${p.firstVisited||'unknown'}</span>
-          ${(p.visitCount||1) > 1 ? `<span style="color:rgba(201,185,154,.5);">${p.visitCount} visits</span>` : ''}
-        </div>
-        <div class="spirit-card-title">◈ ${p.name}</div>
-        <div class="spirit-card-excerpt">${(p.feltQuality||'').slice(0,160)}${(p.feltQuality||'').length>160?'…':''}</div>
-        ${(p.archetypes||[]).length ? `<div class="spirit-card-tags">${p.archetypes.map(a=>`<span class="spirit-card-tag">${a}</span>`).join('')}</div>` : ''}
-        ${(p.dreamIds||[]).length ? `<div class="spirit-card-moon">◎ ${p.dreamIds.length} linked dream${p.dreamIds.length!==1?'s':''}</div>` : ''}
+  function placeCard(p, i) {
+    const color = DP_NATURE_COLORS[p.nature] || 'var(--moon)';
+    return `<div class="spirit-card" style="animation-delay:${i*0.04}s;--cc:${color};" onclick="openDreamPlace('${p.id}')">
+      <div class="spirit-card-date" style="display:flex;align-items:center;gap:8px;">
+        <span style="font-family:'Space Mono',monospace;font-size:.46rem;padding:2px 8px;border:1px solid ${color};color:${color};letter-spacing:.07em;text-transform:uppercase;">${DP_NATURE_LABELS[p.nature]||p.nature}</span>
+        <span>first visited ${p.firstVisited||'unknown'}</span>
+        ${(p.visitCount||1) > 1 ? `<span style="color:rgba(201,185,154,.5);">${p.visitCount} visits</span>` : ''}
       </div>
-    `).join('');
-    return;
+      <div class="spirit-card-title">◈ ${p.name}</div>
+      <div class="spirit-card-excerpt">${(p.feltQuality||'').slice(0,160)}${(p.feltQuality||'').length>160?'…':''}</div>
+      ${(p.archetypes||[]).length ? `<div class="spirit-card-tags">${p.archetypes.map(a=>`<span class="spirit-card-tag">${a}</span>`).join('')}</div>` : ''}
+      ${(p.dreamIds||[]).length ? `<div class="spirit-card-moon">◎ ${p.dreamIds.length} linked dream${p.dreamIds.length!==1?'s':''}</div>` : ''}
+    </div>`;
   }
 
-  const byNature = { locational: [], ambiguous: [], symbolic: [] };
-  places.forEach(p => { if (byNature[p.nature]) byNature[p.nature].push(p); });
+  if (_dpNatureFilter !== 'all') {
+    list.innerHTML = places.map((p,i) => placeCard(p,i)).join('');
+    return;
+  }
 
   const sections = [
     { key: 'locational', label: 'Locational', desc: 'Real and potentially navigable' },
     { key: 'ambiguous',  label: 'Ambiguous',  desc: 'Needs more visits to determine' },
     { key: 'symbolic',   label: 'Symbolic',   desc: 'Processing spaces — track meaning, not location' }
   ];
+  const byNature = { locational: [], ambiguous: [], symbolic: [] };
+  places.forEach(p => { if (byNature[p.nature]) byNature[p.nature].push(p); });
 
   list.innerHTML = sections.map(sec => {
     const items = byNature[sec.key];
     if (!items.length) return '';
     const color = DP_NATURE_COLORS[sec.key];
-    return `
-      <div style="margin-bottom:28px;">
-        <div style="font-family:'Space Mono',monospace;font-size:.52rem;letter-spacing:.12em;text-transform:uppercase;color:${color};opacity:.75;margin-bottom:4px;">${sec.label}</div>
-        <div style="font-family:'Space Mono',monospace;font-size:.44rem;color:rgba(201,185,154,.28);letter-spacing:.06em;margin-bottom:12px;">${sec.desc}</div>
-        ${items.map((p, i) => `
-          <div class="spirit-card" style="animation-delay:${i*0.04}s;--cc:${color};" onclick="openDreamPlace('${p.id}')">
-            <div class="spirit-card-date" style="display:flex;align-items:center;gap:8px;">
-              <span style="font-family:'Space Mono',monospace;font-size:.46rem;padding:2px 8px;border:1px solid ${color};color:${color};letter-spacing:.07em;text-transform:uppercase;">${DP_NATURE_LABELS[p.nature]}</span>
-              <span>first visited ${p.firstVisited||'unknown'}</span>
-              ${(p.visitCount||1) > 1 ? `<span style="color:rgba(201,185,154,.5);">${p.visitCount} visits</span>` : ''}
-            </div>
-            <div class="spirit-card-title">◈ ${p.name}</div>
-            <div class="spirit-card-excerpt">${(p.feltQuality||'').slice(0,160)}${(p.feltQuality||'').length>160?'…':''}</div>
-            ${(p.archetypes||[]).length ? `<div class="spirit-card-tags">${p.archetypes.map(a=>`<span class="spirit-card-tag">${a}</span>`).join('')}</div>` : ''}
-            ${(p.dreamIds||[]).length ? `<div class="spirit-card-moon">◎ ${p.dreamIds.length} linked dream${p.dreamIds.length!==1?'s':''}</div>` : ''}
-          </div>
-        `).join('')}
-      </div>
-    `;
+    return `<div style="margin-bottom:28px;">
+      <div style="font-family:'Space Mono',monospace;font-size:.52rem;letter-spacing:.12em;text-transform:uppercase;color:${color};opacity:.75;margin-bottom:3px;">${sec.label}</div>
+      <div style="font-family:'Space Mono',monospace;font-size:.44rem;color:rgba(201,185,154,.28);letter-spacing:.06em;margin-bottom:10px;">${sec.desc}</div>
+      ${items.map((p,i) => placeCard(p,i)).join('')}
+    </div>`;
   }).join('');
 }
 
@@ -18379,43 +18385,25 @@ function openDreamPlace(id) {
 
   const linkedDreams = (p.dreamIds||[]).map(did => {
     const d = (typeof dreams !== 'undefined' ? dreams : []).find(x => String(x.id) === String(did));
-    return d ? `<div onclick="openDreamFromPlace('${did}')" style="cursor:pointer;padding:8px 12px;background:rgba(255,255,255,.025);border:1px solid rgba(201,185,154,.08);margin-bottom:6px;border-left:2px solid ${color};transition:background .15s;" onmouseover="this.style.background='rgba(255,255,255,.05)'" onmouseout="this.style.background='rgba(255,255,255,.025)'">`
-      + `<div style="font-family:'Space Mono',monospace;font-size:.48rem;color:rgba(201,185,154,.4);margin-bottom:3px;">${d.date}</div>`
-      + `<div style="font-size:.92rem;font-weight:300;">${d.title}</div>`
-      + `</div>` : `<div style="font-family:'Space Mono',monospace;font-size:.52rem;color:rgba(201,185,154,.3);">Dream #${did}</div>`;
+    return d
+      ? `<div onclick="openDreamFromPlace('${did}')" style="cursor:pointer;padding:8px 12px;background:rgba(255,255,255,.025);border:1px solid rgba(201,185,154,.08);margin-bottom:6px;border-left:2px solid ${color};transition:background .15s;" onmouseover="this.style.background='rgba(255,255,255,.05)'" onmouseout="this.style.background='rgba(255,255,255,.025)'">`
+          + `<div style="font-family:'Space Mono',monospace;font-size:.48rem;color:rgba(201,185,154,.4);margin-bottom:3px;">${d.date}</div>`
+          + `<div style="font-size:.92rem;font-weight:300;">${d.title}</div></div>`
+      : `<div style="font-family:'Space Mono',monospace;font-size:.52rem;color:rgba(201,185,154,.3);">Dream #${did}</div>`;
   }).join('');
 
   document.getElementById('view-inner').innerHTML = `
-    <div class="m-date">◈ ${DP_NATURE_LABELS[p.nature]} · first visited ${p.firstVisited||'unknown'}${(p.visitCount||1)>1?' · '+p.visitCount+' visits':''}</div>
+    <div class="m-date">◈ ${DP_NATURE_LABELS[p.nature]||p.nature} · first visited ${p.firstVisited||'unknown'}${(p.visitCount||1)>1?' · '+p.visitCount+' visits':''}</div>
     <div class="m-title">${p.name}</div>
-
-    ${(p.archetypes||[]).length ? `<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:20px;">
-      ${p.archetypes.map(a=>`<span style="font-family:'Space Mono',monospace;font-size:.52rem;padding:3px 10px;background:rgba(255,255,255,.04);border:1px solid ${color};color:${color};">${a}</span>`).join('')}
-    </div>` : ''}
-
-    <div class="m-sec">
-      <div class="m-lbl">Felt Quality</div>
-      <div class="m-body"><p>${p.feltQuality||''}</p></div>
-    </div>
-
-    ${(p.nature === 'locational' && p.navigationNotes) ? `<div class="m-sec">
-      <div class="m-lbl">Navigation Notes</div>
-      <div class="m-body"><p>${p.navigationNotes}</p></div>
-    </div>` : ''}
-
+    ${(p.archetypes||[]).length ? `<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:20px;">${p.archetypes.map(a=>`<span style="font-family:'Space Mono',monospace;font-size:.52rem;padding:3px 10px;background:rgba(255,255,255,.04);border:1px solid ${color};color:${color};">${a}</span>`).join('')}</div>` : ''}
+    <div class="m-sec"><div class="m-lbl">Felt Quality</div><div class="m-body"><p>${p.feltQuality||''}</p></div></div>
+    ${(p.nature === 'locational' && p.navigationNotes) ? `<div class="m-sec"><div class="m-lbl">Navigation Notes</div><div class="m-body"><p>${p.navigationNotes}</p></div></div>` : ''}
     <div class="m-sec">
       <div class="m-lbl">Personal Notes</div>
-      <textarea class="m-interp-edit" id="dp-notes-edit-${p.id}" rows="4"
-        placeholder="Add your own notes, observations, and intentions for this place…"
-        oninput="saveDreamPlaceNotes('${p.id}',this.value)">${p.personalNotes||''}</textarea>
+      <textarea class="m-interp-edit" id="dp-notes-edit-${p.id}" rows="4" placeholder="Add notes, observations, and intentions for this place…" oninput="saveDreamPlaceNotes('${p.id}',this.value)">${p.personalNotes||''}</textarea>
       <div class="save-note">Saved automatically.</div>
     </div>
-
-    ${linkedDreams ? `<div class="m-sec">
-      <div class="m-lbl">Linked Dreams</div>
-      ${linkedDreams}
-    </div>` : ''}
-
+    ${linkedDreams ? `<div class="m-sec"><div class="m-lbl">Linked Dreams</div>${linkedDreams}</div>` : ''}
     <div class="spirit-modal-actions">
       <button class="spirit-action-btn" onclick="openDreamPlaceEdit('${p.id}')">Edit</button>
       <button class="spirit-action-btn delete" onclick="deleteDreamPlace('${p.id}')">Delete</button>
@@ -18437,8 +18425,7 @@ function saveDreamPlaceNotes(id, text) {
 
 function deleteDreamPlace(id) {
   if (!confirm('Remove this place from your dreamscape registry?')) return;
-  const places = getDreamPlaces().filter(p => p.id !== id);
-  saveDreamPlaces(places);
+  saveDreamPlaces(getDreamPlaces().filter(p => p.id !== id));
   closeView();
   const dest = document.getElementById('gt-content');
   if (dest) { dest.innerHTML = ''; renderDreamPlaces(dest); }
@@ -18448,110 +18435,65 @@ function openDreamPlaceEdit(id) {
   const places = getDreamPlaces();
   const p = id ? places.find(x => x.id === id) : null;
   const isNew = !p;
-
   document.getElementById('view-inner').innerHTML = `
     <div class="m-date" style="margin-bottom:14px;">◈ ${isNew ? 'Add New Place' : 'Edit Place'}</div>
-
-    <div class="form-field" style="margin-bottom:14px;">
-      <label>Name</label>
-      <input type="text" id="dpe-name" value="${p ? p.name : ''}"
-        style="width:100%;box-sizing:border-box;background:rgba(255,255,255,.03);border:1px solid rgba(201,185,154,.15);color:var(--parchment);font-family:'Cormorant Garamond',serif;font-size:1rem;padding:8px 12px;outline:none;">
-    </div>
-
-    <div class="form-field" style="margin-bottom:14px;">
-      <label>Nature</label>
+    <div class="form-field" style="margin-bottom:14px;"><label>Name</label>
+      <input type="text" id="dpe-name" value="${p ? p.name.replace(/"/g,'&quot;') : ''}" style="width:100%;box-sizing:border-box;background:rgba(255,255,255,.03);border:1px solid rgba(201,185,154,.15);color:var(--parchment);font-family:'Cormorant Garamond',serif;font-size:1rem;padding:8px 12px;outline:none;"></div>
+    <div class="form-field" style="margin-bottom:14px;"><label>Nature</label>
       <select id="dpe-nature" style="width:100%;background:rgba(15,12,26,.9);border:1px solid rgba(201,185,154,.15);color:var(--parchment);font-family:'Space Mono',monospace;font-size:.6rem;padding:8px 12px;outline:none;">
         <option value="locational" ${(!p||p.nature==='locational')?'selected':''}>Locational — real and potentially navigable</option>
         <option value="ambiguous"  ${(p&&p.nature==='ambiguous')?'selected':''}>Ambiguous — needs more visits</option>
         <option value="symbolic"   ${(p&&p.nature==='symbolic')?'selected':''}>Symbolic — processing space</option>
-      </select>
+      </select></div>
+    <div class="form-field" style="margin-bottom:14px;"><label>Archetypes <span style="opacity:.4;font-size:.5rem;">(comma-separated)</span></label>
+      <input type="text" id="dpe-archetypes" value="${p ? (p.archetypes||[]).join(', ') : ''}" style="width:100%;box-sizing:border-box;background:rgba(255,255,255,.03);border:1px solid rgba(201,185,154,.15);color:var(--parchment);font-family:'Space Mono',monospace;font-size:.6rem;padding:8px 12px;outline:none;" placeholder="water, liminal, threshold…"></div>
+    <div class="form-field" style="margin-bottom:14px;"><label>Felt Quality</label>
+      <textarea id="dpe-felt" rows="4" style="width:100%;box-sizing:border-box;background:rgba(255,255,255,.03);border:1px solid rgba(201,185,154,.15);color:var(--parchment);font-family:'Cormorant Garamond',serif;font-size:.95rem;padding:8px 12px;outline:none;resize:vertical;" placeholder="The texture and atmosphere of this place…">${p ? (p.feltQuality||'') : ''}</textarea></div>
+    <div id="dpe-nav-wrap" style="margin-bottom:14px;${(p&&p.nature==='symbolic')?'display:none;':''}">
+      <div class="form-field"><label>Navigation Notes</label>
+        <textarea id="dpe-nav" rows="3" style="width:100%;box-sizing:border-box;background:rgba(255,255,255,.03);border:1px solid rgba(201,185,154,.15);color:var(--parchment);font-family:'Cormorant Garamond',serif;font-size:.95rem;padding:8px 12px;outline:none;resize:vertical;" placeholder="How you arrived, entry points, movement through the space…">${p ? (p.navigationNotes||'') : ''}</textarea></div>
     </div>
-
-    <div class="form-field" style="margin-bottom:14px;">
-      <label>Archetypes <span style="opacity:.4;font-size:.5rem;">(comma-separated)</span></label>
-      <input type="text" id="dpe-archetypes" value="${p ? (p.archetypes||[]).join(', ') : ''}"
-        style="width:100%;box-sizing:border-box;background:rgba(255,255,255,.03);border:1px solid rgba(201,185,154,.15);color:var(--parchment);font-family:'Space Mono',monospace;font-size:.6rem;padding:8px 12px;outline:none;" placeholder="water, liminal, threshold…">
-    </div>
-
-    <div class="form-field" style="margin-bottom:14px;">
-      <label>Felt Quality</label>
-      <textarea id="dpe-felt" rows="4"
-        style="width:100%;box-sizing:border-box;background:rgba(255,255,255,.03);border:1px solid rgba(201,185,154,.15);color:var(--parchment);font-family:'Cormorant Garamond',serif;font-size:.95rem;padding:8px 12px;outline:none;resize:vertical;"
-        placeholder="The texture and atmosphere of this place…">${p ? (p.feltQuality||'') : ''}</textarea>
-    </div>
-
-    <div id="dpe-nav-wrap" style="margin-bottom:14px;${(!p||p.nature!=='symbolic')?'':'display:none;'}">
-      <div class="form-field">
-        <label>Navigation Notes</label>
-        <textarea id="dpe-nav" rows="3"
-          style="width:100%;box-sizing:border-box;background:rgba(255,255,255,.03);border:1px solid rgba(201,185,154,.15);color:var(--parchment);font-family:'Cormorant Garamond',serif;font-size:.95rem;padding:8px 12px;outline:none;resize:vertical;"
-          placeholder="How you arrived, entry points, movement through the space…">${p ? (p.navigationNotes||'') : ''}</textarea>
-      </div>
-    </div>
-
     <div style="display:flex;gap:12px;margin-bottom:14px;">
-      <div class="form-field" style="flex:1;">
-        <label>First Visited</label>
-        <input type="date" id="dpe-date" value="${p ? (p.firstVisited||'') : new Date().toISOString().slice(0,10)}"
-          style="width:100%;box-sizing:border-box;background:rgba(255,255,255,.03);border:1px solid rgba(201,185,154,.15);color:var(--parchment);font-family:'Space Mono',monospace;font-size:.6rem;padding:8px 12px;outline:none;">
-      </div>
-      <div class="form-field" style="flex:1;">
-        <label>Visit Count</label>
-        <input type="number" id="dpe-visits" value="${p ? (p.visitCount||1) : 1}" min="1"
-          style="width:100%;box-sizing:border-box;background:rgba(255,255,255,.03);border:1px solid rgba(201,185,154,.15);color:var(--parchment);font-family:'Space Mono',monospace;font-size:.6rem;padding:8px 12px;outline:none;">
-      </div>
+      <div class="form-field" style="flex:1;"><label>First Visited</label>
+        <input type="date" id="dpe-date" value="${p ? (p.firstVisited||'') : new Date().toISOString().slice(0,10)}" style="width:100%;box-sizing:border-box;background:rgba(255,255,255,.03);border:1px solid rgba(201,185,154,.15);color:var(--parchment);font-family:'Space Mono',monospace;font-size:.6rem;padding:8px 12px;outline:none;"></div>
+      <div class="form-field" style="flex:1;"><label>Visit Count</label>
+        <input type="number" id="dpe-visits" value="${p ? (p.visitCount||1) : 1}" min="1" style="width:100%;box-sizing:border-box;background:rgba(255,255,255,.03);border:1px solid rgba(201,185,154,.15);color:var(--parchment);font-family:'Space Mono',monospace;font-size:.6rem;padding:8px 12px;outline:none;"></div>
     </div>
-
-    <div class="form-field" style="margin-bottom:14px;">
-      <label>Linked Dream IDs <span style="opacity:.4;font-size:.5rem;">(comma-separated)</span></label>
-      <input type="text" id="dpe-dreams" value="${p ? (p.dreamIds||[]).join(', ') : ''}"
-        style="width:100%;box-sizing:border-box;background:rgba(255,255,255,.03);border:1px solid rgba(201,185,154,.15);color:var(--parchment);font-family:'Space Mono',monospace;font-size:.6rem;padding:8px 12px;outline:none;" placeholder="167, 172, 45…">
-    </div>
-
+    <div class="form-field" style="margin-bottom:14px;"><label>Linked Dream IDs <span style="opacity:.4;font-size:.5rem;">(comma-separated)</span></label>
+      <input type="text" id="dpe-dreams" value="${p ? (p.dreamIds||[]).join(', ') : ''}" style="width:100%;box-sizing:border-box;background:rgba(255,255,255,.03);border:1px solid rgba(201,185,154,.15);color:var(--parchment);font-family:'Space Mono',monospace;font-size:.6rem;padding:8px 12px;outline:none;" placeholder="167, 172, 45…"></div>
     <div class="spirit-modal-actions" style="margin-top:20px;">
-      <button class="spirit-action-btn" onclick="saveDreamPlaceEdit('${id||''}', ${isNew})" style="border-color:var(--teal);color:var(--teal);">Save Place</button>
+      <button class="spirit-action-btn" onclick="saveDreamPlaceEdit('${id||''}',${isNew})" style="border-color:var(--teal);color:var(--teal);">Save Place</button>
       <button class="spirit-action-btn" onclick="closeView()">Cancel</button>
     </div>
   `;
-
   document.getElementById('dpe-nature').addEventListener('change', function() {
     document.getElementById('dpe-nav-wrap').style.display = this.value === 'symbolic' ? 'none' : '';
   });
-
   document.getElementById('view-ov').classList.add('open');
 }
 
 function saveDreamPlaceEdit(id, isNew) {
   const name = document.getElementById('dpe-name')?.value.trim();
   if (!name) { gtAlert('A name is required.'); return; }
-
-  const archetypesRaw = (document.getElementById('dpe-archetypes')?.value || '').split(',').map(s=>s.trim()).filter(Boolean);
-  const dreamIdsRaw   = (document.getElementById('dpe-dreams')?.value || '').split(',').map(s=>s.trim()).filter(Boolean);
-
   const entry = {
     id:              isNew ? 'dp_' + Date.now() : id,
-    name:            name,
+    name,
     nature:          document.getElementById('dpe-nature')?.value || 'locational',
-    archetypes:      archetypesRaw,
+    archetypes:      (document.getElementById('dpe-archetypes')?.value||'').split(',').map(s=>s.trim()).filter(Boolean),
     feltQuality:     document.getElementById('dpe-felt')?.value.trim() || '',
     navigationNotes: document.getElementById('dpe-nav')?.value.trim() || '',
     personalNotes:   '',
     firstVisited:    document.getElementById('dpe-date')?.value || '',
-    visitCount:      parseInt(document.getElementById('dpe-visits')?.value || '1', 10) || 1,
-    dreamIds:        dreamIdsRaw
+    visitCount:      parseInt(document.getElementById('dpe-visits')?.value||'1',10)||1,
+    dreamIds:        (document.getElementById('dpe-dreams')?.value||'').split(',').map(s=>s.trim()).filter(Boolean)
   };
-
   const places = getDreamPlaces();
   if (isNew) {
     places.push(entry);
   } else {
     const idx = places.findIndex(p => p.id === id);
-    if (idx > -1) {
-      entry.personalNotes = places[idx].personalNotes || '';
-      places[idx] = entry;
-    } else {
-      places.push(entry);
-    }
+    if (idx > -1) { entry.personalNotes = places[idx].personalNotes||''; places[idx] = entry; }
+    else places.push(entry);
   }
   saveDreamPlaces(places);
   closeView();
@@ -18559,236 +18501,89 @@ function saveDreamPlaceEdit(id, isNew) {
   if (dest) { dest.innerHTML = ''; renderDreamPlaces(dest); }
 }
 
-// ── DREAM PLACE DETECTION (called from generateDreamReadings) ──────────────
-async function detectDreamPlace(dreamTitle, dreamBody, dreamDate, apiKey) {
-  const placeArea = document.getElementById('f-place-area');
-  const placeResult = document.getElementById('f-place-result');
-  if (!placeArea || !placeResult) return;
-
-  placeArea.style.display = 'block';
-  placeResult.innerHTML = '<div style="font-family:\'Space Mono\',monospace;font-size:.55rem;color:rgba(201,185,154,.35);letter-spacing:.06em;">◈ Scanning dreamscape…</div>';
-
+// ── DREAM PLACE PICKER (new dream form) ──────────────────────────────────────
+function initDreamPlacePicker() {
   initDreamPlaces();
-  const existingPlaces = getDreamPlaces();
-  const placeList = existingPlaces.map((p, i) =>
-    `${i}: id="${p.id}" name="${p.name}" nature="${p.nature}" archetypes="${(p.archetypes||[]).join(',')}" feltQuality="${(p.feltQuality||'').slice(0,120)}"`
-  ).join('\n');
-
-  const prompt = `You are analyzing a dream journal entry to identify whether a significant, distinctive location appears in it — and whether that location matches any known place in the dreamer's dreamscape registry.
-
-DREAM TITLE: "${dreamTitle}"
-DREAM DATE: ${dreamDate}
-DREAM TEXT:
-${dreamBody.slice(0, 1200)}
-
-EXISTING DREAMSCAPE REGISTRY (${existingPlaces.length} places):
-${placeList}
-
-A "dream place" is a location with distinctive architecture, atmosphere, or recurring presence — not every room or setting qualifies. Look for: unusual geometry, impossible physics, strong emotional imprint, specific named or described structures.
-
-Respond in JSON only, no markdown, no preamble:
-{
-  "hasPlace": true/false,
-  "matchType": "existing" | "new" | "none",
-  "matchId": "dp_xxx or null",
-  "matchName": "name of matched place or null",
-  "matchConfidence": "high/medium/low or null",
-  "matchReason": "one sentence explaining why it matches, or null",
-  "suggestedName": "proposed name if new place, or null",
-  "suggestedNature": "locational/ambiguous/symbolic or null",
-  "suggestedArchetypes": ["array","of","tags"] or [],
-  "suggestedFeltQuality": "brief description if new place, or null"
-}`;
-
-  try {
-    const data = await claudeAPI(apiKey, { model: 'claude-sonnet-4-6', max_tokens: 600, messages: [{ role: 'user', content: prompt }] });
-    const raw = data.content?.find(c => c.type === 'text')?.text || '';
-    let result;
-    try {
-      result = JSON.parse(raw.replace(/```json|```/g, '').trim());
-    } catch(e) {
-      placeResult.innerHTML = '<div style="font-family:\'Space Mono\',monospace;font-size:.52rem;color:rgba(201,185,154,.3);">No distinctive place detected.</div>';
-      return;
-    }
-
-    if (!result.hasPlace || result.matchType === 'none') {
-      placeResult.innerHTML = '<div style="font-family:\'Space Mono\',monospace;font-size:.52rem;color:rgba(201,185,154,.3);">No distinctive dreamscape location detected.</div>';
-      return;
-    }
-
-    if (result.matchType === 'existing' && result.matchId) {
-      const matched = existingPlaces.find(p => p.id === result.matchId);
-      const col = matched ? (DP_NATURE_COLORS[matched.nature] || 'var(--teal)') : 'var(--teal)';
-      placeResult.innerHTML = `
-        <div style="padding:12px 14px;background:rgba(255,255,255,.025);border:1px solid rgba(201,185,154,.1);border-left:3px solid ${col};">
-          <div style="font-family:'Space Mono',monospace;font-size:.48rem;color:rgba(201,185,154,.4);letter-spacing:.07em;margin-bottom:5px;">◈ MATCH · ${result.matchConfidence||''} confidence</div>
-          <div style="font-size:1rem;font-weight:400;margin-bottom:4px;">${result.matchName || (matched&&matched.name) || ''}</div>
-          <div style="font-family:'Cormorant Garamond',serif;font-size:.88rem;color:rgba(240,235,224,.55);font-style:italic;margin-bottom:10px;">${result.matchReason||''}</div>
-          <div style="display:flex;gap:8px;flex-wrap:wrap;">
-            <button onclick="confirmDreamPlaceMatch('${result.matchId}', '${(dreamDate||'').replace(/'/g,'')}')"
-              style="font-family:'Space Mono',monospace;font-size:.52rem;letter-spacing:.07em;padding:6px 12px;background:transparent;border:1px solid ${col};color:${col};cursor:pointer;">✓ Confirm Visit</button>
-            <button onclick="dismissDreamPlaceDetection()"
-              style="font-family:'Space Mono',monospace;font-size:.52rem;letter-spacing:.07em;padding:6px 12px;background:transparent;border:1px solid rgba(201,185,154,.15);color:rgba(201,185,154,.4);cursor:pointer;">Skip</button>
-          </div>
-        </div>`;
-
-    } else if (result.matchType === 'new') {
-      placeResult.innerHTML = `
-        <div style="padding:12px 14px;background:rgba(255,255,255,.025);border:1px solid rgba(201,185,154,.1);border-left:3px solid var(--teal);">
-          <div style="font-family:'Space Mono',monospace;font-size:.48rem;color:rgba(201,185,154,.4);letter-spacing:.07em;margin-bottom:5px;">◈ NEW PLACE SUGGESTED</div>
-          <div style="font-size:1rem;font-weight:400;margin-bottom:4px;">${result.suggestedName||'Unnamed Place'}</div>
-          <div style="font-family:'Cormorant Garamond',serif;font-size:.88rem;color:rgba(240,235,224,.55);font-style:italic;margin-bottom:10px;">${result.suggestedFeltQuality||''}</div>
-          <div style="display:flex;gap:8px;flex-wrap:wrap;">
-            <button onclick="openNewPlaceFromDetection(${JSON.stringify(result).replace(/"/g,'&quot;')}, '${(dreamDate||'').replace(/'/g,'')}')"
-              style="font-family:'Space Mono',monospace;font-size:.52rem;letter-spacing:.07em;padding:6px 12px;background:transparent;border:1px solid var(--teal);color:var(--teal);cursor:pointer;">+ Add to Registry</button>
-            <button onclick="dismissDreamPlaceDetection()"
-              style="font-family:'Space Mono',monospace;font-size:.52rem;letter-spacing:.07em;padding:6px 12px;background:transparent;border:1px solid rgba(201,185,154,.15);color:rgba(201,185,154,.4);cursor:pointer;">Skip</button>
-          </div>
-        </div>`;
-    }
-  } catch(e) {
-    placeResult.innerHTML = `<div style="font-family:'Space Mono',monospace;font-size:.52rem;color:rgba(201,185,154,.3);">Place detection unavailable.</div>`;
-  }
-}
-
-function confirmDreamPlaceMatch(placeId, dreamDate) {
-  // Store the confirmed match on the form overlay dataset — addDream() will apply it on save
-  const addOv = document.getElementById('add-ov');
-  if (addOv) addOv.dataset.confirmedPlaceId = placeId;
-  const placeResult = document.getElementById('f-place-result');
-  if (placeResult) {
-    const p = getDreamPlaces().find(x => x.id === placeId);
-    const col = p ? (DP_NATURE_COLORS[p.nature] || 'var(--teal)') : 'var(--teal)';
-    placeResult.innerHTML = `<div style="font-family:'Space Mono',monospace;font-size:.52rem;color:${col};letter-spacing:.06em;">✓ ${p ? p.name : placeId} — will be linked on save.</div>`;
-  }
-}
-
-function dismissDreamPlaceDetection() {
-  const placeArea = document.getElementById('f-place-area');
-  if (placeArea) placeArea.style.display = 'none';
-  const addOv = document.getElementById('add-ov');
-  if (addOv) delete addOv.dataset.confirmedPlaceId;
-}
-
-function openNewPlaceFromDetection(detectionResult, dreamDate) {
-  // Pre-fill the edit form with AI suggestions, then the user can refine before saving
-  const addOv = document.getElementById('add-ov');
-
-  // Stash detection data so addDream knows a new place is pending
-  if (addOv) {
-    addOv.dataset.pendingNewPlace = JSON.stringify({
-      suggestedName: detectionResult.suggestedName || '',
-      suggestedNature: detectionResult.suggestedNature || 'ambiguous',
-      suggestedArchetypes: detectionResult.suggestedArchetypes || [],
-      suggestedFeltQuality: detectionResult.suggestedFeltQuality || '',
-      firstVisited: dreamDate || new Date().toISOString().slice(0,10)
-    });
-  }
-
-  // Open the edit overlay pre-filled — addDream will clear it after save
+  const chips = document.getElementById('f-place-chips');
+  if (!chips) return;
   const places = getDreamPlaces();
-  // Build a temporary "new" entry using the suggestions
-  document.getElementById('view-inner').innerHTML = `
-    <div class="m-date" style="margin-bottom:14px;">◈ Add New Place</div>
-    <div style="font-family:'Cormorant Garamond',serif;font-size:.88rem;color:rgba(240,235,224,.55);font-style:italic;margin-bottom:16px;">AI pre-filled from your dream. Edit as needed, then save.</div>
-
-    <div class="form-field" style="margin-bottom:14px;">
-      <label>Name</label>
-      <input type="text" id="dpe-name" value="${(detectionResult.suggestedName||'').replace(/"/g,'&quot;')}"
-        style="width:100%;box-sizing:border-box;background:rgba(255,255,255,.03);border:1px solid rgba(201,185,154,.15);color:var(--parchment);font-family:'Cormorant Garamond',serif;font-size:1rem;padding:8px 12px;outline:none;">
-    </div>
-
-    <div class="form-field" style="margin-bottom:14px;">
-      <label>Nature</label>
-      <select id="dpe-nature" style="width:100%;background:rgba(15,12,26,.9);border:1px solid rgba(201,185,154,.15);color:var(--parchment);font-family:'Space Mono',monospace;font-size:.6rem;padding:8px 12px;outline:none;">
-        <option value="locational" ${detectionResult.suggestedNature==='locational'?'selected':''}>Locational — real and potentially navigable</option>
-        <option value="ambiguous"  ${(detectionResult.suggestedNature==='ambiguous'||!detectionResult.suggestedNature)?'selected':''}>Ambiguous — needs more visits</option>
-        <option value="symbolic"   ${detectionResult.suggestedNature==='symbolic'?'selected':''}>Symbolic — processing space</option>
-      </select>
-    </div>
-
-    <div class="form-field" style="margin-bottom:14px;">
-      <label>Archetypes <span style="opacity:.4;font-size:.5rem;">(comma-separated)</span></label>
-      <input type="text" id="dpe-archetypes" value="${(detectionResult.suggestedArchetypes||[]).join(', ')}"
-        style="width:100%;box-sizing:border-box;background:rgba(255,255,255,.03);border:1px solid rgba(201,185,154,.15);color:var(--parchment);font-family:'Space Mono',monospace;font-size:.6rem;padding:8px 12px;outline:none;" placeholder="water, liminal, threshold…">
-    </div>
-
-    <div class="form-field" style="margin-bottom:14px;">
-      <label>Felt Quality</label>
-      <textarea id="dpe-felt" rows="4"
-        style="width:100%;box-sizing:border-box;background:rgba(255,255,255,.03);border:1px solid rgba(201,185,154,.15);color:var(--parchment);font-family:'Cormorant Garamond',serif;font-size:.95rem;padding:8px 12px;outline:none;resize:vertical;"
-        placeholder="The texture and atmosphere of this place…">${(detectionResult.suggestedFeltQuality||'').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</textarea>
-    </div>
-
-    <div id="dpe-nav-wrap" style="margin-bottom:14px;">
-      <div class="form-field">
-        <label>Navigation Notes</label>
-        <textarea id="dpe-nav" rows="3"
-          style="width:100%;box-sizing:border-box;background:rgba(255,255,255,.03);border:1px solid rgba(201,185,154,.15);color:var(--parchment);font-family:'Cormorant Garamond',serif;font-size:.95rem;padding:8px 12px;outline:none;resize:vertical;"
-          placeholder="How you arrived, entry points, movement through the space…"></textarea>
-      </div>
-    </div>
-
-    <div style="display:flex;gap:12px;margin-bottom:14px;">
-      <div class="form-field" style="flex:1;">
-        <label>First Visited</label>
-        <input type="date" id="dpe-date" value="${dreamDate||new Date().toISOString().slice(0,10)}"
-          style="width:100%;box-sizing:border-box;background:rgba(255,255,255,.03);border:1px solid rgba(201,185,154,.15);color:var(--parchment);font-family:'Space Mono',monospace;font-size:.6rem;padding:8px 12px;outline:none;">
-      </div>
-      <div class="form-field" style="flex:1;">
-        <label>Visit Count</label>
-        <input type="number" id="dpe-visits" value="1" min="1"
-          style="width:100%;box-sizing:border-box;background:rgba(255,255,255,.03);border:1px solid rgba(201,185,154,.15);color:var(--parchment);font-family:'Space Mono',monospace;font-size:.6rem;padding:8px 12px;outline:none;">
-      </div>
-    </div>
-
-    <div class="spirit-modal-actions" style="margin-top:20px;">
-      <button class="spirit-action-btn" onclick="saveNewPlaceFromDetection()" style="border-color:var(--teal);color:var(--teal);">Save Place</button>
-      <button class="spirit-action-btn" onclick="closeView()">Cancel</button>
-    </div>
-  `;
-
-  document.getElementById('dpe-nature').addEventListener('change', function() {
-    document.getElementById('dpe-nav-wrap').style.display = this.value === 'symbolic' ? 'none' : '';
+  chips.innerHTML = '';
+  places.forEach(p => {
+    const col = DP_NATURE_COLORS[p.nature] || 'var(--moon)';
+    const chip = document.createElement('span');
+    chip.className = 'pchip-check';
+    chip.dataset.dpid = p.id;
+    chip.textContent = p.name;
+    chip.style.cssText = `font-family:'Space Mono',monospace;font-size:.52rem;padding:4px 10px;border:1px solid rgba(201,185,154,.18);background:transparent;color:rgba(201,185,154,.5);cursor:pointer;transition:all .2s;display:inline-block;margin:2px;`;
+    chip.onclick = function() {
+      // Deselect all others
+      chips.querySelectorAll('.pchip-check').forEach(c => {
+        c.style.borderColor = 'rgba(201,185,154,.18)';
+        c.style.background  = 'transparent';
+        c.style.color       = 'rgba(201,185,154,.5)';
+        c.classList.remove('selected');
+      });
+      // Toggle this one
+      const wasSelected = document.getElementById('f-place-id').value === p.id;
+      if (wasSelected) {
+        document.getElementById('f-place-id').value = '';
+        renderFormPlaceSelected(null);
+      } else {
+        chip.style.borderColor = col;
+        chip.style.background  = col.replace('var(--teal)','rgba(58,107,107,.18)').replace('var(--gold)','rgba(201,168,76,.15)').replace('var(--mariam)','rgba(155,107,171,.18)');
+        chip.style.color       = col;
+        chip.classList.add('selected');
+        document.getElementById('f-place-id').value = p.id;
+        renderFormPlaceSelected(p);
+      }
+    };
+    chips.appendChild(chip);
   });
-
-  document.getElementById('view-ov').classList.add('open');
 }
 
-function saveNewPlaceFromDetection() {
-  const name = document.getElementById('dpe-name')?.value.trim();
-  if (!name) { gtAlert('A name is required.'); return; }
+function renderFormPlaceSelected(p) {
+  const sel = document.getElementById('f-place-selected');
+  if (!sel) return;
+  if (!p) { sel.innerHTML = ''; return; }
+  const col = DP_NATURE_COLORS[p.nature] || 'var(--teal)';
+  sel.innerHTML = `<span style="font-family:'Space Mono',monospace;font-size:.52rem;padding:3px 10px;border:1px solid ${col};color:${col};background:transparent;display:inline-block;">◈ ${p.name}</span>`;
+}
 
+function toggleDreamPlacePicker() {
+  const picker = document.getElementById('f-place-picker');
+  if (!picker) return;
+  const isOpen = picker.style.display !== 'none';
+  if (isOpen) {
+    picker.style.display = 'none';
+  } else {
+    picker.style.display = 'block';
+    initDreamPlacePicker();
+  }
+  const btn = document.getElementById('f-place-toggle-btn');
+  if (btn) btn.textContent = isOpen ? '◈ Pick Place' : '✕ Close';
+}
+
+function addNewDreamPlaceFromForm() {
+  const nameInput = document.getElementById('f-place-new-name');
+  const name = nameInput ? nameInput.value.trim() : '';
+  if (!name) return;
   const newId = 'dp_' + Date.now();
-  const entry = {
-    id:              newId,
-    name:            name,
-    nature:          document.getElementById('dpe-nature')?.value || 'ambiguous',
-    archetypes:      (document.getElementById('dpe-archetypes')?.value||'').split(',').map(s=>s.trim()).filter(Boolean),
-    feltQuality:     document.getElementById('dpe-felt')?.value.trim() || '',
-    navigationNotes: document.getElementById('dpe-nav')?.value.trim() || '',
-    personalNotes:   '',
-    firstVisited:    document.getElementById('dpe-date')?.value || '',
-    visitCount:      parseInt(document.getElementById('dpe-visits')?.value||'1',10)||1,
-    dreamIds:        []
+  const newPlace = {
+    id: newId, name, nature: 'ambiguous', archetypes: [], feltQuality: '',
+    navigationNotes: '', personalNotes: '',
+    firstVisited: document.getElementById('f-date')?.value || new Date().toISOString().slice(0,10),
+    visitCount: 1, dreamIds: []
   };
-
   const places = getDreamPlaces();
-  places.push(entry);
+  places.push(newPlace);
   saveDreamPlaces(places);
-
-  // Mark the new place as confirmed so addDream() will link this dream to it
-  const addOv = document.getElementById('add-ov');
-  if (addOv) {
-    addOv.dataset.confirmedPlaceId = newId;
-    delete addOv.dataset.pendingNewPlace;
-  }
-
-  closeView();
-  const placeResult = document.getElementById('f-place-result');
-  if (placeResult) {
-    placeResult.innerHTML = `<div style="font-family:'Space Mono',monospace;font-size:.52rem;color:var(--teal);letter-spacing:.06em;">✓ ${name} — added and will be linked on save.</div>`;
-  }
+  if (nameInput) nameInput.value = '';
+  // Re-render chips and select the new one
+  initDreamPlacePicker();
+  setTimeout(() => {
+    const chip = document.querySelector(`#f-place-chips [data-dpid="${newId}"]`);
+    if (chip) chip.click();
+  }, 50);
 }
 
 
@@ -21229,15 +21024,22 @@ async function scanDreamPeople() {
   var knownNames = PEOPLE.map(function(p){ return p.name + ' (id:' + p.id + ')'; }).join(', ');
   var catList = CATS.map(function(c){ return c.id + ' = ' + c.lbl; }).join(', ');
 
-  var prompt = 'You are scanning a dream entry to identify beings and categories.\n\n'
+  var knownPlaces = (typeof getDreamPlaces==='function') ? getDreamPlaces() : [];
+  var placeList = knownPlaces.length
+    ? knownPlaces.map(function(p,i){ return i+': id="'+p.id+'" name="'+p.name+'" nature="'+p.nature+'" feltQuality="'+(p.feltQuality||'').slice(0,80)+'"'; }).join('\n')
+    : 'None yet.';
+
+  var prompt = 'You are scanning a dream entry to identify beings, categories, and dream places.\n\n'
     + 'KNOWN BEINGS IN ARCHIVE:\n' + knownNames + '\n\n'
     + 'DREAM TEXT:\n' + dreamText.slice(0, 1500) + '\n\n'
-    + 'Return a JSON object with two arrays:\n'
+    + 'Return a JSON object with:\n'
     + '1. "found": array of IDs from the known beings list who clearly appear in this dream\n'
-    + '2. "new": array of objects for beings NOT in the known list who appear, each with: { "name": "string", "role": "brief role description", "context": "how they appear in this dream" }\n'
-    + '3. "cats": array of category IDs that apply to this dream\n\n'
+    + '2. "new": array of objects for beings NOT in the known list, each with: { "name": "string", "role": "brief role", "context": "how they appear" }\n'
+    + '3. "cats": array of category IDs that apply\n'
+    + '4. "place": object or null — if a distinctive dream location appears (unusual architecture, impossible physics, strong emotional imprint), return { "matchType": "existing" or "new", "matchId": "id or null", "matchName": "name", "confidence": "high/medium/low", "reason": "one sentence", "suggestedName": "if new or null", "suggestedNature": "locational/ambiguous/symbolic or null" }. Set to null if no distinctive place.\n\n'
     + 'AVAILABLE CATEGORIES:\n' + catList + '\n\n'
-    + 'Be accurate but conservative. Return ONLY valid JSON, no preamble.';
+    + 'EXISTING DREAM PLACES:\n' + placeList + '\n\n'
+    + 'Conservative: a dream place must be architecturally specific or recurring — not every setting qualifies. Return ONLY valid JSON, no preamble.';
 
   try {
     const data = await claudeAPI(apiKey, {model:'claude-sonnet-4-6',max_tokens:600,messages:[{role:'user',content:prompt}]});
@@ -21294,7 +21096,44 @@ async function scanDreamPeople() {
       });
     }
     if (detectedCats.length) msgs.push('Categories: ' + detectedCats.map(function(id){ var c=CATS.find(function(x){return x.id===id;}); return c?c.lbl:id; }).join(', '));
-    if (!found.length && !newBeings.length && !detectedCats.length) msgs.push('No known beings or categories detected.');
+
+    // Handle place detection result
+    var placeResult = result.place || null;
+    if (placeResult && placeResult.matchType) {
+      var placeArea = document.getElementById('f-place-area-scan');
+      if (!placeArea) {
+        // Create a place result area below scan-people-result if it doesn't exist
+        placeArea = document.createElement('div');
+        placeArea.id = 'f-place-area-scan';
+        placeArea.style.cssText = 'margin-top:8px;';
+        var scanResultEl = document.getElementById('scan-people-result');
+        if (scanResultEl && scanResultEl.parentNode) scanResultEl.parentNode.insertBefore(placeArea, scanResultEl.nextSibling);
+      }
+      var pCol = 'rgba(58,107,107,.85)';
+      if (placeResult.matchType === 'existing' && placeResult.matchId) {
+        var matchedPlace = (typeof getDreamPlaces==='function') ? getDreamPlaces().find(function(p){return p.id===placeResult.matchId;}) : null;
+        var pName = (matchedPlace && matchedPlace.name) || placeResult.matchName || placeResult.matchId;
+        placeArea.innerHTML = '<div style="padding:8px 10px;background:rgba(58,107,107,.08);border:1px solid rgba(58,107,107,.25);border-left:2px solid '+pCol+';margin-top:4px;">'
+          + '<span style="font-family:\'Space Mono\',monospace;font-size:.48rem;color:rgba(58,107,107,.7);letter-spacing:.07em;">◈ PLACE MATCH · '+placeResult.confidence+' confidence</span><br>'
+          + '<span style="font-size:.9rem;font-weight:400;">'+pName+'</span>'
+          + '<span style="font-family:\'Cormorant Garamond\',serif;font-size:.82rem;color:rgba(240,235,224,.5);font-style:italic;display:block;margin:2px 0 6px;">'+( placeResult.reason||'')+'</span>'
+          + '<button onclick="scanConfirmPlaceMatch(\''+placeResult.matchId+'\', this)" style="font-family:\'Space Mono\',monospace;font-size:.48rem;padding:3px 9px;border:1px solid '+pCol+';color:'+pCol+';background:transparent;cursor:pointer;margin-right:6px;">✓ Confirm Visit</button>'
+          + '<button onclick="this.parentNode.parentNode.remove()" style="font-family:\'Space Mono\',monospace;font-size:.48rem;padding:3px 9px;border:1px solid rgba(201,185,154,.15);color:rgba(201,185,154,.35);background:transparent;cursor:pointer;">Skip</button>'
+          + '</div>';
+        msgs.push('Place: ' + pName);
+      } else if (placeResult.matchType === 'new' && placeResult.suggestedName) {
+        placeArea.innerHTML = '<div style="padding:8px 10px;background:rgba(58,107,107,.06);border:1px solid rgba(58,107,107,.2);border-left:2px solid rgba(58,107,107,.5);margin-top:4px;">'
+          + '<span style="font-family:\'Space Mono\',monospace;font-size:.48rem;color:rgba(58,107,107,.65);letter-spacing:.07em;">◈ NEW PLACE SUGGESTED</span><br>'
+          + '<span style="font-size:.9rem;font-weight:400;">'+placeResult.suggestedName+'</span>'
+          + '<span style="font-family:\'Cormorant Garamond\',serif;font-size:.82rem;color:rgba(240,235,224,.5);font-style:italic;display:block;margin:2px 0 6px;">'+(placeResult.reason||'')+'</span>'
+          + '<button onclick="scanAddNewPlace(\''+encodeURIComponent(placeResult.suggestedName)+'\',' + JSON.stringify(placeResult.suggestedNature||'ambiguous') + ', this)" style="font-family:\'Space Mono\',monospace;font-size:.48rem;padding:3px 9px;border:1px solid '+pCol+';color:'+pCol+';background:transparent;cursor:pointer;margin-right:6px;">+ Add to Registry</button>'
+          + '<button onclick="this.parentNode.parentNode.remove()" style="font-family:\'Space Mono\',monospace;font-size:.48rem;padding:3px 9px;border:1px solid rgba(201,185,154,.15);color:rgba(201,185,154,.35);background:transparent;cursor:pointer;">Skip</button>'
+          + '</div>';
+        msgs.push('New place: ' + placeResult.suggestedName);
+      }
+    }
+
+    if (!found.length && !newBeings.length && !detectedCats.length && !placeResult) msgs.push('No known beings or categories detected.');
     if (resultEl) resultEl.textContent = msgs.join(' · ');
   } catch(e) {
     if (resultEl) resultEl.textContent = 'Scan error: ' + e.message;
@@ -21341,6 +21180,43 @@ function addNewBeingFromScan(name, role, context) {
   }
 
   return id;
+}
+
+// ── Dream Place scan helpers ──────────────────────────────────────────
+function scanConfirmPlaceMatch(placeId, btn) {
+  var placeIdInput = document.getElementById('f-place-id');
+  var placeSelected = document.getElementById('f-place-selected');
+  var p = (typeof getDreamPlaces==='function') ? getDreamPlaces().find(function(x){return x.id===placeId;}) : null;
+  if (placeIdInput) placeIdInput.value = placeId;
+  if (placeSelected && p) {
+    var col = (typeof DP_NATURE_COLORS!=='undefined' && DP_NATURE_COLORS[p.nature]) || 'var(--teal)';
+    placeSelected.innerHTML = '<span style="font-family:\'Space Mono\',monospace;font-size:.52rem;padding:3px 10px;border:1px solid '+col+';color:'+col+';display:inline-block;">◈ '+p.name+'</span>';
+  }
+  // Also highlight the chip in the picker if it's open
+  var picker = document.getElementById('f-place-chips');
+  if (picker) {
+    picker.querySelectorAll('[data-dpid]').forEach(function(c) { c.classList.remove('selected'); });
+    var chip = picker.querySelector('[data-dpid="'+placeId+'"]');
+    if (chip) chip.classList.add('selected');
+  }
+  if (btn) btn.closest('div').innerHTML = '<span style="font-family:\'Space Mono\',monospace;font-size:.52rem;color:var(--teal);">✓ '+(p?p.name:placeId)+' linked — saves with dream.</span>';
+}
+
+function scanAddNewPlace(encodedName, nature, btn) {
+  var name = decodeURIComponent(encodedName);
+  var newId = 'dp_' + Date.now();
+  var date = (document.getElementById('f-date')||{}).value || new Date().toISOString().slice(0,10);
+  var newPlace = {
+    id: newId, name: name, nature: nature || 'ambiguous',
+    archetypes: [], feltQuality: '', navigationNotes: '', personalNotes: '',
+    firstVisited: date, visitCount: 1, dreamIds: []
+  };
+  var places = (typeof getDreamPlaces==='function') ? getDreamPlaces() : [];
+  places.push(newPlace);
+  if (typeof saveDreamPlaces==='function') saveDreamPlaces(places);
+  // Select it
+  scanConfirmPlaceMatch(newId, null);
+  if (btn) btn.closest('div').innerHTML = '<span style="font-family:\'Space Mono\',monospace;font-size:.52rem;color:var(--teal);">✓ '+name+' added and linked — saves with dream.</span>';
 }
 
 // ── Pattern alert replay ──────────────────────────────────────────────
