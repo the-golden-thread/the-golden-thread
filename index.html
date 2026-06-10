@@ -22277,9 +22277,9 @@ function mirrorChartGrid(p) {
   var bid = 'mcb-'+(p.name||'x').replace(/\s+/g,'_');
   // Clean any verbose rising/hdType values that slipped through from AI
   var _SIGNS = ['Aries','Taurus','Gemini','Cancer','Leo','Virgo','Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces'];
-  var _HD = ['Generator','Manifesting Generator','Projector','Manifestor','Reflector'];
+  var _HD = ['Manifesting Generator','Generator','Projector','Manifestor','Reflector'];
   function _cleanSign(s) { if (!s) return s; for (var i=0;i<_SIGNS.length;i++) { if (s === _SIGNS[i]) return s; } for (var j=0;j<_SIGNS.length;j++) { if (s.indexOf(_SIGNS[j])!==-1) return _SIGNS[j]; } return s.split(/[,.(\s]/)[0]; }
-  function _cleanHD(s) { if (!s) return s; for (var i=0;i<_HD.length;i++) { if (s.indexOf(_HD[i])!==-1) return _HD[i]; } return s; }
+  function _cleanHD(s) { if (!s) return s; for (var i=0;i<_HD.length;i++) { if (s === _HD[i]) return s; } for (var i=0;i<_HD.length;i++) { if (s.indexOf(_HD[i])!==-1) return _HD[i]; } return s; }
   if (p.rising) p.rising = _cleanSign(p.rising);
   if (p.hdType) p.hdType = _cleanHD(p.hdType);
 
