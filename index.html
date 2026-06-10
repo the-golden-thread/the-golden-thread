@@ -22318,7 +22318,7 @@ function mirrorChartGrid(p) {
     + items.map(function(item){
         var d = item.dim?'opacity:.45;':'';
         var c = item.desc?'cursor:pointer;':'';
-        var oc = item.desc?' onclick="mirrorChartBoxExpand(\''+item.id+'\',\''+esc(item.desc)+'\')"':'';
+        var oc = item.desc?' onclick="mirrorChartBoxExpand(this)" data-desc="'+esc(item.desc)+'"':'';
         var ind = item.desc?' <span style="opacity:.3;font-size:.8em;">\u25b8</span>':'';
         return '<div id="'+item.id+'"'+oc+' style="padding:10px 12px;background:rgba(255,255,255,.02);border:1px solid rgba(201,185,154,.08);'+d+c+'">'
           +'<div style="font-family:Space Mono,monospace;font-size:.42rem;letter-spacing:.08em;text-transform:uppercase;color:rgba(201,185,154,.3);margin-bottom:3px;">'+item.emoji+' '+item.label+ind+'</div>'
@@ -22329,9 +22329,10 @@ function mirrorChartGrid(p) {
     +(!p.hasBirthTime?'<div style="font-family:Space Mono,monospace;font-size:.42rem;color:rgba(201,185,154,.25);margin-top:4px;">* Moon may vary near sign boundaries. Rising &amp; HD require birth time.</div>':'');
 }
 
-function mirrorChartBoxExpand(id, desc) {
-  var box = document.getElementById(id);
+function mirrorChartBoxExpand(el) {
+  var box = (typeof el === 'string') ? document.getElementById(el) : el;
   if (!box) return;
+  var desc = box.dataset.desc || '';
   var existing = box.querySelector('.mcb-detail');
   if (existing) { existing.remove(); return; }
   var d = document.createElement('div');
