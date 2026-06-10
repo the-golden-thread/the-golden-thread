@@ -21776,6 +21776,177 @@ function saveCrossCompares(arr) {
 }
 
 // ── RENDER MIRROR (updated with mode toggle + cross-compare tab) ──
+// ── PEOPLE DIRECTORY ─────────────────────────────────────────
+const PEOPLE_STORE_KEY = 'gt_people_v1';
+function getPeopleDirectory() {
+  try { return JSON.parse(localStorage.getItem(PEOPLE_STORE_KEY) || '[]'); } catch(e) { return []; }
+}
+function savePeopleDirectory(arr) {
+  try { localStorage.setItem(PEOPLE_STORE_KEY, JSON.stringify(arr)); } catch(e) {}
+}
+
+// ── RENDER PEOPLE TAB ────────────────────────────────────────
+function renderPeopleTab() {
+  var panel = document.getElementById('mirror-panel-people');
+  if (!panel) return;
+  var people = getPeopleDirectory().sort(function(a,b){ return (a.name||'').localeCompare(b.name||''); });
+
+  panel.innerHTML = '<div style="margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;">'
+    +'<div style="font-family:Cormorant Garamond,serif;font-size:1rem;font-style:italic;color:rgba(240,235,224,.5);">Your people, saved for quick use.</div>'
+    +'<button onclick="showAddPersonForm()" style="font-family:Space Mono,monospace;font-size:.5rem;letter-spacing:.08em;padding:7px 14px;background:rgba(107,79,138,.08);border:1px solid rgba(107,79,138,.3);color:rgba(155,107,171,.7);cursor:pointer;">+ Add Person</button>'
+    +'</div>'
+    +'<div id="add-person-form" style="display:none;background:rgba(255,255,255,.02);border:1px solid rgba(201,185,154,.1);padding:16px;margin-bottom:20px;">'
+    +'<div style="font-family:Space Mono,monospace;font-size:.46rem;letter-spacing:.1em;text-transform:uppercase;color:rgba(201,185,154,.35);margin-bottom:12px;">New Person</div>'
+    + mirrorPersonForm('pd', false)
+    +'<div style="display:flex;gap:8px;margin-top:4px;">'
+    +'<button onclick="saveNewPerson()" style="font-family:Space Mono,monospace;font-size:.5rem;letter-spacing:.08em;padding:8px 16px;background:rgba(107,155,107,.08);border:1px solid rgba(107,155,107,.3);color:rgba(107,180,107,.7);cursor:pointer;">\u2713 Save</button>'
+    +'<button onclick="document.getElementById(\'add-person-form\').style.display=\'none\'" style="font-family:Space Mono,monospace;font-size:.5rem;letter-spacing:.08em;padding:8px 16px;background:transparent;border:1px solid rgba(201,185,154,.15);color:rgba(201,185,154,.4);cursor:pointer;">\u2715 Cancel</button>'
+    +'</div></div>'
+    +(people.length
+      ? people.map(function(p){ return personDirectoryCard(p); }).join('')
+      : '<div style="font-family:Cormorant Garamond,serif;font-size:.95rem;font-style:italic;color:rgba(201,185,154,.3);padding:20px 0;">No people saved yet.</div>');
+}
+
+function showAddPersonForm() {
+  var f = document.getElementById('add-person-form');
+  if (f) { f.style.display = f.style.display === 'none' ? '' : 'none'; }
+}
+
+function saveNewPerson() {
+  var name     = (document.getElementById('mirror-pd-name')?.value||'').trim();
+  var pronouns = (document.getElementById('mirror-pd-pronouns')?.value||'').trim();
+  var dob      = (document.getElementById('mirror-pd-dob')?.value||'').trim();
+  var time     = (document.getElementById('mirror-pd-time')?.value||'').trim();
+  var loc      = (document.getElementById('mirror-pd-location')?.value||'').trim();
+  if (!name || !dob) { gtAlert('Name and birthdate are required.'); return; }
+  var person = computePersonChart(name, dob, time, loc);
+  person.pronouns = pronouns;
+  var list = getPeopleDirectory().filter(function(p){ return p.name !== name; });
+  list.push(person);
+  savePeopleDirectory(list);
+  document.getElementById('add-person-form').style.display = 'none';
+  renderPeopleTab();
+}
+
+function personDirectoryCard(person) {
+  var id = 'pd-' + (person.name||'').replace(/\s+/g,'_');
+  var birthParts = [];
+  if (person.dob) birthParts.push(person.dob);
+  if (person.birthTime) birthParts.push(person.birthTime);
+  if (person.birthLocation) birthParts.push(person.birthLocation);
+  var birthLine = birthParts.join(' \u00b7 ');
+
+  return '<div style="border:1px solid rgba(201,185,154,.1);margin-bottom:12px;background:rgba(255,255,255,.02);">'
+    +'<div onclick="pdToggle(\''+id+'\')" style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;cursor:pointer;">'
+    +'<div style="display:flex;align-items:center;gap:12px;">'
+    +'<div style="font-size:1.4rem;">'+(person.czEmoji||'\u9680')+'</div>'
+    +'<div>'
+    +'<div style="font-family:Cormorant Garamond,serif;font-size:1.05rem;color:rgba(240,235,224,.9);">'+(person.name||'')+'</div>'
+    +'<div style="font-family:Space Mono,monospace;font-size:.44rem;color:rgba(201,185,154,.35);letter-spacing:.06em;margin-top:2px;">'+(person.pronouns?person.pronouns+' \u00b7 ':'')+'\u2600 '+(person.sunSign||'?')+' \u00b7 \ud83c\udf19 '+(person.moonSign||'?')+' \u00b7 LP '+(person.lifePath||'?')+'</div>'
+    +(birthLine?'<div style="font-family:Space Mono,monospace;font-size:.42rem;color:rgba(201,185,154,.25);margin-top:2px;">'+birthLine+'</div>':'')
+    +'</div></div>'
+    +'<div style="font-family:Space Mono,monospace;font-size:.6rem;color:rgba(201,185,154,.3);" id="'+id+'-chevron">\u25b8</div>'
+    +'</div>'
+    +'<div id="'+id+'" style="display:none;padding:0 16px 16px;">'
+    +'<div id="'+id+'-grid">'+mirrorChartGrid(person)+'</div>'
+    +'<div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap;">'
+    +'<button onclick="pdEditField(\''+id+'\',\'rising\')" style="font-family:Space Mono,monospace;font-size:.48rem;letter-spacing:.08em;padding:6px 12px;background:transparent;border:1px solid rgba(201,185,154,.15);color:rgba(201,185,154,.4);cursor:pointer;">\u270e Rising</button>'
+    +'<button onclick="pdEditField(\''+id+'\',\'hdType\')" style="font-family:Space Mono,monospace;font-size:.48rem;letter-spacing:.08em;padding:6px 12px;background:transparent;border:1px solid rgba(201,185,154,.15);color:rgba(201,185,154,.4);cursor:pointer;">\u270e HD</button>'
+    +'<button onclick="pdDelete(\''+id+'\')" style="font-family:Space Mono,monospace;font-size:.48rem;letter-spacing:.08em;padding:6px 12px;background:transparent;border:1px solid rgba(180,80,80,.2);color:rgba(180,100,100,.5);cursor:pointer;">\u2715 Remove</button>'
+    +'</div></div></div>';
+}
+
+function pdToggle(id) {
+  var el = document.getElementById(id);
+  var ch = document.getElementById(id+'-chevron');
+  if (!el) return;
+  var open = el.style.display !== 'none';
+  el.style.display = open ? 'none' : 'block';
+  if (ch) ch.textContent = open ? '\u25b8' : '\u25be';
+}
+
+function pdEditField(cardId, field) {
+  var name = cardId.replace(/^pd-/,'').replace(/_/g,' ');
+  var list = getPeopleDirectory();
+  var person = list.find(function(p){ return p.name === name; });
+  if (!person) return;
+  var labels = {rising:'Rising Sign', hdType:'HD Type'};
+  var val = prompt('Edit ' + (labels[field]||field) + ' for ' + name + ':', person[field]||'');
+  if (val === null) return;
+  person[field] = val.trim();
+  savePeopleDirectory(list);
+  var gridEl = document.getElementById(cardId+'-grid');
+  if (gridEl) gridEl.innerHTML = mirrorChartGrid(person);
+}
+
+function pdDelete(cardId) {
+  var name = cardId.replace(/^pd-/,'').replace(/_/g,' ');
+  if (!confirm('Remove '+name+' from your People directory?')) return;
+  var list = getPeopleDirectory().filter(function(p){ return p.name !== name; });
+  savePeopleDirectory(list);
+  renderPeopleTab();
+}
+
+// ── AUTOCOMPLETE ─────────────────────────────────────────────
+function pdHandleNameInput(el) {
+  var id = el.id;
+  if      (id === 'mirror--name')  pdAutocomplete(id, '');
+  else if (id === 'mirror-a-name') pdAutocomplete(id, 'a');
+  else if (id === 'mirror-b-name') pdAutocomplete(id, 'b');
+}
+
+function pdAutocomplete(inputId, fieldsPrefix) {
+  var input = document.getElementById(inputId);
+  if (!input) return;
+  var val = input.value.trim().toLowerCase();
+
+  // Remove existing dropdown
+  var existing = document.getElementById(inputId+'-ac');
+  if (existing) existing.remove();
+  if (!val || val.length < 1) return;
+
+  var people = getPeopleDirectory().filter(function(p){
+    return (p.name||'').toLowerCase().indexOf(val) !== -1;
+  });
+  if (!people.length) return;
+
+  var dropdown = document.createElement('div');
+  dropdown.id = inputId+'-ac';
+  dropdown.style.cssText = 'position:absolute;z-index:999;background:#1a1820;border:1px solid rgba(201,185,154,.2);min-width:180px;max-height:200px;overflow-y:auto;';
+  people.forEach(function(p) {
+    var item = document.createElement('div');
+    item.style.cssText = 'padding:9px 14px;font-family:Cormorant Garamond,serif;font-size:.95rem;color:rgba(240,235,224,.8);cursor:pointer;border-bottom:1px solid rgba(201,185,154,.06);';
+    item.innerHTML = p.name + (p.pronouns?'<span style="font-family:Space Mono,monospace;font-size:.42rem;color:rgba(201,185,154,.35);margin-left:8px;">'+p.pronouns+'</span>':'');
+    item.onmousedown = function(e) {
+      e.preventDefault();
+      pdFillFields(p, fieldsPrefix);
+      var ac = document.getElementById(inputId+'-ac');
+      if (ac) ac.remove();
+    };
+    item.onmouseover = function(){ this.style.background='rgba(107,79,138,.12)'; };
+    item.onmouseout  = function(){ this.style.background=''; };
+    dropdown.appendChild(item);
+  });
+
+  input.parentElement.style.position = 'relative';
+  input.parentElement.appendChild(dropdown);
+
+  input.onblur = function() {
+    setTimeout(function(){ var ac=document.getElementById(inputId+'-ac'); if(ac) ac.remove(); }, 200);
+  };
+}
+
+function pdFillFields(person, prefix) {
+  var p = prefix ? 'mirror-'+prefix+'-' : 'mirror--';
+  function set(suffix, val) { var el=document.getElementById(p+suffix); if(el) el.value=val||''; }
+  set('name',     person.name||'');
+  set('pronouns', person.pronouns||'');
+  set('dob',      person.dob||'');
+  set('time',     person.birthTime||'');
+  set('location', person.birthLocation||'');
+}
+
+
 function renderMirror(dest) {
   var people  = getMirrorPeople().sort(function(a,b){ return (a.name||'').localeCompare(b.name||''); });
   var crosses = getCrossCompares().sort(function(a,b){ return ((a.personA&&a.personA.name)||'').localeCompare((b.personA&&b.personA.name)||''); });
@@ -21790,6 +21961,7 @@ function renderMirror(dest) {
     + '<div style="display:flex;gap:8px;">'
     + '<button id="mirror-btn-new" onclick="mirrorShowPanel(\'new\')" style="font-family:Space Mono,monospace;font-size:.5rem;letter-spacing:.08em;padding:6px 14px;background:rgba(107,79,138,.1);border:1px solid rgba(107,79,138,.3);color:rgba(155,107,171,.7);cursor:pointer;">+ New</button>'
     + '<button id="mirror-btn-established" onclick="mirrorShowPanel(\'established\')" style="font-family:Space Mono,monospace;font-size:.5rem;letter-spacing:.08em;padding:6px 14px;background:transparent;border:1px solid rgba(201,185,154,.15);color:rgba(201,185,154,.4);cursor:pointer;">&#9680; '+estLabel+'</button>'
+    + '<button id="mirror-btn-people" onclick="mirrorShowPanel(\'people\')" style="font-family:Space Mono,monospace;font-size:.5rem;letter-spacing:.08em;padding:6px 14px;background:transparent;border:1px solid rgba(201,185,154,.15);color:rgba(201,185,154,.4);cursor:pointer;">• People</button>'
     + '</div></div>'
 
     // ── NEW PANEL ──
@@ -21847,22 +22019,24 @@ function renderMirror(dest) {
     + '<div id="est-panel-cross" style="display:none;">'
     + (crossCount ? crosses.map(function(c){ return crossCompareCard(c); }).join('') : '<div style="font-family:Cormorant Garamond,serif;font-size:.95rem;font-style:italic;color:rgba(201,185,154,.3);padding:16px 0;">No cross-compares saved yet.</div>')
     + '</div>'
-    + '</div></div>';
+    + '</div>'
+    + '<div id="mirror-panel-people" style="display:none;"></div>'
+    + '</div>';
 
   mirrorShowPanel('new');
 }
 
 // ── PANEL SWITCHERS ─────────────────────────────────────────
 function mirrorShowPanel(which) {
-  var np = document.getElementById('mirror-panel-new');
-  var ep = document.getElementById('mirror-panel-established');
-  var nb = document.getElementById('mirror-btn-new');
-  var eb = document.getElementById('mirror-btn-established');
-  if (!np || !ep) return;
-  np.style.display = which === 'new' ? '' : 'none';
-  ep.style.display = which === 'established' ? '' : 'none';
-  if (nb) { nb.style.background=which==='new'?'rgba(107,79,138,.1)':'transparent'; nb.style.borderColor=which==='new'?'rgba(107,79,138,.3)':'rgba(201,185,154,.15)'; nb.style.color=which==='new'?'rgba(155,107,171,.7)':'rgba(201,185,154,.4)'; }
-  if (eb) { eb.style.background=which==='established'?'rgba(107,79,138,.1)':'transparent'; eb.style.borderColor=which==='established'?'rgba(107,79,138,.3)':'rgba(201,185,154,.15)'; eb.style.color=which==='established'?'rgba(155,107,171,.7)':'rgba(201,185,154,.4)'; }
+  var panels = {new:'mirror-panel-new', established:'mirror-panel-established', people:'mirror-panel-people'};
+  var btns   = {new:'mirror-btn-new', established:'mirror-btn-established', people:'mirror-btn-people'};
+  Object.keys(panels).forEach(function(k){
+    var p = document.getElementById(panels[k]);
+    var b = document.getElementById(btns[k]);
+    if (p) p.style.display = k === which ? '' : 'none';
+    if (b) { b.style.background=k===which?'rgba(107,79,138,.1)':'transparent'; b.style.borderColor=k===which?'rgba(107,79,138,.3)':'rgba(201,185,154,.15)'; b.style.color=k===which?'rgba(155,107,171,.7)':'rgba(201,185,154,.4)'; }
+  });
+  if (which === 'people') renderPeopleTab();
 }
 
 function mirrorEstTab(tab) {
@@ -21883,7 +22057,7 @@ function mirrorPersonForm(prefix, compact) {
   return '<div style="display:flex;flex-direction:column;gap:10px;margin-bottom:16px;">'
     + '<div style="display:grid;grid-template-columns:2fr 1fr;gap:10px;">'
     + '<div><div style="font-family:Space Mono,monospace;font-size:.44rem;letter-spacing:.1em;text-transform:uppercase;color:rgba(201,185,154,.35);margin-bottom:4px;">Name</div>'
-    + '<input id="mirror-'+p+'name" type="text" placeholder="e.g. Jenna" style="width:100%;box-sizing:border-box;background:rgba(255,255,255,.04);border:1px solid rgba(201,185,154,.2);color:rgba(240,235,224,.9);font-family:Cormorant Garamond,serif;font-size:1rem;padding:9px 12px;outline:none;"></div>'
+    + '<input id="mirror-'+p+'name" type="text" placeholder="e.g. Jenna" autocomplete="off" oninput="pdHandleNameInput(this)" style="width:100%;box-sizing:border-box;background:rgba(255,255,255,.04);border:1px solid rgba(201,185,154,.2);color:rgba(240,235,224,.9);font-family:Cormorant Garamond,serif;font-size:1rem;padding:9px 12px;outline:none;"></div>'
     + '<div><div style="font-family:Space Mono,monospace;font-size:.44rem;letter-spacing:.1em;text-transform:uppercase;color:rgba(201,185,154,.25);margin-bottom:4px;">Pronouns</div>'
     + '<input id="mirror-'+p+'pronouns" type="text" placeholder="she/her" style="width:100%;box-sizing:border-box;background:rgba(255,255,255,.04);border:1px solid rgba(201,185,154,.12);color:rgba(240,235,224,.8);font-family:Cormorant Garamond,serif;font-size:.95rem;padding:9px 12px;outline:none;"></div>'
     + '</div>'
