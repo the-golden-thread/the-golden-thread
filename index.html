@@ -10911,7 +10911,62 @@ function renderDreams(){
   const q=document.getElementById('search').value.toLowerCase();
   let filtered=dreams.filter(d=>{
     const vivMin = parseInt(document.getElementById('viv-min')?.value||1);
-    const mq=!q||(d.title||'').toLowerCase().includes(q)||(d.body||'').toLowerCase().includes(q)||(d.moon||'').toLowerCase().includes(q)||(d.claude||'').toLowerCase().includes(q)||(d.ctx||'').toLowerCase().includes(q)||(d.interp||'').toLowerCase().includes(q)||d.cats.some(c=>c.toLowerCase().includes(q))||d.people.some(p=>p.toLowerCase().includes(q));
+    // Dream search: word-boundary on title+body (prevents 'craft'→'spellcraft', 'bus'→'business')
+    // Claude readings, interp, ctx, moon use substring (prose — partial match is fine)
+    // Synonym expansion: common dream vocabulary maps to related terms
+    const _DREAM_SYNONYMS = {
+      craft: ['spaceship','spacecraft','ufo','vessel','rocket','saucer','ship','pod'],
+      ship: ['spaceship','spacecraft','vessel','boat','craft','ark'],
+      spaceship: ['craft','spacecraft','ufo','vessel','rocket','saucer'],
+      spacecraft: ['craft','spaceship','ufo','vessel','rocket','saucer'],
+      ufo: ['craft','spaceship','spacecraft','saucer','vessel'],
+      fly: ['float','levitate','soar','glide','hover'],
+      flying: ['floating','levitating','soaring','gliding','hovering'],
+      float: ['fly','levitate','hover','drift','soar'],
+      floating: ['flying','levitating','hovering','drifting','soaring'],
+      chase: ['chased','chasing','run','running','escape','flee','fleeing','pursued','pursuit'],
+      chased: ['chase','chasing','running','escape','flee','pursued'],
+      run: ['chase','chased','flee','escape','running'],
+      fall: ['falling','dropped','drop','sink','sinking','plunge'],
+      falling: ['fall','dropped','sink','sinking','plunge'],
+      drown: ['drowning','underwater','submerged','sink','sinking'],
+      water: ['ocean','sea','river','lake','pool','flood','wave','waves','underwater','swimming'],
+      ocean: ['water','sea','waves','shore','beach','deep','underwater'],
+      house: ['home','building','room','apartment','structure'],
+      home: ['house','building','room','apartment'],
+      baby: ['infant','child','newborn','toddler'],
+      dead: ['death','died','dying','deceased','ghost','spirit'],
+      death: ['dead','died','dying','deceased','killed'],
+      monster: ['creature','beast','demon','entity','shadow figure','dark figure'],
+      creature: ['monster','beast','animal','entity','being'],
+      school: ['classroom','teacher','class','campus','university','college'],
+      car: ['vehicle','driving','drive','rode','road'],
+      plane: ['airplane','flight','flying','aircraft','airport'],
+      snake: ['serpent','reptile'],
+      door: ['doorway','entrance','portal','gate','threshold'],
+      portal: ['door','doorway','gate','threshold','entrance'],
+    };
+    function _wordMatch(text, term) {
+      return new RegExp('\\b' + term.replace(/[.*+?^${}()|[\]\\]/g,'\\$&') + '\\b','i').test(text||'');
+    }
+    const _searchTerms = q ? (function() {
+      const base = [q];
+      const syns = _DREAM_SYNONYMS[q.toLowerCase()] || [];
+      return base.concat(syns);
+    })() : [];
+    const mq = !q || (function() {
+      // Title + body: word-boundary match on base term AND synonyms
+      if (_searchTerms.some(function(t){ return _wordMatch(d.title,t)||_wordMatch(d.body,t); })) return true;
+      // Prose fields (claude reading, interp, ctx, moon): substring on base term only
+      if ((d.claude||'').toLowerCase().includes(q)||(d.ctx||'').toLowerCase().includes(q)||(d.interp||'').toLowerCase().includes(q)||(d.moon||'').toLowerCase().includes(q)) return true;
+      // Categories: substring
+      if (d.cats.some(function(c){return c.toLowerCase().includes(q);})) return true;
+      // People: resolve ID to name, word-boundary
+      if (d.people.some(function(p){const person=PEOPLE.find(function(x){return x.id===p;});return _wordMatch((person?person.name:p),q);})) return true;
+      // Linked dream place names: word-boundary
+      if (typeof getDreamPlaces==='function'&&getDreamPlaces().some(function(pl){return (pl.dreamIds||[]).some(function(did){return String(did)===String(d.id);})&&_wordMatch(pl.name,q);})) return true;
+      return false;
+    })();
     const mviv = (d.viv||1) >= vivMin;
     const mc=activeFilter==='all'||d.cats.includes(activeFilter);
     // Notable filter
