@@ -9238,35 +9238,48 @@ async function generateArc() {
   const ctx = buildFullArchiveContext({ maxDreams: 128, maxSpirit: 80, bodyLen: 1000 });
   const today = new Date().toLocaleDateString('en-US', {weekday:'long', year:'numeric', month:'long', day:'numeric'});
 
-  const prompt = `You are Tiff's spiritual archivist and witness. You have access to her complete Golden Thread archive — every dream, every working, every signal, every prophecy, every Within group call, every meditation, every thread of practice over the last four years. Write a living portrait of who she is and who she is becoming.
+  // Build compact title index for grounding the Arc
+  const _arcDreams = (typeof dreams !== 'undefined') ? dreams : [];
+  const _dreamTitleIndex = _arcDreams.slice().sort((a,b)=>(b.date||'').localeCompare(a.date||'')).map(d=>'['+d.date+'] '+d.title).join('\n');
+
+  const prompt = `You are Tiff's spiritual archivist and witness. Write a living portrait of who she is and who she is becoming based strictly on her archive data below.
+
+CRITICAL ACCURACY RULE: Only reference specific dreams, events, entries, or names that appear explicitly in the data provided. Do not invent thread names, dream titles, or references that are not in the data. If you want to name a specific dream, use its exact title from the DREAM INDEX. If uncertain whether something exists, speak in general terms about patterns and themes rather than inventing specifics.
 
 TODAY: ${today}
 CHART: ${ctx.chartSummary}
 
-DREAM ARCHIVE (${ctx.dreamCount} dreams):
-${ctx.dreamDigest.slice(0,2000)}
+COMPLETE DREAM INDEX — ${ctx.dreamCount} dreams, most recent first (only use titles from this list):
+${_dreamTitleIndex.slice(0,3500)}
 
-PRACTICE:
-${ctx.spiritDigest.slice(0,1000)}
+DREAM PATTERNS & SYMBOLS:
+${ctx.dreamDigest.slice(0,2500)}
+
+PRACTICE & WORKINGS:
+${ctx.spiritDigest.slice(0,1200)}
 
 WITHIN GROUP WORK:
-${ctx.withinDigest.slice(0,800)}
+${ctx.withinDigest.slice(0,1000)}
 
-PROPHECY & THREADS:
-${ctx.prophecyDigest.slice(0,400)}
-${ctx.threadDigest.slice(0,400)}
+PROPHECY, THREADS & SIGNALS:
+${ctx.prophecyDigest.slice(0,600)}
+${ctx.threadDigest.slice(0,500)}
 
 ANCESTORS & PEOPLE:
-${ctx.ancestorDigest.slice(0,300)}
+${ctx.ancestorDigest.slice(0,400)}
 
-Write a living document — not a summary, not a report. A portrait. It should:
-1. Open with who she is at her core — her nature, her gifts, her way of moving through the world
-2. Name the arc of her journey — where she began and what she has been moving through
-3. Speak to what the archive reveals about her growth and transformation over time
-4. Name what appears to be emerging or opening right now
-5. Close with something true about where she is headed
+DREAM PLACES:
+${ctx.dreamPlacesDigest ? ctx.dreamPlacesDigest.slice(0,500) : ''}
 
-Write in second person (you). Lyrical, specific, grounded in the actual data. 5-7 paragraphs. This is a mirror, not a flattery. Address her as Tiff.`;
+Write a living document — a portrait, not a summary. 5-7 paragraphs in second person, addressing her as Tiff.
+1. Who she is at her core — nature, gifts, way of moving through the world
+2. The arc of her journey — where she began, what she has moved through
+3. What the archive reveals about her growth and transformation
+4. What appears to be emerging or opening right now
+5. Something true about where she is headed
+
+Grounded and specific where the data is rich — use real dream titles, real events, real names from the archive above. Where the data is thin, speak in themes and patterns rather than inventing. This is a mirror, not a flattery.`;
+
 
   try {
     const data = await claudeAPI(apiKey, { model:'claude-sonnet-4-6', max_tokens:2000, messages:[{role:'user', content:prompt}] });
@@ -9565,6 +9578,7 @@ function openDeityModal(deityId) {
   wrap.innerHTML = `
     <div style="background:#1a1820;border:1px solid rgba(201,185,154,.2);padding:24px;max-width:640px;width:100%;margin-top:16px;">
       <div style="font-family:'Space Mono',monospace;font-size:.52rem;letter-spacing:.1em;text-transform:uppercase;color:var(--moon);margin-bottom:18px;">✦ ${d?'Edit':'New'} Deity</div>
+      ${!d ? `<div style="margin-bottom:18px;padding:12px 14px;background:rgba(201,168,76,.05);border:1px solid rgba(201,168,76,.18);"><div style="font-family:Space Mono,monospace;font-size:.48rem;letter-spacing:.08em;text-transform:uppercase;color:rgba(201,168,76,.6);margin-bottom:8px;">✦ Fill with AI</div><div style="display:flex;gap:8px;align-items:center;"><input id="dty-ai-name" type="text" placeholder="Enter deity name…" style="flex:1;background:rgba(255,255,255,.04);border:1px solid rgba(201,185,154,.2);color:var(--parchment);font-family:Cormorant Garamond,serif;font-size:.95rem;padding:7px 10px;outline:none;"><button onclick="fillDeityWithAI()" id="dty-ai-btn" style="font-family:Space Mono,monospace;font-size:.5rem;letter-spacing:.08em;padding:7px 14px;border:1px solid rgba(201,168,76,.4);background:transparent;color:rgba(201,168,76,.8);cursor:pointer;white-space:nowrap;">✦ Fill</button></div><div id="dty-ai-status" style="font-family:Space Mono,monospace;font-size:.48rem;color:rgba(201,185,154,.35);margin-top:6px;min-height:14px;"></div></div>` : ''}
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:13px;">
         <div><label style="font-family:'Space Mono',monospace;font-size:.5rem;letter-spacing:.08em;text-transform:uppercase;color:rgba(201,185,154,.5);display:block;margin-bottom:5px;">Name</label>${inp('dty-name',d?.name,'e.g. Hecate')}</div>
         <div><label style="font-family:'Space Mono',monospace;font-size:.5rem;letter-spacing:.08em;text-transform:uppercase;color:rgba(201,185,154,.5);display:block;margin-bottom:5px;">Culture</label><select id="dty-culture" style="width:100%;background:#1a1820;border:1px solid rgba(201,185,154,.22);color:var(--parchment);font-family:'Space Mono',monospace;font-size:.7rem;padding:8px 11px;outline:none;">${cultureOpts}</select></div>
@@ -9582,6 +9596,45 @@ function openDeityModal(deityId) {
       </div>
     </div>`;
   document.body.appendChild(wrap);
+}
+
+async function fillDeityWithAI() {
+  const apiKey = getApiKey();
+  if (!apiKey) { gtAlert('Add your API key in Settings first.'); return; }
+  const nameInput = document.getElementById('dty-ai-name');
+  const name = nameInput ? nameInput.value.trim() : '';
+  if (!name) { gtAlert('Enter a deity name first.'); return; }
+  const btn = document.getElementById('dty-ai-btn');
+  const status = document.getElementById('dty-ai-status');
+  if (btn) { btn.disabled = true; btn.textContent = '⟳ Looking up…'; }
+  if (status) status.textContent = 'Researching ' + name + '…';
+  const prompt = 'You are a comprehensive mythology and spiritual practice reference. Provide detailed, accurate information about the deity "' + name + '".\n\nReturn a JSON object with these exact fields (no markdown, no preamble):\n{\n  "name": "canonical name",\n  "culture": "one of: Greek, Egyptian, Norse, Celtic (Irish), Celtic (Welsh), Celtic, Hindu, Yoruba / Ifá, Japanese / Shinto, Slavic, Sumerian, Pagan / Wiccan, Other",\n  "domains": ["array", "of", "domains"],\n  "symbols": ["array", "of", "symbols"],\n  "description": "2-4 sentence description of who they are and what they govern — their essence, their myth, their role",\n  "howToWork": "3-5 sentences on how to work with this deity — timing, approach, rituals, what they respond to",\n  "offerings": ["array", "of", "traditional", "offerings"],\n  "notes": "1-2 sentences of practical notes for a modern spiritual practitioner — what this deity is especially good for, any cautions"\n}\n\nBe specific and accurate. If this is an obscure or regional deity, note the tradition clearly.';
+  try {
+    const data = await claudeAPI(apiKey, { model:'claude-sonnet-4-6', max_tokens:900, messages:[{role:'user',content:prompt}] });
+    const raw = data.content?.find(c=>c.type==='text')?.text||'';
+    let result;
+    try { result = JSON.parse(raw.replace(/```json|```/g,'').trim()); }
+    catch(e) { throw new Error('Could not parse AI response.'); }
+    // Fill the form fields
+    const set = (id, val) => { const el = document.getElementById(id); if (el) el.value = val||''; };
+    set('dty-name', result.name || name);
+    if (result.culture) {
+      const sel = document.getElementById('dty-culture');
+      if (sel) { for (let i=0; i<sel.options.length; i++) { if (sel.options[i].value === result.culture) { sel.selectedIndex = i; break; } } }
+    }
+    set('dty-domains', Array.isArray(result.domains) ? result.domains.join(', ') : result.domains||'');
+    set('dty-symbols', Array.isArray(result.symbols) ? result.symbols.join(', ') : result.symbols||'');
+    set('dty-desc', result.description||'');
+    set('dty-how', result.howToWork||'');
+    set('dty-offerings', Array.isArray(result.offerings) ? result.offerings.join(', ') : result.offerings||'');
+    set('dty-notes', result.notes||'');
+    if (status) status.textContent = '✓ Filled — review and edit before saving.';
+    if (status) status.style.color = 'rgba(80,160,100,.8)';
+  } catch(e) {
+    if (status) status.textContent = 'Error: ' + e.message;
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = '✦ Fill'; }
+  }
 }
 
 function saveDeity(existingId) {
@@ -15914,9 +15967,11 @@ function getNextFullMoon(newMoonDateStr) {
 }
 
 function getCycleLabel(newMoonDateStr) {
-  const astro = getAstroForDate(newMoonDateStr);
   const d = new Date(newMoonDateStr + 'T12:00:00');
   const month = d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+  const named = (typeof getNewMoonName === 'function') ? getNewMoonName(newMoonDateStr) : null;
+  if (named) return month + ' \u00b7 ' + named.name;
+  const astro = getAstroForDate(newMoonDateStr);
   return month + ' \u00b7 New Moon in ' + astro.moonSign;
 }
 
@@ -16009,7 +16064,7 @@ function renderMoonIntentions(container) {
     + '<div style="font-size:.85rem;color:rgba(201,185,154,.5);font-family:\'Space Mono\',monospace;">' + astroNow.summary + '</div></div>'
     + '</div>'
     + '<div style="margin-bottom:36px;padding:24px;background:rgba(107,79,138,.06);border:1px solid rgba(107,79,138,.2);">'
-    + '<div style="font-family:\'Space Mono\',monospace;font-size:.52rem;letter-spacing:.12em;text-transform:uppercase;color:rgba(155,107,171,.6);margin-bottom:4px;">Current Cycle</div>'    + (getNewMoonName(currentNewMoon) ? '<div style="font-size:1.5rem;margin-bottom:4px;">' + getNewMoonName(currentNewMoon).emoji + ' <span style="font-size:1.1rem;font-weight:300;font-style:italic;color:var(--parchment);">New ' + getNewMoonName(currentNewMoon).name + '</span></div>' : '')    + '<div style="font-size:.9rem;font-weight:300;font-style:italic;margin-bottom:18px;color:rgba(240,235,224,.55);">' + getCycleLabel(currentNewMoon) + '</div>'
+    + '<div style="font-family:\'Space Mono\',monospace;font-size:.52rem;letter-spacing:.12em;text-transform:uppercase;color:rgba(155,107,171,.6);margin-bottom:4px;">Current Cycle</div>'    + (getNewMoonName(currentNewMoon) ? '<div style="font-size:1.5rem;margin-bottom:4px;">' + getNewMoonName(currentNewMoon).emoji + ' <span style="font-size:1.1rem;font-weight:300;font-style:italic;color:var(--parchment);"> ' + getNewMoonName(currentNewMoon).name + '</span></div>' : '')    + '<div style="font-size:.9rem;font-weight:300;font-style:italic;margin-bottom:18px;color:rgba(240,235,224,.55);">' + (function(){ var _nm=getNewMoonName(currentNewMoon); if(_nm){ var _d=new Date(currentNewMoon+'T12:00:00'); var _a=getAstroForDate(currentNewMoon); return _d.toLocaleDateString('en-US',{month:'long',year:'numeric'})+' · New Moon in '+_a.moonSign; } return getCycleLabel(currentNewMoon); })() + '</div>'
     + '<div style="display:flex;gap:14px;font-family:\'Space Mono\',monospace;font-size:.54rem;color:rgba(201,185,154,.4);margin-bottom:20px;flex-wrap:wrap;">'
     + '<span>&#x1F311; New ' + nmFmt + '</span><span style="color:rgba(201,185,154,.2);">\u2192</span><span>&#x1F315; Full ' + fullFmt + '</span>'
     + (isNewMoonWindow ? '<span style="color:var(--gold);letter-spacing:.06em;">\u2736 New Moon window</span>' : '')
