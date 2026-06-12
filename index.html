@@ -4554,9 +4554,8 @@ function getCurrentNamedMoon() {
 
 // Returns the named moon for a new moon cycle (based on the full moon it leads to)
 function getNewMoonName(newMoonDateStr) {
-  const fullMoonStr = getNextFullMoon(newMoonDateStr);
-  const fullMoonMonth = new Date(fullMoonStr + 'T12:00:00').getMonth();
-  return NAMED_MOONS[fullMoonMonth] || null;
+  const newMoonMonth = new Date(newMoonDateStr + 'T12:00:00').getMonth();
+  return NAMED_MOONS[newMoonMonth] || null;
 }
 
 function getShadowMoonCacheKey() {
