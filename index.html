@@ -1395,6 +1395,7 @@ async function generateClaudeReading(dreamId, btnEl) {
     d.claude = text;
     var dreamIdx = dreams.findIndex(function(x){return x && x.id==dreamId;});
     if (dreamIdx > -1) { dreams[dreamIdx].claude = text; if (dreams[dreamIdx].userAdded) saveUserDreams(); }
+    saveDreamClaude(dreamId, text); // persist for pre-built dreams too
     if (el) {
       // Strip markdown headers and clean up before rendering
       var cleaned = text
@@ -1481,6 +1482,12 @@ function loadDreamSig(dreamId) {
 }
 function saveDreamSig(dreamId, val) {
   try { localStorage.setItem(lsKey('sig', dreamId), val); } catch(e) {}
+}
+function saveDreamClaude(dreamId, text) {
+  try { localStorage.setItem(lsKey('claude', dreamId), text); } catch(e) {}
+}
+function loadDreamClaude(dreamId) {
+  try { return localStorage.getItem(lsKey('claude', dreamId)) || ''; } catch(e) { return ''; }
 }
 function saveDreamFlags(dreamId, flags) {
   try { localStorage.setItem(lsKey('flags', dreamId), JSON.stringify(flags)); } catch(e) {}
@@ -10911,62 +10918,7 @@ function renderDreams(){
   const q=document.getElementById('search').value.toLowerCase();
   let filtered=dreams.filter(d=>{
     const vivMin = parseInt(document.getElementById('viv-min')?.value||1);
-    // Dream search: word-boundary on title+body (prevents 'craft'→'spellcraft', 'bus'→'business')
-    // Claude readings, interp, ctx, moon use substring (prose — partial match is fine)
-    // Synonym expansion: common dream vocabulary maps to related terms
-    const _DREAM_SYNONYMS = {
-      craft: ['spaceship','spacecraft','ufo','vessel','rocket','saucer','ship','pod'],
-      ship: ['spaceship','spacecraft','vessel','boat','craft','ark'],
-      spaceship: ['craft','spacecraft','ufo','vessel','rocket','saucer'],
-      spacecraft: ['craft','spaceship','ufo','vessel','rocket','saucer'],
-      ufo: ['craft','spaceship','spacecraft','saucer','vessel'],
-      fly: ['float','levitate','soar','glide','hover'],
-      flying: ['floating','levitating','soaring','gliding','hovering'],
-      float: ['fly','levitate','hover','drift','soar'],
-      floating: ['flying','levitating','hovering','drifting','soaring'],
-      chase: ['chased','chasing','run','running','escape','flee','fleeing','pursued','pursuit'],
-      chased: ['chase','chasing','running','escape','flee','pursued'],
-      run: ['chase','chased','flee','escape','running'],
-      fall: ['falling','dropped','drop','sink','sinking','plunge'],
-      falling: ['fall','dropped','sink','sinking','plunge'],
-      drown: ['drowning','underwater','submerged','sink','sinking'],
-      water: ['ocean','sea','river','lake','pool','flood','wave','waves','underwater','swimming'],
-      ocean: ['water','sea','waves','shore','beach','deep','underwater'],
-      house: ['home','building','room','apartment','structure'],
-      home: ['house','building','room','apartment'],
-      baby: ['infant','child','newborn','toddler'],
-      dead: ['death','died','dying','deceased','ghost','spirit'],
-      death: ['dead','died','dying','deceased','killed'],
-      monster: ['creature','beast','demon','entity','shadow figure','dark figure'],
-      creature: ['monster','beast','animal','entity','being'],
-      school: ['classroom','teacher','class','campus','university','college'],
-      car: ['vehicle','driving','drive','rode','road'],
-      plane: ['airplane','flight','flying','aircraft','airport'],
-      snake: ['serpent','reptile'],
-      door: ['doorway','entrance','portal','gate','threshold'],
-      portal: ['door','doorway','gate','threshold','entrance'],
-    };
-    function _wordMatch(text, term) {
-      return new RegExp('\\b' + term.replace(/[.*+?^${}()|[\]\\]/g,'\\$&') + '\\b','i').test(text||'');
-    }
-    const _searchTerms = q ? (function() {
-      const base = [q];
-      const syns = _DREAM_SYNONYMS[q.toLowerCase()] || [];
-      return base.concat(syns);
-    })() : [];
-    const mq = !q || (function() {
-      // Title + body: word-boundary match on base term AND synonyms
-      if (_searchTerms.some(function(t){ return _wordMatch(d.title,t)||_wordMatch(d.body,t); })) return true;
-      // Prose fields (claude reading, interp, ctx, moon): substring on base term only
-      if ((d.claude||'').toLowerCase().includes(q)||(d.ctx||'').toLowerCase().includes(q)||(d.interp||'').toLowerCase().includes(q)||(d.moon||'').toLowerCase().includes(q)) return true;
-      // Categories: substring
-      if (d.cats.some(function(c){return c.toLowerCase().includes(q);})) return true;
-      // People: resolve ID to name, word-boundary
-      if (d.people.some(function(p){const person=PEOPLE.find(function(x){return x.id===p;});return _wordMatch((person?person.name:p),q);})) return true;
-      // Linked dream place names: word-boundary
-      if (typeof getDreamPlaces==='function'&&getDreamPlaces().some(function(pl){return (pl.dreamIds||[]).some(function(did){return String(did)===String(d.id);})&&_wordMatch(pl.name,q);})) return true;
-      return false;
-    })();
+    const mq=!q||(d.title||'').toLowerCase().includes(q)||(d.body||'').toLowerCase().includes(q)||(d.moon||'').toLowerCase().includes(q)||(d.claude||'').toLowerCase().includes(q)||(d.ctx||'').toLowerCase().includes(q)||(d.interp||'').toLowerCase().includes(q)||d.cats.some(c=>c.toLowerCase().includes(q))||d.people.some(p=>p.toLowerCase().includes(q));
     const mviv = (d.viv||1) >= vivMin;
     const mc=activeFilter==='all'||d.cats.includes(activeFilter);
     // Notable filter
@@ -11059,6 +11011,10 @@ function openDream(d){
   const _safeBody = (d.body||'').replace(/`/g,"'");
   const _safeInterp = (d.interp||'').replace(/`/g,"'");
   const _safeCtx = (d.ctx||'').replace(/`/g,"'");
+  // Load persisted claude reading (covers pre-built dreams regenerated this session)
+  const _persistedClaude = loadDreamClaude(d.id);
+  if (_persistedClaude && !d.claude) d.claude = _persistedClaude;
+  const _safeClaude = (d.claude||'').replace(/`/g,"'");
   document.getElementById('view-inner').innerHTML=`
     <div class="m-date">${fmt(d.date)}${(()=>{const ds=getDreamSeason(d.date);return ds?` <span style="font-family:'Space Mono',monospace;font-size:.6rem;letter-spacing:.08em;color:${SEASON_GLYPHS[ds.phase.id].color};margin-left:8px;">${SEASON_GLYPHS[ds.phase.id].emoji} ${ds.phase.season} · Day ${ds.dayOfCycle}</span>`:'';})()}</div>
     <div class="m-title">${_safeTitle}</div>
@@ -11109,7 +11065,7 @@ function openDream(d){
       <div class="m-ctx" style="font-family:'Space Mono',monospace;font-size:.62rem;color:rgba(201,185,154,.6);line-height:1.7;margin-bottom:12px;">☽ ${d.astro.moon} (${d.astro.moonPct}%) · ☀️ ${d.astro.sun}${d.astro.retro&&d.astro.retro!=='None'?' · ℞ '+d.astro.retro:''}</div>
       ${d.astroReading ? `<div class="m-astro-reading">${d.astroReading.replace(/^#[^\n]*\n+/,'').replace(/\n/g,'<br>')}</div>` : '<div id="astro-reading-${d.id}" class="m-astro-reading" style="display:none;"></div>'}
     </div>` : ''}
-    ${d.claude ? `<div class="m-sec"><div class="m-lbl">✦ Reading</div><div class="m-claude">${(function(t){ return t.replace(/^#+\s+[^\n]*/gm,'').replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>').replace(/\*(.*?)\*/g,'<em>$1</em>').trim().split(/\n{2,}/).map(function(p){return '<p>'+p.replace(/\n/g,' ')+'</p>';}).join(''); })(d.claude)}</div></div>` : '<div id="claude-reading-${d.id}"></div>'}
+    ${_safeClaude ? `<div class="m-sec"><div class="m-lbl">✦ Reading</div><div class="m-claude">${(function(t){ return t.replace(/^#+\s+[^\n]*/gm,'').replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>').replace(/\*(.*?)\*/g,'<em>$1</em>').trim().split(/\n{2,}/).map(function(p){return '<p>'+p.replace(/\n/g,' ')+'</p>';}).join(''); })(_safeClaude)}</div></div>` : '<div id="claude-reading-${d.id}"></div>'}
   `;
   // Add thread section above edit button
   const threadSection = document.createElement('div');
@@ -11131,6 +11087,17 @@ function openDream(d){
     openEditDream(_editId);
   });
   editBtn.appendChild(editDreamBtn);
+  // Scan with AI button
+  const scanSavedBtn = document.createElement('button');
+  scanSavedBtn.className = 'astro-gen-btn';
+  scanSavedBtn.style.cssText = 'flex:1;justify-content:center;';
+  scanSavedBtn.innerHTML = '<span>✦</span> Scan with AI';
+  scanSavedBtn.id = 'scan-saved-btn-' + d.id;
+  scanSavedBtn.addEventListener('click', function(e) {
+    e.stopPropagation();
+    scanSavedDream(d.id, scanSavedBtn);
+  });
+  editBtn.appendChild(scanSavedBtn);
   document.getElementById('view-inner').appendChild(editBtn);
   renderLinksSection('dream:'+String(d.id), document.getElementById('view-inner'));
 
@@ -11390,6 +11357,96 @@ function openEditDream(dreamId) {
   pplF.appendChild(customPplRow);
   inner.appendChild(pplF);
 
+  // Dream Place picker
+  var placeF = document.createElement('div');
+  placeF.className = 'form-field';
+  placeF.style.marginTop = '6px';
+  var placeLbl = document.createElement('label');
+  placeLbl.style.cssText = 'display:flex;justify-content:space-between;align-items:center;';
+  var placeLblTxt = document.createElement('span');
+  placeLblTxt.textContent = 'Dream Place';
+  var placeToggleBtn = document.createElement('button');
+  placeToggleBtn.type = 'button';
+  placeToggleBtn.id = 'ed-place-toggle-btn';
+  placeToggleBtn.textContent = '◈ Pick Place';
+  placeToggleBtn.style.cssText = "font-family:Space Mono,monospace;font-size:.5rem;letter-spacing:.07em;padding:4px 10px;border:1px solid rgba(58,107,107,.35);background:rgba(58,107,107,.08);color:rgba(80,160,160,.75);cursor:pointer;";
+  placeLbl.appendChild(placeLblTxt);
+  placeLbl.appendChild(placeToggleBtn);
+  placeF.appendChild(placeLbl);
+
+  var edPlaceSel = document.createElement('div');
+  edPlaceSel.id = 'ed-place-selected';
+  edPlaceSel.style.cssText = 'min-height:28px;margin-bottom:4px;';
+  var linkedPlacesNow = (typeof getDreamPlaces==='function') ? getDreamPlaces().filter(function(pl){return (pl.dreamIds||[]).some(function(did){return String(did)===String(dreamId);});}) : [];
+  if (linkedPlacesNow.length) {
+    var col0 = (typeof DP_NATURE_COLORS!=='undefined' && linkedPlacesNow[0] && DP_NATURE_COLORS[linkedPlacesNow[0].nature]) || 'var(--teal)';
+    edPlaceSel.innerHTML = '<span style="font-family:Space Mono,monospace;font-size:.52rem;padding:3px 10px;border:1px solid '+col0+';color:'+col0+';display:inline-block;">◈ '+linkedPlacesNow[0].name+'</span>';
+  }
+  placeF.appendChild(edPlaceSel);
+
+  var edPlacePicker = document.createElement('div');
+  edPlacePicker.id = 'ed-place-picker';
+  edPlacePicker.style.cssText = 'display:none;max-height:200px;overflow-y:auto;padding:6px 0;';
+  var edPlaceChips = document.createElement('div');
+  edPlaceChips.id = 'ed-place-chips';
+  edPlaceChips.style.cssText = 'display:flex;flex-wrap:wrap;gap:6px;';
+  var allPlacesForEdit = (typeof getDreamPlaces==='function') ? getDreamPlaces() : [];
+  var currentLinkedId = linkedPlacesNow.length ? linkedPlacesNow[0].id : '';
+  var edPlaceIdHolder = document.createElement('input');
+  edPlaceIdHolder.type = 'hidden';
+  edPlaceIdHolder.id = 'ed-place-id';
+  edPlaceIdHolder.value = currentLinkedId;
+  allPlacesForEdit.forEach(function(pl) {
+    var pchip = document.createElement('span');
+    var isSelected = pl.id === currentLinkedId;
+    var pCol = (typeof DP_NATURE_COLORS!=='undefined' && DP_NATURE_COLORS[pl.nature]) || 'var(--teal)';
+    pchip.dataset.dpid = pl.id;
+    pchip.style.cssText = 'font-family:Space Mono,monospace;font-size:.52rem;padding:4px 10px;cursor:pointer;transition:all .2s;display:inline-block;margin:2px;border:1px solid '+(isSelected?pCol+';background:rgba(58,107,107,.15);color:'+pCol:'rgba(201,185,154,.18);background:transparent;color:rgba(201,185,154,.5)')+';';
+    pchip.textContent = pl.name;
+    pchip.onclick = function() {
+      edPlaceChips.querySelectorAll('[data-dpid]').forEach(function(c){c.style.borderColor='rgba(201,185,154,.18)';c.style.background='transparent';c.style.color='rgba(201,185,154,.5)';});
+      var wasSelected = edPlaceIdHolder.value === pl.id;
+      if (wasSelected) {
+        edPlaceIdHolder.value=''; edPlaceSel.innerHTML='';
+      } else {
+        pchip.style.borderColor=pCol; pchip.style.background='rgba(58,107,107,.15)'; pchip.style.color=pCol;
+        edPlaceIdHolder.value=pl.id;
+        edPlaceSel.innerHTML='<span style="font-family:Space Mono,monospace;font-size:.52rem;padding:3px 10px;border:1px solid '+pCol+';color:'+pCol+';display:inline-block;">◈ '+pl.name+'</span>';
+      }
+    };
+    edPlaceChips.appendChild(pchip);
+  });
+  var edPlaceNewRow = document.createElement('div');
+  edPlaceNewRow.style.cssText = 'margin-top:8px;display:flex;gap:6px;align-items:center;';
+  var edPlaceNewInput = document.createElement('input');
+  edPlaceNewInput.type='text'; edPlaceNewInput.placeholder='Name a new place…';
+  edPlaceNewInput.style.cssText="flex:1;background:rgba(255,255,255,.03);border:1px solid rgba(201,185,154,.15);color:var(--parchment);font-family:Cormorant Garamond,serif;font-size:.9rem;padding:5px 10px;outline:none;";
+  var edPlaceNewBtn = document.createElement('button');
+  edPlaceNewBtn.type='button'; edPlaceNewBtn.textContent='+ Add';
+  edPlaceNewBtn.style.cssText="font-family:Space Mono,monospace;font-size:.5rem;letter-spacing:.06em;padding:5px 10px;border:1px solid rgba(201,185,154,.2);background:transparent;color:rgba(201,185,154,.5);cursor:pointer;white-space:nowrap;";
+  edPlaceNewBtn.onclick = function() {
+    var nm=edPlaceNewInput.value.trim(); if(!nm) return;
+    var newId2='dp_'+Date.now();
+    var allPl=(typeof getDreamPlaces==='function')?getDreamPlaces():[];
+    allPl.push({id:newId2,name:nm,nature:'ambiguous',archetypes:[],feltQuality:'',navigationNotes:'',personalNotes:'',firstVisited:d.date||new Date().toISOString().slice(0,10),visitCount:1,dreamIds:[]});
+    if(typeof saveDreamPlaces==='function') saveDreamPlaces(allPl);
+    edPlaceNewInput.value='';
+    var newCol='var(--gold)';
+    var newChip=document.createElement('span');
+    newChip.dataset.dpid=newId2;
+    newChip.style.cssText='font-family:Space Mono,monospace;font-size:.52rem;padding:4px 10px;cursor:pointer;transition:all .2s;display:inline-block;margin:2px;border:1px solid '+newCol+';background:rgba(201,168,76,.12);color:'+newCol+';';
+    newChip.textContent=nm;
+    newChip.onclick=function(){edPlaceChips.querySelectorAll('[data-dpid]').forEach(function(c){c.style.borderColor='rgba(201,185,154,.18)';c.style.background='transparent';c.style.color='rgba(201,185,154,.5)';});var was=edPlaceIdHolder.value===newId2;if(was){edPlaceIdHolder.value='';edPlaceSel.innerHTML='';}else{newChip.style.borderColor=newCol;newChip.style.background='rgba(201,168,76,.12)';newChip.style.color=newCol;edPlaceIdHolder.value=newId2;edPlaceSel.innerHTML='<span style="font-family:Space Mono,monospace;font-size:.52rem;padding:3px 10px;border:1px solid '+newCol+';color:'+newCol+';display:inline-block;">◈ '+nm+'</span>';}};
+    edPlaceChips.appendChild(newChip);
+    edPlaceIdHolder.value=newId2;
+    edPlaceSel.innerHTML='<span style="font-family:Space Mono,monospace;font-size:.52rem;padding:3px 10px;border:1px solid '+newCol+';color:'+newCol+';display:inline-block;">◈ '+nm+'</span>';
+  };
+  edPlaceNewRow.appendChild(edPlaceNewInput); edPlaceNewRow.appendChild(edPlaceNewBtn);
+  edPlacePicker.appendChild(edPlaceChips); edPlacePicker.appendChild(edPlaceNewRow);
+  placeF.appendChild(edPlacePicker); placeF.appendChild(edPlaceIdHolder);
+  placeToggleBtn.onclick=function(){var isOpen=edPlacePicker.style.display!=='none';edPlacePicker.style.display=isOpen?'none':'block';placeToggleBtn.textContent=isOpen?'◈ Pick Place':'✕ Close';};
+  inner.appendChild(placeF);
+
   // Buttons
   var btnRow = document.createElement('div');
   btnRow.style.cssText = 'display:flex;gap:10px;margin-top:22px;';
@@ -11430,6 +11487,31 @@ function saveInlineEditDream(dreamId) {
 
   dreams[idx] = d;
   if (d.userAdded) saveUserDreams();
+
+  // Save dream place link
+  var edPlaceId = (document.getElementById('ed-place-id')||{}).value || '';
+  var allDp = (typeof getDreamPlaces==='function') ? getDreamPlaces() : [];
+  var placeChanged = false;
+  allDp.forEach(function(pl) {
+    var had = (pl.dreamIds||[]).some(function(did){return String(did)===String(dreamId);});
+    if (had && pl.id !== edPlaceId) {
+      pl.dreamIds = pl.dreamIds.filter(function(did){return String(did)!==String(dreamId);});
+      if (pl.visitCount > 1) pl.visitCount = Math.max(1, pl.visitCount - 1);
+      placeChanged = true;
+    }
+  });
+  if (edPlaceId) {
+    var dpIdx = allDp.findIndex(function(pl){return pl.id===edPlaceId;});
+    if (dpIdx > -1) {
+      var already = (allDp[dpIdx].dreamIds||[]).some(function(did){return String(did)===String(dreamId);});
+      if (!already) {
+        allDp[dpIdx].dreamIds = (allDp[dpIdx].dreamIds||[]).concat(String(dreamId));
+        allDp[dpIdx].visitCount = (allDp[dpIdx].visitCount||1) + 1;
+        placeChanged = true;
+      }
+    }
+  }
+  if (placeChanged && typeof saveDreamPlaces==='function') saveDreamPlaces(allDp);
 
   // Close modal and refresh
   document.getElementById('view-ov').classList.remove('open');
@@ -21274,6 +21356,204 @@ function scanAddNewPlace(encodedName, nature, btn) {
   if (btn) btn.closest('div').innerHTML = '<span style="font-family:\'Space Mono\',monospace;font-size:.52rem;color:var(--teal);">✓ '+name+' added and linked — saves with dream.</span>';
 }
 
+// ── Scan an already-saved dream ──────────────────────────────────────
+async function scanSavedDream(dreamId, btn) {
+  var apiKey = getApiKey();
+  if (!apiKey) { gtAlert('Add your Anthropic API key in ⚙ Settings first.'); return; }
+  var d = dreams.find(function(x){ return String(x.id) === String(dreamId); });
+  if (!d) { gtAlert('Dream not found.'); return; }
+
+  var dreamText = ((d.title||'') + ' ' + (d.body||'')).trim();
+  if (!dreamText) { gtAlert('This dream has no body text to scan.'); return; }
+
+  if (btn) { btn.disabled = true; btn.innerHTML = '<span>⟳</span> Scanning…'; }
+
+  // Create or reuse a result area in the modal
+  var resultArea = document.getElementById('scan-saved-result-' + dreamId);
+  if (!resultArea) {
+    resultArea = document.createElement('div');
+    resultArea.id = 'scan-saved-result-' + dreamId;
+    resultArea.style.cssText = 'margin-top:12px;padding:10px 14px;background:rgba(255,255,255,.025);border:1px solid rgba(201,185,154,.1);font-family:Space Mono,monospace;font-size:.52rem;color:rgba(201,185,154,.5);line-height:1.8;';
+    if (btn && btn.parentNode) btn.parentNode.insertAdjacentElement('afterend', resultArea);
+  }
+  resultArea.textContent = 'Scanning…';
+
+  var knownNames = PEOPLE.map(function(p){ return p.name + ' (id:' + p.id + ')'; }).join(', ');
+  var catList = CATS.map(function(c){ return c.id + ' = ' + c.lbl; }).join(', ');
+  var currentPeople = (d.people||[]).map(function(pid){ var p=PEOPLE.find(function(x){return x.id===pid;}); return p?p.name:pid; }).join(', ');
+  var currentCats = (d.cats||[]).join(', ');
+  var knownPlaces = (typeof getDreamPlaces==='function') ? getDreamPlaces() : [];
+  var placeList = knownPlaces.length
+    ? knownPlaces.map(function(p,i){ return i+': id="'+p.id+'" name="'+p.name+'" nature="'+p.nature+'" feltQuality="'+(p.feltQuality||'').slice(0,80)+'"'; }).join('\n')
+    : 'None yet.';
+  var alreadyLinkedPlace = knownPlaces.filter(function(pl){ return (pl.dreamIds||[]).some(function(did){return String(did)===String(dreamId);}); });
+
+  var prompt = 'You are scanning a saved dream entry to identify beings, categories, and dream places.\n\n'
+    + 'DREAM TITLE: ' + (d.title||'') + '\n'
+    + 'DREAM DATE: ' + (d.date||'') + '\n'
+    + 'DREAM TEXT:\n' + dreamText.slice(0, 1500) + '\n\n'
+    + 'ALREADY TAGGED — people: ' + (currentPeople||'none') + ' | categories: ' + (currentCats||'none') + '\n'
+    + (alreadyLinkedPlace.length ? 'ALREADY LINKED PLACE: ' + alreadyLinkedPlace[0].name + '\n' : '') + '\n'
+    + 'KNOWN BEINGS IN ARCHIVE:\n' + knownNames + '\n\n'
+    + 'Return a JSON object with:\n'
+    + '1. "found": array of person IDs who clearly appear but are NOT already tagged\n'
+    + '2. "new": array of objects for beings not in the known list: { "name": string, "role": brief, "context": how they appear }\n'
+    + '3. "cats": array of category IDs that apply but are NOT already tagged\n'
+    + '4. "place": object or null — { "matchType": "existing"|"new", "matchId": id or null, "matchName": name, "confidence": high/medium/low, "reason": one sentence, "suggestedName": if new, "suggestedNature": locational/ambiguous/symbolic }. Null if no distinctive place or place already linked.\n\n'
+    + 'AVAILABLE CATEGORIES:\n' + catList + '\n\n'
+    + 'EXISTING DREAM PLACES:\n' + placeList + '\n\n'
+    + 'Return ONLY valid JSON, no preamble.';
+
+  try {
+    const data = await claudeAPI(apiKey, {model:'claude-sonnet-4-6', max_tokens:700, messages:[{role:'user',content:prompt}]});
+    var raw = (data.content && data.content[0] && data.content[0].text) ? data.content[0].text.replace(/```json|```/g,'').trim() : '{}';
+    var result = JSON.parse(raw);
+
+    var found   = Array.isArray(result.found) ? result.found : [];
+    var newBngs = Array.isArray(result.new)   ? result.new.filter(function(b){return b&&b.name;}) : [];
+    var newCats = Array.isArray(result.cats)  ? result.cats : [];
+    var placeResult = result.place || null;
+    var msgs = [];
+
+    // Apply found people directly to the dream
+    if (found.length) {
+      found.forEach(function(pid) {
+        if (!(d.people||[]).includes(pid)) {
+          d.people = (d.people||[]).concat(pid);
+        }
+      });
+      msgs.push('Added: ' + found.map(function(id){ var p=PEOPLE.find(function(x){return x.id===id;}); return p?p.name:id; }).join(', '));
+    }
+
+    // Apply new categories directly
+    if (newCats.length) {
+      newCats.forEach(function(cid) {
+        if (!(d.cats||[]).includes(cid)) d.cats = (d.cats||[]).concat(cid);
+      });
+      msgs.push('Categories: ' + newCats.map(function(id){ var c=CATS.find(function(x){return x.id===id;}); return c?c.lbl:id; }).join(', '));
+    }
+
+    if (found.length || newCats.length) {
+      if (d.userAdded) saveUserDreams();
+    }
+
+    // Offer new beings as addable chips
+    if (newBngs.length) {
+      msgs.push('New: ' + newBngs.map(function(b){return b.name;}).join(', '));
+    }
+
+    // Place result — show confirm/add UI
+    var pCol = 'rgba(58,107,107,.85)';
+    if (placeResult && placeResult.matchType) {
+      var placeHtml = '';
+      if (placeResult.matchType === 'existing' && placeResult.matchId) {
+        var mp = knownPlaces.find(function(p){return p.id===placeResult.matchId;});
+        var pName = (mp&&mp.name) || placeResult.matchName || placeResult.matchId;
+        placeHtml = '<div style="margin-top:8px;padding:8px 10px;background:rgba(58,107,107,.08);border:1px solid rgba(58,107,107,.25);border-left:2px solid '+pCol+';">'
+          + '<span style="font-size:.48rem;color:rgba(58,107,107,.7);letter-spacing:.07em;">◈ PLACE MATCH · '+(placeResult.confidence||'')+'</span><br>'
+          + '<span style="font-size:.9rem;">'+pName+'</span>'
+          + '<span style="font-family:Cormorant Garamond,serif;font-size:.82rem;color:rgba(240,235,224,.5);font-style:italic;display:block;margin:2px 0 6px;">'+(placeResult.reason||'')+'</span>'
+          + '<button onclick="linkPlaceToSavedDream(\''+dreamId+'\',\''+placeResult.matchId+'\',this)" style="font-size:.48rem;padding:3px 9px;border:1px solid '+pCol+';color:'+pCol+';background:transparent;cursor:pointer;margin-right:6px;">✓ Link Place</button>'
+          + '<button onclick="this.closest(\'[id^=scan-saved-result]\').querySelector(\'.place-scan-result\').remove()" style="font-size:.48rem;padding:3px 9px;border:1px solid rgba(201,185,154,.15);color:rgba(201,185,154,.35);background:transparent;cursor:pointer;">Skip</button>'
+          + '</div>';
+        msgs.push('Place: '+pName);
+      } else if (placeResult.matchType === 'new' && placeResult.suggestedName) {
+        placeHtml = '<div style="margin-top:8px;padding:8px 10px;background:rgba(58,107,107,.06);border:1px solid rgba(58,107,107,.2);border-left:2px solid rgba(58,107,107,.5);">'
+          + '<span style="font-size:.48rem;color:rgba(58,107,107,.65);letter-spacing:.07em;">◈ NEW PLACE SUGGESTED</span><br>'
+          + '<span style="font-size:.9rem;">'+placeResult.suggestedName+'</span>'
+          + '<span style="font-family:Cormorant Garamond,serif;font-size:.82rem;color:rgba(240,235,224,.5);font-style:italic;display:block;margin:2px 0 6px;">'+(placeResult.reason||'')+'</span>'
+          + '<button onclick="addAndLinkNewPlaceToSavedDream(\''+dreamId+'\',\''+encodeURIComponent(placeResult.suggestedName)+'\',\''+( placeResult.suggestedNature||'ambiguous')+'\',\''+( d.date||'')+'\',this)" style="font-size:.48rem;padding:3px 9px;border:1px solid '+pCol+';color:'+pCol+';background:transparent;cursor:pointer;margin-right:6px;">+ Add & Link</button>'
+          + '<button onclick="this.parentNode.remove()" style="font-size:.48rem;padding:3px 9px;border:1px solid rgba(201,185,154,.15);color:rgba(201,185,154,.35);background:transparent;cursor:pointer;">Skip</button>'
+          + '</div>';
+        msgs.push('New place: '+placeResult.suggestedName);
+      }
+      if (placeHtml) {
+        var placeDiv = document.createElement('div');
+        placeDiv.className = 'place-scan-result';
+        placeDiv.innerHTML = placeHtml;
+        resultArea.appendChild(placeDiv);
+      }
+    }
+
+    // New beings chips
+    if (newBngs.length) {
+      var bDiv = document.createElement('div');
+      bDiv.style.cssText = 'margin-top:8px;display:flex;flex-wrap:wrap;gap:6px;';
+      newBngs.forEach(function(b) {
+        var chip = document.createElement('span');
+        chip.style.cssText = 'font-size:.52rem;padding:3px 10px;border:1px dashed rgba(201,168,76,.5);background:rgba(201,168,76,.06);color:rgba(201,168,76,.8);cursor:pointer;';
+        chip.title = 'Add '+b.name+' to Beings archive and tag this dream';
+        chip.textContent = '+ '+b.name;
+        chip.onclick = function() {
+          addNewBeingFromScan(b.name, b.role, b.context);
+          var newPerson = PEOPLE[PEOPLE.length-1];
+          if (newPerson && !(d.people||[]).includes(newPerson.id)) {
+            d.people = (d.people||[]).concat(newPerson.id);
+            if (d.userAdded) saveUserDreams();
+          }
+          chip.style.borderStyle='solid'; chip.style.borderColor='rgba(155,107,171,.7)';
+          chip.style.background='rgba(107,79,138,.2)'; chip.style.color='rgba(200,160,220,.9)';
+          chip.textContent = b.name+' ✓'; chip.onclick=null;
+        };
+        bDiv.appendChild(chip);
+      });
+      resultArea.appendChild(bDiv);
+    }
+
+    var summaryText = msgs.length ? msgs.join(' · ') : 'Nothing new to add.';
+    // Prepend summary text (place/being divs follow)
+    resultArea.insertAdjacentHTML('afterbegin', '<div>'+summaryText+'</div>');
+
+    // Refresh the people chips in the card view
+    var beingsDisplay = document.getElementById('dream-beings-display-' + dreamId);
+    if (beingsDisplay) {
+      var updatedPpl = (d.people||[]).map(function(pid){ var p=PEOPLE.find(function(x){return x.id===pid;}); return p?'<span class="pchip" onclick="showPerson(\''+pid+'\')">'+p.name+'</span>':''; }).join('');
+      beingsDisplay.innerHTML = updatedPpl || '<span style="font-family:Space Mono,monospace;font-size:.55rem;color:rgba(201,185,154,.3);">None tagged yet</span>';
+    }
+
+  } catch(e) {
+    resultArea.textContent = 'Scan error: ' + e.message;
+  } finally {
+    if (btn) { btn.disabled = false; btn.innerHTML = '<span>✦</span> Scan with AI'; }
+  }
+}
+
+function linkPlaceToSavedDream(dreamId, placeId, btn) {
+  var allDp = (typeof getDreamPlaces==='function') ? getDreamPlaces() : [];
+  var idx = allDp.findIndex(function(p){return p.id===placeId;});
+  if (idx > -1) {
+    var already = (allDp[idx].dreamIds||[]).some(function(did){return String(did)===String(dreamId);});
+    if (!already) {
+      allDp[idx].dreamIds = (allDp[idx].dreamIds||[]).concat(String(dreamId));
+      allDp[idx].visitCount = (allDp[idx].visitCount||1) + 1;
+      if (typeof saveDreamPlaces==='function') saveDreamPlaces(allDp);
+    }
+  }
+  // Refresh place display in card
+  var placeSection = document.querySelector('#view-inner .m-sec');
+  // Simpler: just show a confirmation
+  if (btn) {
+    var pName = (allDp[idx]&&allDp[idx].name) || placeId;
+    btn.parentNode.innerHTML = '<span style="color:var(--teal);font-size:.52rem;">✓ '+pName+' linked to this dream.</span>';
+  }
+  // Reopen the dream to refresh the card view
+  var d = dreams.find(function(x){return String(x.id)===String(dreamId);});
+  if (d) setTimeout(function(){ openDream(d); }, 800);
+}
+
+function addAndLinkNewPlaceToSavedDream(dreamId, encodedName, nature, date, btn) {
+  var name = decodeURIComponent(encodedName);
+  var newId = 'dp_' + Date.now();
+  var allDp = (typeof getDreamPlaces==='function') ? getDreamPlaces() : [];
+  allDp.push({id:newId, name:name, nature:nature||'ambiguous', archetypes:[], feltQuality:'',
+    navigationNotes:'', personalNotes:'', firstVisited:date||new Date().toISOString().slice(0,10),
+    visitCount:1, dreamIds:[String(dreamId)]});
+  if (typeof saveDreamPlaces==='function') saveDreamPlaces(allDp);
+  if (btn) btn.parentNode.innerHTML = '<span style="color:var(--teal);font-size:.52rem;">✓ '+name+' added and linked.</span>';
+  var d = dreams.find(function(x){return String(x.id)===String(dreamId);});
+  if (d) setTimeout(function(){ openDream(d); }, 800);
+}
+
 // ── Pattern alert replay ──────────────────────────────────────────────
 function replayLastPatternAlert() {
   if (!window._lastPatternAlerts || !window._lastPatternAlerts.length) {
@@ -21380,6 +21660,8 @@ function openEditDreamBeings(dreamId) {
 
   panel.appendChild(btns);
   inner.appendChild(panel);
+  // Scroll panel into view — on mobile the modal is long and panel appears below fold
+  setTimeout(function() { panel.scrollIntoView({behavior:'smooth', block:'nearest'}); }, 50);
   } catch(err) { gtAlert('Error opening beings editor: ' + err.message); }
 }
 
@@ -22481,9 +22763,18 @@ function pdAutocomplete(inputId, fieldsPrefix) {
   if (existing) existing.remove();
   if (!val || val.length < 1) return;
 
-  var people = getPeopleDirectory().filter(function(p){
+  // Search both the mirror people directory AND the main PEOPLE dream archive
+  var dirPeople = getPeopleDirectory().filter(function(p){
     return (p.name||'').toLowerCase().indexOf(val) !== -1;
   });
+  var archivePeople = (typeof PEOPLE !== 'undefined' ? PEOPLE : [])
+    .filter(function(p){
+      return p && p.name && p.name.toLowerCase().indexOf(val) !== -1
+        && !dirPeople.some(function(d){ return d.name.toLowerCase() === p.name.toLowerCase(); });
+    })
+    .map(function(p){ return {name: p.name, pronouns: '', dob: '', birthTime: '', birthLocation: '', _fromArchive: true}; });
+
+  var people = dirPeople.concat(archivePeople);
   if (!people.length) return;
 
   var dropdown = document.createElement('div');
@@ -22492,7 +22783,9 @@ function pdAutocomplete(inputId, fieldsPrefix) {
   people.forEach(function(p) {
     var item = document.createElement('div');
     item.style.cssText = 'padding:9px 14px;font-family:Cormorant Garamond,serif;font-size:.95rem;color:rgba(240,235,224,.8);cursor:pointer;border-bottom:1px solid rgba(201,185,154,.06);';
-    item.innerHTML = p.name + (p.pronouns?'<span style="font-family:Space Mono,monospace;font-size:.42rem;color:rgba(201,185,154,.35);margin-left:8px;">'+p.pronouns+'</span>':'');
+    item.innerHTML = p.name
+      + (p.pronouns ? '<span style="font-family:Space Mono,monospace;font-size:.42rem;color:rgba(201,185,154,.35);margin-left:8px;">'+p.pronouns+'</span>' : '')
+      + (p._fromArchive ? '<span style="font-family:Space Mono,monospace;font-size:.4rem;color:rgba(201,185,154,.25);margin-left:8px;">archive</span>' : '');
     item.onmousedown = function(e) {
       e.preventDefault();
       pdFillFields(p, fieldsPrefix);
