@@ -23435,6 +23435,7 @@ function mirrorAction(action, cardId) {
   if (action === 'refresh') mirrorRefreshReflections(name);
   else if (action === 'rising') mirrorEditField(name, 'rising');
   else if (action === 'hdType') mirrorEditField(name, 'hdType');
+  else if (action === 'moonSign') mirrorEditField(name, 'moonSign');
   else if (action === 'delete') mirrorDelete(name);
 }
 
@@ -23463,6 +23464,7 @@ function mirrorPersonCard(person, expanded) {
     +'<div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap;">'
     +'<button onclick="mirrorAction(\'refresh\',\''+id+'\')" style="font-family:Space Mono,monospace;font-size:.48rem;letter-spacing:.08em;padding:6px 12px;background:transparent;border:1px solid rgba(107,79,138,.25);color:rgba(155,107,171,.6);cursor:pointer;">&#8635; Refresh</button>'
     +'<button onclick="mirrorAction(\'rising\',\''+id+'\')" style="font-family:Space Mono,monospace;font-size:.48rem;letter-spacing:.08em;padding:6px 12px;background:transparent;border:1px solid rgba(201,185,154,.15);color:rgba(201,185,154,.4);cursor:pointer;">&#9998; Rising</button>'
+    +'<button onclick="mirrorAction(\'moonSign\',\''+id+'\')" style="font-family:Space Mono,monospace;font-size:.48rem;letter-spacing:.08em;padding:6px 12px;background:transparent;border:1px solid rgba(201,185,154,.15);color:rgba(201,185,154,.4);cursor:pointer;">&#9998; Moon</button>'
     +'<button onclick="mirrorAction(\'hdType\',\''+id+'\')" style="font-family:Space Mono,monospace;font-size:.48rem;letter-spacing:.08em;padding:6px 12px;background:transparent;border:1px solid rgba(201,185,154,.15);color:rgba(201,185,154,.4);cursor:pointer;">&#9998; HD</button>'
     +'<button onclick="mirrorAction(\'delete\',\''+id+'\')" style="font-family:Space Mono,monospace;font-size:.48rem;letter-spacing:.08em;padding:6px 12px;background:transparent;border:1px solid rgba(180,80,80,.2);color:rgba(180,100,100,.5);cursor:pointer;">&#10005; Remove</button>'
     +'</div></div></div>';
@@ -23472,10 +23474,17 @@ function mirrorEditField(name, field) {
   var people = getMirrorPeople();
   var person = people.find(function(p){ return p.name === name; });
   if (!person) return;
-  var labels = {rising:'Rising Sign', hdType:'HD Type'};
-  var val = prompt('Edit ' + (labels[field]||field) + ' for ' + name + ':', person[field]||'');
+  var labels = {rising:'Rising Sign', hdType:'HD Type', moonSign:'Moon Sign (correct if off)'};
+  var currentVal = field === 'moonSign' ? (person.moonSignOverride || person.moonSign || '') : (person[field]||'');
+  var val = prompt('Edit ' + (labels[field]||field) + ' for ' + name + ':', currentVal);
   if (val === null) return;
-  person[field] = val.trim();
+  var trimmed = val.trim();
+  if (field === 'moonSign') {
+    person.moonSignOverride = trimmed;
+    person.moonSign = trimmed;
+  } else {
+    person[field] = trimmed;
+  }
   saveMirrorPeople(people);
   var id = 'mpc-' + name.replace(/\s+/g,'_');
   var gridEl = document.getElementById(id+'-grid');
@@ -23511,7 +23520,7 @@ function mirrorChartGrid(p) {
 
   var items = [
     {label:'Sun',          emoji:'\u2600', id:bid+'-sun',    value:p.sunSign||'\u2014',                                                     desc:sunDesc},
-    {label:'Moon',         emoji:'\ud83c\udf19',id:bid+'-moon',  value:(p.moonSign||'\u2014')+(p.hasBirthTime?'':' *'),                       desc:moonDesc},
+    {label:'Moon',         emoji:'\ud83c\udf19',id:bid+'-moon',  value:(p.moonSign||'\u2014')+(p.hasBirthTime?'':' *'),                       desc:moonDesc, editAction:'moonSign'},
     {label:'Rising',       emoji:'\u2191', id:bid+'-rising', value:p.rising||(p.hasBirthTime?'\u21bb Tap Refresh':'Needs birth time'),        desc:risingDesc, dim:!p.rising},
     {label:'Life Path',    emoji:'\u2736', id:bid+'-lp',     value:p.lifePath?(p.lifePath+(p.lpTitle?' \u00b7 '+p.lpTitle:'')):'—',           desc:lpDesc},
     {label:'Soul Card',    emoji:'\u25d1', id:bid+'-sc',     value:p.soulCard?p.soulCard.name:'\u2014',                                       desc:scDesc},
@@ -23530,12 +23539,12 @@ function mirrorChartGrid(p) {
         var oc = item.desc?' onclick="mirrorChartBoxExpand(this)" data-desc="'+esc(item.desc)+'"':'';
         var ind = item.desc?' <span style="opacity:.3;font-size:.8em;">\u25b8</span>':'';
         return '<div id="'+item.id+'"'+oc+' style="padding:10px 12px;background:rgba(255,255,255,.02);border:1px solid rgba(201,185,154,.08);'+d+c+'">'
-          +'<div style="font-family:Space Mono,monospace;font-size:.42rem;letter-spacing:.08em;text-transform:uppercase;color:rgba(201,185,154,.3);margin-bottom:3px;">'+item.emoji+' '+item.label+ind+'</div>'
+          +'<div style="font-family:Space Mono,monospace;font-size:.42rem;letter-spacing:.08em;text-transform:uppercase;color:rgba(201,185,154,.3);margin-bottom:3px;">'+item.emoji+' '+item.label+ind+(item.editAction?' <span onclick="event.stopPropagation();mirrorAction(\''+item.editAction+'\',\''+bid+'\');" style="cursor:pointer;opacity:.35;font-size:.7em;" title="Correct">&#9998;</span>':'')+'</div>'
           +'<div style="font-family:Cormorant Garamond,serif;font-size:.88rem;color:rgba(240,235,224,.8);">'+item.value+'</div>'
           +'</div>';
       }).join('')
     +'</div>'
-    +(!p.hasBirthTime?'<div style="font-family:Space Mono,monospace;font-size:.42rem;color:rgba(201,185,154,.25);margin-top:4px;">* Moon may vary near sign boundaries. Rising &amp; HD require birth time.</div>':'');
+    +(!p.hasBirthTime?'<div style="font-family:Space Mono,monospace;font-size:.42rem;color:rgba(201,185,154,.25);margin-top:4px;">* Moon may vary near sign boundaries — tap ✎ to correct. Rising &amp; HD require birth time.</div>':'');
 }
 
 function mirrorChartBoxExpand(el) {
