@@ -22858,7 +22858,8 @@ function pdDelete(cardId) {
 // ── AUTOCOMPLETE ─────────────────────────────────────────────
 function pdHandleNameInput(el) {
   var id = el.id;
-  if      (id === 'mirror--name')  pdAutocomplete(id, '');
+  if      (id === 'mirror-name')   pdAutocomplete(id, '');
+  else if (id === 'mirror--name')  pdAutocomplete(id, '');
   else if (id === 'mirror-a-name') pdAutocomplete(id, 'a');
   else if (id === 'mirror-b-name') pdAutocomplete(id, 'b');
 }
@@ -22916,7 +22917,7 @@ function pdAutocomplete(inputId, fieldsPrefix) {
 }
 
 function pdFillFields(person, prefix) {
-  var p = prefix ? 'mirror-'+prefix+'-' : 'mirror--';
+  var p = prefix ? 'mirror-'+prefix+'-' : 'mirror-';
   function set(suffix, val) { var el=document.getElementById(p+suffix); if(el) el.value=val||''; }
   set('name',     person.name||'');
   set('pronouns', person.pronouns||'');
