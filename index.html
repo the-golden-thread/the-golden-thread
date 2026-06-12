@@ -21218,7 +21218,7 @@ async function scanDreamPeople() {
     + '1. "found": array of IDs from the known beings list who clearly appear in this dream\n'
     + '2. "new": array of objects for beings NOT in the known list, each with: { "name": "string", "role": "brief role", "context": "how they appear" }\n'
     + '3. "cats": array of category IDs that apply\n'
-    + '4. "place": object or null — if a distinctive dream location appears (unusual architecture, impossible physics, strong emotional imprint), return { "matchType": "existing" or "new", "matchId": "id or null", "matchName": "name", "confidence": "high/medium/low", "reason": "one sentence", "suggestedName": "if new or null", "suggestedNature": "locational/ambiguous/symbolic or null" }. Set to null if no distinctive place.\n\n'
+    + '4. "place": object or null — if a distinctive dream location appears (unusual architecture, impossible physics, strong emotional imprint), return { "matchType": "existing" or "new", "matchId": "id or null", "matchName": "name", "confidence": "high/medium/low", "reason": "one sentence", "suggestedName": "if new or null", "suggestedNature": "locational/ambiguous/symbolic or null", "suggestedFeltQuality": "1-2 sentence description of the place atmosphere and texture if new, or null" }. Set to null if no distinctive place.\n\n'
     + 'AVAILABLE CATEGORIES:\n' + catList + '\n\n'
     + 'EXISTING DREAM PLACES:\n' + placeList + '\n\n'
     + 'Conservative: a dream place must be architecturally specific or recurring — not every setting qualifies. Return ONLY valid JSON, no preamble.';
@@ -21321,6 +21321,7 @@ async function scanDreamPeople() {
         _addBtn2.style.cssText = 'font-family:Space Mono,monospace;font-size:.48rem;padding:3px 9px;border:1px solid '+pCol+';color:'+pCol+';background:transparent;cursor:pointer;margin-right:6px;';
         _addBtn2.dataset.placeName = placeResult.suggestedName || '';
         _addBtn2.dataset.placeNature = placeResult.suggestedNature || 'ambiguous';
+        _addBtn2.dataset.placeFeltQuality = placeResult.suggestedFeltQuality || '';
         _addBtn2.onclick = function() { scanAddNewPlace(this); };
         var _skipBtn3 = document.createElement('button');
         _skipBtn3.textContent = 'Skip';
@@ -21404,12 +21405,13 @@ function scanConfirmPlaceMatch(placeId, btn) {
 }
 
 function scanAddNewPlace(btn) {
-  var name   = (btn && btn.dataset) ? (btn.dataset.placeName   || '') : '';
-  var nature = (btn && btn.dataset) ? (btn.dataset.placeNature || 'ambiguous') : 'ambiguous';
+  var name        = (btn && btn.dataset) ? (btn.dataset.placeName        || '') : '';
+  var nature      = (btn && btn.dataset) ? (btn.dataset.placeNature      || 'ambiguous') : 'ambiguous';
+  var feltQuality = (btn && btn.dataset) ? (btn.dataset.placeFeltQuality || '') : '';
   if (!name) return;
   var newId = 'dp_' + Date.now();
   var date = (document.getElementById('f-date')||{}).value || new Date().toISOString().slice(0,10);
-  var newPlace = { id:newId, name:name, nature:nature, archetypes:[], feltQuality:'',
+  var newPlace = { id:newId, name:name, nature:nature, archetypes:[], feltQuality:feltQuality,
     navigationNotes:'', personalNotes:'', firstVisited:date, visitCount:1, dreamIds:[] };
   var places = (typeof getDreamPlaces==='function') ? getDreamPlaces() : [];
   places.push(newPlace);
@@ -21460,7 +21462,7 @@ async function scanSavedDream(dreamId, btn) {
     + '1. "found": array of person IDs who clearly appear but are NOT already tagged\n'
     + '2. "new": array of objects for beings not in the known list: { "name": string, "role": brief, "context": how they appear }\n'
     + '3. "cats": array of category IDs that apply but are NOT already tagged\n'
-    + '4. "place": object or null — { "matchType": "existing"|"new", "matchId": id or null, "matchName": name, "confidence": high/medium/low, "reason": one sentence, "suggestedName": if new, "suggestedNature": locational/ambiguous/symbolic }. Null if no distinctive place or place already linked.\n\n'
+    + '4. "place": object or null — { "matchType": "existing"|"new", "matchId": id or null, "matchName": name, "confidence": high/medium/low, "reason": one sentence, "suggestedName": if new, "suggestedNature": locational/ambiguous/symbolic, "suggestedFeltQuality": "1-2 sentence description of the place atmosphere and texture, or null" }. Null if no distinctive place or place already linked.\n\n'
     + 'AVAILABLE CATEGORIES:\n' + catList + '\n\n'
     + 'EXISTING DREAM PLACES:\n' + placeList + '\n\n'
     + 'Return ONLY valid JSON, no preamble.';
@@ -21548,6 +21550,7 @@ async function scanSavedDream(dreamId, btn) {
         _addBtn.dataset.dreamId = String(dreamId);
         _addBtn.dataset.placeName = placeResult.suggestedName || '';
         _addBtn.dataset.placeNature = placeResult.suggestedNature || 'ambiguous';
+        _addBtn.dataset.placeFeltQuality = placeResult.suggestedFeltQuality || '';
         _addBtn.dataset.placeDate = d.date || '';
         _addBtn.onclick = function() { addAndLinkNewPlaceToSavedDream(this); };
         var _skipBtn2 = document.createElement('button');
@@ -21637,14 +21640,15 @@ function linkPlaceToSavedDream(dreamIdOrBtn, placeId, btn) {
 
 function addAndLinkNewPlaceToSavedDream(btn) {
   // Reads all data from button dataset — no inline string passing, avoids escaping bugs
-  var dreamId   = btn.dataset.dreamId;
-  var name      = btn.dataset.placeName || '';
-  var nature    = btn.dataset.placeNature || 'ambiguous';
-  var date      = btn.dataset.placeDate || new Date().toISOString().slice(0,10);
+  var dreamId        = btn.dataset.dreamId;
+  var name           = btn.dataset.placeName        || '';
+  var nature         = btn.dataset.placeNature       || 'ambiguous';
+  var date           = btn.dataset.placeDate         || new Date().toISOString().slice(0,10);
+  var feltQuality    = btn.dataset.placeFeltQuality  || '';
   if (!name || !dreamId) return;
   var newId = 'dp_' + Date.now();
   var allDp = (typeof getDreamPlaces==='function') ? getDreamPlaces() : [];
-  allDp.push({id:newId, name:name, nature:nature, archetypes:[], feltQuality:'',
+  allDp.push({id:newId, name:name, nature:nature, archetypes:[], feltQuality:feltQuality,
     navigationNotes:'', personalNotes:'', firstVisited:date, visitCount:1, dreamIds:[String(dreamId)]});
   if (typeof saveDreamPlaces==='function') saveDreamPlaces(allDp);
   if (btn.parentNode) {
