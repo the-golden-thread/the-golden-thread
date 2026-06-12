@@ -23276,6 +23276,11 @@ async function crossGenerate() {
 
   var personA = computePersonChart(nameA, dobA, timeA, locA);
   var personB = computePersonChart(nameB, dobB, timeB, locB);
+  // Use any manually corrected fields from the People directory
+  var _dirA = getPeopleDirectory().find(function(p){ return p.name.toLowerCase() === nameA.toLowerCase(); });
+  var _dirB = getPeopleDirectory().find(function(p){ return p.name.toLowerCase() === nameB.toLowerCase(); });
+  if (_dirA) { if (_dirA.sunSign) personA.sunSign=_dirA.sunSign; if (_dirA.moonSign) personA.moonSign=_dirA.moonSign; if (_dirA.rising) personA.rising=_dirA.rising; if (_dirA.hdType) personA.hdType=_dirA.hdType; }
+  if (_dirB) { if (_dirB.sunSign) personB.sunSign=_dirB.sunSign; if (_dirB.moonSign) personB.moonSign=_dirB.moonSign; if (_dirB.rising) personB.rising=_dirB.rising; if (_dirB.hdType) personB.hdType=_dirB.hdType; }
   personA.pronouns = pronounsA; personA.relType = relType;
   personB.pronouns = pronounsB; personB.relType = relType;
 
@@ -23721,6 +23726,15 @@ async function mirrorGenerate() {
   if (result) result.innerHTML = '<div style="font-family:Space Mono,monospace;font-size:.55rem;color:rgba(201,185,154,.3);display:flex;align-items:center;gap:10px;padding:16px 0;"><div class="astro-spinner"></div> Weaving the mirror\u2026</div>';
 
   var person = computePersonChart(name, dob, time, loc);
+  // If this person already exists in the People directory with manual corrections, use that data
+  var existingPerson = getPeopleDirectory().find(function(p){ return p.name.toLowerCase() === name.toLowerCase(); });
+  if (existingPerson) {
+    // Preserve computed numerology/zodiac but use any manually corrected chart fields
+    if (existingPerson.sunSign)  person.sunSign  = existingPerson.sunSign;
+    if (existingPerson.moonSign) person.moonSign = existingPerson.moonSign;
+    if (existingPerson.rising)   person.rising   = existingPerson.rising;
+    if (existingPerson.hdType)   person.hdType   = existingPerson.hdType;
+  }
   person.pronouns = pronouns;
   person.relType  = relType;
 
