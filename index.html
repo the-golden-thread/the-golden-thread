@@ -23428,6 +23428,7 @@ function clearMirrorResult() {
 function mirrorAction(action, cardId) {
   var name = cardId.replace(/^mpc-/, '').replace(/_/g,' ');
   if (action === 'refresh') mirrorRefreshReflections(name);
+  else if (action === 'edit')    mirrorEditAll(name);
   else if (action === 'moon')    mirrorEditField(name, 'moonSign');
   else if (action === 'rising')  mirrorEditField(name, 'rising');
   else if (action === 'hdType')  mirrorEditField(name, 'hdType');
@@ -23459,10 +23460,7 @@ function mirrorPersonCard(person, expanded) {
     +'<div id="'+id+'-relate" style="margin-top:12px;">'+(person.relate?mirrorRelateHTML(person.relate):'')+'</div>'
     +'<div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap;">'
     +'<button onclick="mirrorAction(\'refresh\',\''+id+'\')" style="font-family:Space Mono,monospace;font-size:.48rem;letter-spacing:.08em;padding:6px 12px;background:transparent;border:1px solid rgba(107,79,138,.25);color:rgba(155,107,171,.6);cursor:pointer;">&#8635; Refresh</button>'
-    +'<button onclick="mirrorAction(\'moon\',\''+id+'\')" style="font-family:Space Mono,monospace;font-size:.48rem;letter-spacing:.08em;padding:6px 12px;background:transparent;border:1px solid rgba(201,185,154,.15);color:rgba(201,185,154,.4);cursor:pointer;">&#9998; Moon</button>'
-    +'<button onclick="mirrorAction(\'rising\',\''+id+'\')" style="font-family:Space Mono,monospace;font-size:.48rem;letter-spacing:.08em;padding:6px 12px;background:transparent;border:1px solid rgba(201,185,154,.15);color:rgba(201,185,154,.4);cursor:pointer;">&#9998; Rising</button>'
-    +'<button onclick="mirrorAction(\'hdType\',\''+id+'\')" style="font-family:Space Mono,monospace;font-size:.48rem;letter-spacing:.08em;padding:6px 12px;background:transparent;border:1px solid rgba(201,185,154,.15);color:rgba(201,185,154,.4);cursor:pointer;">&#9998; HD</button>'
-    +'<button onclick="mirrorAction(\'more\',\''+id+'\')" style="font-family:Space Mono,monospace;font-size:.48rem;letter-spacing:.08em;padding:6px 12px;background:transparent;border:1px solid rgba(201,185,154,.15);color:rgba(201,185,154,.4);cursor:pointer;">&#9998; More</button>'
+    +'<button onclick="mirrorAction(\'edit\',\''+id+'\')" style="font-family:Space Mono,monospace;font-size:.48rem;letter-spacing:.08em;padding:6px 12px;background:transparent;border:1px solid rgba(201,185,154,.25);color:rgba(201,185,154,.6);cursor:pointer;">&#9998; Edit Chart</button>'
     +'<button onclick="mirrorAction(\'delete\',\''+id+'\')" style="font-family:Space Mono,monospace;font-size:.48rem;letter-spacing:.08em;padding:6px 12px;background:transparent;border:1px solid rgba(180,80,80,.2);color:rgba(180,100,100,.5);cursor:pointer;">&#10005; Remove</button>'
     +'</div></div></div>';
 }
