@@ -10918,7 +10918,52 @@ function renderDreams(){
   const q=document.getElementById('search').value.toLowerCase();
   let filtered=dreams.filter(d=>{
     const vivMin = parseInt(document.getElementById('viv-min')?.value||1);
-    const mq=!q||(d.title||'').toLowerCase().includes(q)||(d.body||'').toLowerCase().includes(q)||(d.moon||'').toLowerCase().includes(q)||(d.claude||'').toLowerCase().includes(q)||(d.ctx||'').toLowerCase().includes(q)||(d.interp||'').toLowerCase().includes(q)||d.cats.some(c=>c.toLowerCase().includes(q))||d.people.some(p=>p.toLowerCase().includes(q));
+    // Search: word-boundary on title+body (avoids 'craft'→'spellcraft', 'bus'→'business')
+    // Synonym expansion for common dream vocabulary
+    const _DREAM_SYNONYMS = {
+      craft: ['spaceship','spacecraft','ufo','vessel','rocket','saucer','ship','pod'],
+      ship: ['spaceship','spacecraft','vessel','boat','craft','ark'],
+      spaceship: ['craft','spacecraft','ufo','vessel','rocket','saucer'],
+      spacecraft: ['craft','spaceship','ufo','vessel','rocket','saucer'],
+      ufo: ['craft','spaceship','spacecraft','saucer','vessel'],
+      fly: ['float','levitate','soar','glide','hover'],
+      flying: ['floating','levitating','soaring','gliding','hovering'],
+      float: ['fly','levitate','hover','drift','soar'],
+      floating: ['flying','levitating','hovering','drifting','soaring'],
+      chase: ['chased','chasing','run','running','escape','flee','fleeing','pursued','pursuit'],
+      chased: ['chase','chasing','running','escape','flee','pursued'],
+      run: ['chase','chased','flee','escape','running'],
+      fall: ['falling','dropped','drop','sink','sinking','plunge'],
+      falling: ['fall','dropped','sink','sinking','plunge'],
+      drown: ['drowning','underwater','submerged','sink','sinking'],
+      water: ['ocean','sea','river','lake','pool','flood','wave','waves','underwater','swimming'],
+      ocean: ['water','sea','waves','shore','beach','deep','underwater'],
+      house: ['home','building','room','apartment','structure'],
+      home: ['house','building','room','apartment'],
+      baby: ['infant','child','newborn','toddler'],
+      dead: ['death','died','dying','deceased','ghost','spirit'],
+      death: ['dead','died','dying','deceased','killed'],
+      monster: ['creature','beast','demon','entity','shadow figure','dark figure'],
+      creature: ['monster','beast','animal','entity','being'],
+      school: ['classroom','teacher','class','campus','university','college'],
+      car: ['vehicle','driving','drive','rode','road'],
+      plane: ['airplane','flight','flying','aircraft','airport'],
+      snake: ['serpent','reptile'],
+      door: ['doorway','entrance','portal','gate','threshold'],
+      portal: ['door','doorway','gate','threshold','entrance'],
+    };
+    function _wordMatch(text, term) {
+      return new RegExp('\\b' + term.replace(/[.*+?^${}()|[\]\\]/g,'\\$&') + '\\b','i').test(text||'');
+    }
+    const _searchTerms = q ? [q].concat(_DREAM_SYNONYMS[q.toLowerCase()]||[]) : [];
+    const mq = !q || (function() {
+      if (_searchTerms.some(function(t){ return _wordMatch(d.title,t)||_wordMatch(d.body,t); })) return true;
+      if ((d.claude||'').toLowerCase().includes(q)||(d.ctx||'').toLowerCase().includes(q)||(d.interp||'').toLowerCase().includes(q)||(d.moon||'').toLowerCase().includes(q)) return true;
+      if (d.cats.some(function(c){return c.toLowerCase().includes(q);})) return true;
+      if (d.people.some(function(p){const person=PEOPLE.find(function(x){return x.id===p;});return _wordMatch((person?person.name:p),q);})) return true;
+      if (typeof getDreamPlaces==='function'&&getDreamPlaces().some(function(pl){return (pl.dreamIds||[]).some(function(did){return String(did)===String(d.id);})&&_wordMatch(pl.name,q);})) return true;
+      return false;
+    })();
     const mviv = (d.viv||1) >= vivMin;
     const mc=activeFilter==='all'||d.cats.includes(activeFilter);
     // Notable filter
@@ -21259,13 +21304,32 @@ async function scanDreamPeople() {
           + '</div>';
         msgs.push('Place: ' + pName);
       } else if (placeResult.matchType === 'new' && placeResult.suggestedName) {
-        placeArea.innerHTML = '<div style="padding:8px 10px;background:rgba(58,107,107,.06);border:1px solid rgba(58,107,107,.2);border-left:2px solid rgba(58,107,107,.5);margin-top:4px;">'
-          + '<span style="font-family:\'Space Mono\',monospace;font-size:.48rem;color:rgba(58,107,107,.65);letter-spacing:.07em;">◈ NEW PLACE SUGGESTED</span><br>'
-          + '<span style="font-size:.9rem;font-weight:400;">'+placeResult.suggestedName+'</span>'
-          + '<span style="font-family:\'Cormorant Garamond\',serif;font-size:.82rem;color:rgba(240,235,224,.5);font-style:italic;display:block;margin:2px 0 6px;">'+(placeResult.reason||'')+'</span>'
-          + '<button onclick="scanAddNewPlace(\''+encodeURIComponent(placeResult.suggestedName)+'\',' + JSON.stringify(placeResult.suggestedNature||'ambiguous') + ', this)" style="font-family:\'Space Mono\',monospace;font-size:.48rem;padding:3px 9px;border:1px solid '+pCol+';color:'+pCol+';background:transparent;cursor:pointer;margin-right:6px;">+ Add to Registry</button>'
-          + '<button onclick="this.parentNode.parentNode.remove()" style="font-family:\'Space Mono\',monospace;font-size:.48rem;padding:3px 9px;border:1px solid rgba(201,185,154,.15);color:rgba(201,185,154,.35);background:transparent;cursor:pointer;">Skip</button>'
-          + '</div>';
+        if (!placeArea) {
+          placeArea = document.createElement('div');
+          placeArea.id = 'f-place-area-scan';
+          placeArea.style.cssText = 'margin-top:8px;';
+          var scanResultEl2 = document.getElementById('scan-people-result');
+          if (scanResultEl2 && scanResultEl2.parentNode) scanResultEl2.parentNode.insertBefore(placeArea, scanResultEl2.nextSibling);
+        }
+        var _nWrap2 = document.createElement('div');
+        _nWrap2.style.cssText = 'padding:8px 10px;background:rgba(58,107,107,.06);border:1px solid rgba(58,107,107,.2);border-left:2px solid rgba(58,107,107,.5);margin-top:4px;';
+        _nWrap2.innerHTML = '<span style="font-family:Space Mono,monospace;font-size:.48rem;color:rgba(58,107,107,.65);letter-spacing:.07em;">◈ NEW PLACE SUGGESTED</span><br>'
+          + '<span style="font-size:.9rem;font-weight:400;">'+(placeResult.suggestedName||'').replace(/</g,'&lt;')+'</span>'
+          + '<span style="font-family:Cormorant Garamond,serif;font-size:.82rem;color:rgba(240,235,224,.5);font-style:italic;display:block;margin:2px 0 6px;">'+(placeResult.reason||'').replace(/</g,'&lt;')+'</span>';
+        var _addBtn2 = document.createElement('button');
+        _addBtn2.textContent = '+ Add to Registry';
+        _addBtn2.style.cssText = 'font-family:Space Mono,monospace;font-size:.48rem;padding:3px 9px;border:1px solid '+pCol+';color:'+pCol+';background:transparent;cursor:pointer;margin-right:6px;';
+        _addBtn2.dataset.placeName = placeResult.suggestedName || '';
+        _addBtn2.dataset.placeNature = placeResult.suggestedNature || 'ambiguous';
+        _addBtn2.onclick = function() { scanAddNewPlace(this); };
+        var _skipBtn3 = document.createElement('button');
+        _skipBtn3.textContent = 'Skip';
+        _skipBtn3.style.cssText = 'font-family:Space Mono,monospace;font-size:.48rem;padding:3px 9px;border:1px solid rgba(201,185,154,.15);color:rgba(201,185,154,.35);background:transparent;cursor:pointer;';
+        _skipBtn3.onclick = function() { var el=document.getElementById('f-place-area-scan'); if(el) el.remove(); };
+        _nWrap2.appendChild(_addBtn2);
+        _nWrap2.appendChild(_skipBtn3);
+        placeArea.innerHTML = '';
+        placeArea.appendChild(_nWrap2);
         msgs.push('New place: ' + placeResult.suggestedName);
       }
     }
@@ -21339,21 +21403,18 @@ function scanConfirmPlaceMatch(placeId, btn) {
   if (btn) btn.closest('div').innerHTML = '<span style="font-family:\'Space Mono\',monospace;font-size:.52rem;color:var(--teal);">✓ '+(p?p.name:placeId)+' linked — saves with dream.</span>';
 }
 
-function scanAddNewPlace(encodedName, nature, btn) {
-  var name = decodeURIComponent(encodedName);
+function scanAddNewPlace(btn) {
+  var name   = (btn && btn.dataset) ? (btn.dataset.placeName   || '') : '';
+  var nature = (btn && btn.dataset) ? (btn.dataset.placeNature || 'ambiguous') : 'ambiguous';
+  if (!name) return;
   var newId = 'dp_' + Date.now();
   var date = (document.getElementById('f-date')||{}).value || new Date().toISOString().slice(0,10);
-  var newPlace = {
-    id: newId, name: name, nature: nature || 'ambiguous',
-    archetypes: [], feltQuality: '', navigationNotes: '', personalNotes: '',
-    firstVisited: date, visitCount: 1, dreamIds: []
-  };
+  var newPlace = { id:newId, name:name, nature:nature, archetypes:[], feltQuality:'',
+    navigationNotes:'', personalNotes:'', firstVisited:date, visitCount:1, dreamIds:[] };
   var places = (typeof getDreamPlaces==='function') ? getDreamPlaces() : [];
   places.push(newPlace);
   if (typeof saveDreamPlaces==='function') saveDreamPlaces(places);
-  // Select it
   scanConfirmPlaceMatch(newId, null);
-  if (btn) btn.closest('div').innerHTML = '<span style="font-family:\'Space Mono\',monospace;font-size:.52rem;color:var(--teal);">✓ '+name+' added and linked — saves with dream.</span>';
 }
 
 // ── Scan an already-saved dream ──────────────────────────────────────
@@ -21442,37 +21503,64 @@ async function scanSavedDream(dreamId, btn) {
       msgs.push('New: ' + newBngs.map(function(b){return b.name;}).join(', '));
     }
 
-    // Place result — show confirm/add UI
+    // Place result — show confirm/add UI — uses createElement to avoid quote-escaping bugs
     var pCol = 'rgba(58,107,107,.85)';
     if (placeResult && placeResult.matchType) {
-      var placeHtml = '';
+      var placeNode = document.createElement('div');
+      placeNode.className = 'place-scan-result';
+
       if (placeResult.matchType === 'existing' && placeResult.matchId) {
         var mp = knownPlaces.find(function(p){return p.id===placeResult.matchId;});
         var pName = (mp&&mp.name) || placeResult.matchName || placeResult.matchId;
-        placeHtml = '<div style="margin-top:8px;padding:8px 10px;background:rgba(58,107,107,.08);border:1px solid rgba(58,107,107,.25);border-left:2px solid '+pCol+';">'
-          + '<span style="font-size:.48rem;color:rgba(58,107,107,.7);letter-spacing:.07em;">◈ PLACE MATCH · '+(placeResult.confidence||'')+'</span><br>'
-          + '<span style="font-size:.9rem;">'+pName+'</span>'
-          + '<span style="font-family:Cormorant Garamond,serif;font-size:.82rem;color:rgba(240,235,224,.5);font-style:italic;display:block;margin:2px 0 6px;">'+(placeResult.reason||'')+'</span>'
-          + '<button onclick="linkPlaceToSavedDream(\''+dreamId+'\',\''+placeResult.matchId+'\',this)" style="font-size:.48rem;padding:3px 9px;border:1px solid '+pCol+';color:'+pCol+';background:transparent;cursor:pointer;margin-right:6px;">✓ Link Place</button>'
-          + '<button onclick="this.closest(\'[id^=scan-saved-result]\').querySelector(\'.place-scan-result\').remove()" style="font-size:.48rem;padding:3px 9px;border:1px solid rgba(201,185,154,.15);color:rgba(201,185,154,.35);background:transparent;cursor:pointer;">Skip</button>'
-          + '</div>';
+        var _eWrap = document.createElement('div');
+        _eWrap.style.cssText = 'margin-top:8px;padding:8px 10px;background:rgba(58,107,107,.08);border:1px solid rgba(58,107,107,.25);border-left:2px solid '+pCol+';';
+        _eWrap.innerHTML = '<span style="font-size:.48rem;color:rgba(58,107,107,.7);letter-spacing:.07em;">◈ PLACE MATCH · '+(placeResult.confidence||'')+'</span><br>'
+          + '<span style="font-size:.9rem;">'+(pName||'').replace(/</g,'&lt;')+'</span>'
+          + '<span style="font-family:Cormorant Garamond,serif;font-size:.82rem;color:rgba(240,235,224,.5);font-style:italic;display:block;margin:2px 0 6px;">'+(placeResult.reason||'').replace(/</g,'&lt;')+'</span>';
+        var _linkBtn = document.createElement('button');
+        _linkBtn.textContent = '✓ Link Place';
+        _linkBtn.style.cssText = 'font-size:.48rem;padding:3px 9px;border:1px solid '+pCol+';color:'+pCol+';background:transparent;cursor:pointer;margin-right:6px;';
+        _linkBtn.dataset.dreamId = String(dreamId);
+        _linkBtn.dataset.placeId = placeResult.matchId;
+        _linkBtn.onclick = function() {
+          var pid = this.dataset.placeId;
+          var did = this.dataset.dreamId;
+          linkPlaceToSavedDream(did, pid, this);
+        };
+        var _skipBtn1 = document.createElement('button');
+        _skipBtn1.textContent = 'Skip';
+        _skipBtn1.style.cssText = 'font-size:.48rem;padding:3px 9px;border:1px solid rgba(201,185,154,.15);color:rgba(201,185,154,.35);background:transparent;cursor:pointer;';
+        _skipBtn1.onclick = function() { var el=this.closest('.place-scan-result'); if(el) el.remove(); };
+        _eWrap.appendChild(_linkBtn);
+        _eWrap.appendChild(_skipBtn1);
+        placeNode.appendChild(_eWrap);
         msgs.push('Place: '+pName);
+
       } else if (placeResult.matchType === 'new' && placeResult.suggestedName) {
-        placeHtml = '<div style="margin-top:8px;padding:8px 10px;background:rgba(58,107,107,.06);border:1px solid rgba(58,107,107,.2);border-left:2px solid rgba(58,107,107,.5);">'
-          + '<span style="font-size:.48rem;color:rgba(58,107,107,.65);letter-spacing:.07em;">◈ NEW PLACE SUGGESTED</span><br>'
-          + '<span style="font-size:.9rem;">'+placeResult.suggestedName+'</span>'
-          + '<span style="font-family:Cormorant Garamond,serif;font-size:.82rem;color:rgba(240,235,224,.5);font-style:italic;display:block;margin:2px 0 6px;">'+(placeResult.reason||'')+'</span>'
-          + '<button onclick="addAndLinkNewPlaceToSavedDream(\''+dreamId+'\',\''+encodeURIComponent(placeResult.suggestedName)+'\',\''+( placeResult.suggestedNature||'ambiguous')+'\',\''+( d.date||'')+'\',this)" style="font-size:.48rem;padding:3px 9px;border:1px solid '+pCol+';color:'+pCol+';background:transparent;cursor:pointer;margin-right:6px;">+ Add & Link</button>'
-          + '<button onclick="this.parentNode.remove()" style="font-size:.48rem;padding:3px 9px;border:1px solid rgba(201,185,154,.15);color:rgba(201,185,154,.35);background:transparent;cursor:pointer;">Skip</button>'
-          + '</div>';
+        var _nWrap = document.createElement('div');
+        _nWrap.style.cssText = 'margin-top:8px;padding:8px 10px;background:rgba(58,107,107,.06);border:1px solid rgba(58,107,107,.2);border-left:2px solid rgba(58,107,107,.5);';
+        _nWrap.innerHTML = '<span style="font-size:.48rem;color:rgba(58,107,107,.65);letter-spacing:.07em;">◈ NEW PLACE SUGGESTED</span><br>'
+          + '<span style="font-size:.9rem;">'+(placeResult.suggestedName||'').replace(/</g,'&lt;')+'</span>'
+          + '<span style="font-family:Cormorant Garamond,serif;font-size:.82rem;color:rgba(240,235,224,.5);font-style:italic;display:block;margin:2px 0 6px;">'+(placeResult.reason||'').replace(/</g,'&lt;')+'</span>';
+        var _addBtn = document.createElement('button');
+        _addBtn.textContent = '+ Add & Link';
+        _addBtn.style.cssText = 'font-size:.48rem;padding:3px 9px;border:1px solid '+pCol+';color:'+pCol+';background:transparent;cursor:pointer;margin-right:6px;';
+        _addBtn.dataset.dreamId = String(dreamId);
+        _addBtn.dataset.placeName = placeResult.suggestedName || '';
+        _addBtn.dataset.placeNature = placeResult.suggestedNature || 'ambiguous';
+        _addBtn.dataset.placeDate = d.date || '';
+        _addBtn.onclick = function() { addAndLinkNewPlaceToSavedDream(this); };
+        var _skipBtn2 = document.createElement('button');
+        _skipBtn2.textContent = 'Skip';
+        _skipBtn2.style.cssText = 'font-size:.48rem;padding:3px 9px;border:1px solid rgba(201,185,154,.15);color:rgba(201,185,154,.35);background:transparent;cursor:pointer;';
+        _skipBtn2.onclick = function() { var el=this.closest('.place-scan-result'); if(el) el.remove(); };
+        _nWrap.appendChild(_addBtn);
+        _nWrap.appendChild(_skipBtn2);
+        placeNode.appendChild(_nWrap);
         msgs.push('New place: '+placeResult.suggestedName);
       }
-      if (placeHtml) {
-        var placeDiv = document.createElement('div');
-        placeDiv.className = 'place-scan-result';
-        placeDiv.innerHTML = placeHtml;
-        resultArea.appendChild(placeDiv);
-      }
+
+      if (placeNode.children.length) resultArea.appendChild(placeNode);
     }
 
     // New beings chips
@@ -21518,7 +21606,17 @@ async function scanSavedDream(dreamId, btn) {
   }
 }
 
-function linkPlaceToSavedDream(dreamId, placeId, btn) {
+function linkPlaceToSavedDream(dreamIdOrBtn, placeId, btn) {
+  // Accept either (btn) with dataset, or (dreamId, placeId, btn) legacy form
+  var dreamId, _btn;
+  if (dreamIdOrBtn && dreamIdOrBtn.dataset) {
+    _btn = dreamIdOrBtn;
+    dreamId = _btn.dataset.dreamId;
+    placeId = _btn.dataset.placeId;
+  } else {
+    dreamId = dreamIdOrBtn;
+    _btn = btn;
+  }
   var allDp = (typeof getDreamPlaces==='function') ? getDreamPlaces() : [];
   var idx = allDp.findIndex(function(p){return p.id===placeId;});
   if (idx > -1) {
@@ -21529,27 +21627,29 @@ function linkPlaceToSavedDream(dreamId, placeId, btn) {
       if (typeof saveDreamPlaces==='function') saveDreamPlaces(allDp);
     }
   }
-  // Refresh place display in card
-  var placeSection = document.querySelector('#view-inner .m-sec');
-  // Simpler: just show a confirmation
-  if (btn) {
-    var pName = (allDp[idx]&&allDp[idx].name) || placeId;
-    btn.parentNode.innerHTML = '<span style="color:var(--teal);font-size:.52rem;">✓ '+pName+' linked to this dream.</span>';
+  var pName = (idx > -1 && allDp[idx] && allDp[idx].name) || placeId;
+  if (_btn && _btn.parentNode) {
+    _btn.parentNode.innerHTML = '<span style="color:var(--teal);font-size:.52rem;">✓ '+pName.replace(/</g,'&lt;')+' linked.</span>';
   }
-  // Reopen the dream to refresh the card view
   var d = dreams.find(function(x){return String(x.id)===String(dreamId);});
   if (d) setTimeout(function(){ openDream(d); }, 800);
 }
 
-function addAndLinkNewPlaceToSavedDream(dreamId, encodedName, nature, date, btn) {
-  var name = decodeURIComponent(encodedName);
+function addAndLinkNewPlaceToSavedDream(btn) {
+  // Reads all data from button dataset — no inline string passing, avoids escaping bugs
+  var dreamId   = btn.dataset.dreamId;
+  var name      = btn.dataset.placeName || '';
+  var nature    = btn.dataset.placeNature || 'ambiguous';
+  var date      = btn.dataset.placeDate || new Date().toISOString().slice(0,10);
+  if (!name || !dreamId) return;
   var newId = 'dp_' + Date.now();
   var allDp = (typeof getDreamPlaces==='function') ? getDreamPlaces() : [];
-  allDp.push({id:newId, name:name, nature:nature||'ambiguous', archetypes:[], feltQuality:'',
-    navigationNotes:'', personalNotes:'', firstVisited:date||new Date().toISOString().slice(0,10),
-    visitCount:1, dreamIds:[String(dreamId)]});
+  allDp.push({id:newId, name:name, nature:nature, archetypes:[], feltQuality:'',
+    navigationNotes:'', personalNotes:'', firstVisited:date, visitCount:1, dreamIds:[String(dreamId)]});
   if (typeof saveDreamPlaces==='function') saveDreamPlaces(allDp);
-  if (btn) btn.parentNode.innerHTML = '<span style="color:var(--teal);font-size:.52rem;">✓ '+name+' added and linked.</span>';
+  if (btn.parentNode) {
+    btn.parentNode.innerHTML = '<span style="color:var(--teal);font-size:.52rem;">✓ '+name.replace(/</g,'&lt;')+' added and linked.</span>';
+  }
   var d = dreams.find(function(x){return String(x.id)===String(dreamId);});
   if (d) setTimeout(function(){ openDream(d); }, 800);
 }
