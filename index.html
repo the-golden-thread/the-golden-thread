@@ -22869,8 +22869,7 @@ function personDirectoryCard(person) {
     +'<div id="'+id+'" style="display:none;padding:0 16px 16px;">'
     +'<div id="'+id+'-grid">'+mirrorChartGrid(person)+'</div>'
     +'<div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap;">'
-    +'<button onclick="pdEditField(\''+id+'\',\'rising\')" style="font-family:Space Mono,monospace;font-size:.48rem;letter-spacing:.08em;padding:6px 12px;background:transparent;border:1px solid rgba(201,185,154,.15);color:rgba(201,185,154,.4);cursor:pointer;">\u270e Rising</button>'
-    +'<button onclick="pdEditField(\''+id+'\',\'hdType\')" style="font-family:Space Mono,monospace;font-size:.48rem;letter-spacing:.08em;padding:6px 12px;background:transparent;border:1px solid rgba(201,185,154,.15);color:rgba(201,185,154,.4);cursor:pointer;">\u270e HD</button>'
+    +'<button onclick="pdEditAll(\''+id+'\')" style="font-family:Space Mono,monospace;font-size:.48rem;letter-spacing:.08em;padding:6px 12px;background:transparent;border:1px solid rgba(201,185,154,.25);color:rgba(201,185,154,.6);cursor:pointer;">&#9998; Edit Chart</button>'
     +'<button onclick="pdDelete(\''+id+'\')" style="font-family:Space Mono,monospace;font-size:.48rem;letter-spacing:.08em;padding:6px 12px;background:transparent;border:1px solid rgba(180,80,80,.2);color:rgba(180,100,100,.5);cursor:pointer;">\u2715 Remove</button>'
     +'</div></div></div>';
 }
@@ -22884,16 +22883,59 @@ function pdToggle(id) {
   if (ch) ch.textContent = open ? '\u25b8' : '\u25be';
 }
 
-function pdEditField(cardId, field) {
+function pdEditAll(cardId) {
   var name = cardId.replace(/^pd-/,'').replace(/_/g,' ');
   var list = getPeopleDirectory();
   var person = list.find(function(p){ return p.name === name; });
   if (!person) return;
-  var labels = {rising:'Rising Sign', hdType:'HD Type'};
-  var val = prompt('Edit ' + (labels[field]||field) + ' for ' + name + ':', person[field]||'');
-  if (val === null) return;
-  person[field] = val.trim();
+  var wrap = document.createElement('div');
+  wrap.id = 'pd-edit-all-wrap';
+  wrap.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.88);z-index:9999;display:flex;align-items:flex-start;justify-content:center;padding:16px;overflow-y:auto;';
+  var SIGNS = ['Aries','Taurus','Gemini','Cancer','Leo','Virgo','Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces'];
+  function signSel(id, current) {
+    return '<select id="'+id+'" style="width:100%;background:#1a1820;border:1px solid rgba(201,185,154,.22);color:var(--parchment);font-family:Space Mono,monospace;font-size:.7rem;padding:8px 11px;outline:none;">'
+      +'<option value="">— no change —</option>'
+      +SIGNS.map(function(s){ return '<option value="'+s+'"'+(s===current?' selected':'')+'>'+s+'</option>'; }).join('')
+      +'</select>';
+  }
+  var HD_TYPES = ['Generator','Manifesting Generator','Projector','Manifestor','Reflector'];
+  var hdOpts = '<option value="">— no change —</option>'+HD_TYPES.map(function(h){ return '<option value="'+h+'"'+(h===(person.hdType||'')?'selected':'')+'>'+h+'</option>'; }).join('');
+  function lbl(t){ return '<label style="font-family:Space Mono,monospace;font-size:.5rem;letter-spacing:.08em;text-transform:uppercase;color:rgba(201,185,154,.5);display:block;margin-bottom:5px;">'+t+'</label>'; }
+  wrap.innerHTML = '<div style="background:#1a1820;border:1px solid rgba(201,185,154,.2);padding:24px;max-width:520px;width:100%;margin-top:16px;">'
+    +'<div style="font-family:Space Mono,monospace;font-size:.52rem;letter-spacing:.1em;text-transform:uppercase;color:var(--moon);margin-bottom:16px;">✶ Correct Chart — '+name+'</div>'
+    +'<div style="font-family:Space Mono,monospace;font-size:.48rem;color:rgba(201,185,154,.35);margin-bottom:16px;line-height:1.8;">Override any fields that are wrong. Leave on “— no change —” to keep existing values.</div>'
+    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;">'
+      +'<div>'+lbl('Sun Sign')+signSel('pea-sun', person.sunSign||'')+'</div>'
+      +'<div>'+lbl('Moon Sign')+signSel('pea-moon', person.moonSign||'')+'</div>'
+    +'</div>'
+    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:18px;">'
+      +'<div>'+lbl('Rising Sign')+signSel('pea-rising', person.rising||'')+'</div>'
+      +'<div>'+lbl('HD Type')+'<select id="pea-hd" style="width:100%;background:#1a1820;border:1px solid rgba(201,185,154,.22);color:var(--parchment);font-family:Space Mono,monospace;font-size:.7rem;padding:8px 11px;outline:none;">'+hdOpts+'</select></div>'
+    +'</div>'
+    +'<div style="display:flex;gap:10px;">'
+      +'<button onclick="pdEditAllSave(\''+cardId+'\')" style="font-family:Space Mono,monospace;font-size:.55rem;letter-spacing:.1em;text-transform:uppercase;padding:10px 22px;border:1px solid rgba(201,185,154,.4);background:transparent;color:rgba(201,185,154,.8);cursor:pointer;">Save</button>'
+      +'<button onclick="document.getElementById(\'pd-edit-all-wrap\').remove()" style="font-family:Space Mono,monospace;font-size:.55rem;letter-spacing:.1em;text-transform:uppercase;padding:10px 22px;border:1px solid rgba(201,185,154,.15);background:transparent;color:rgba(201,185,154,.4);cursor:pointer;">Cancel</button>'
+    +'</div>'
+    +'</div>';
+  document.body.appendChild(wrap);
+}
+
+function pdEditAllSave(cardId) {
+  var name = cardId.replace(/^pd-/,'').replace(/_/g,' ');
+  var list = getPeopleDirectory();
+  var person = list.find(function(p){ return p.name === name; });
+  if (!person) return;
+  var sun    = (document.getElementById('pea-sun')||{}).value||'';
+  var moon   = (document.getElementById('pea-moon')||{}).value||'';
+  var rising = (document.getElementById('pea-rising')||{}).value||'';
+  var hd     = (document.getElementById('pea-hd')||{}).value||'';
+  if (sun)    person.sunSign  = sun;
+  if (moon)   person.moonSign = moon;
+  if (rising) person.rising   = rising;
+  if (hd)     person.hdType   = hd;
   savePeopleDirectory(list);
+  var wrap = document.getElementById('pd-edit-all-wrap');
+  if (wrap) wrap.remove();
   var gridEl = document.getElementById(cardId+'-grid');
   if (gridEl) gridEl.innerHTML = mirrorChartGrid(person);
 }
