@@ -11593,7 +11593,7 @@ function saveInlineEditDream(dreamId) {
     var had = (pl.dreamIds||[]).some(function(did){return String(did)===String(dreamId);});
     if (had && pl.id !== edPlaceId) {
       pl.dreamIds = pl.dreamIds.filter(function(did){return String(did)!==String(dreamId);});
-      if (pl.visitCount > 1) pl.visitCount = Math.max(1, pl.visitCount - 1);
+      pl.visitCount = Math.max(1, (pl.dreamIds||[]).length);
       placeChanged = true;
     }
   });
@@ -11603,7 +11603,7 @@ function saveInlineEditDream(dreamId) {
       var already = (allDp[dpIdx].dreamIds||[]).some(function(did){return String(did)===String(dreamId);});
       if (!already) {
         allDp[dpIdx].dreamIds = (allDp[dpIdx].dreamIds||[]).concat(String(dreamId));
-        allDp[dpIdx].visitCount = (allDp[dpIdx].visitCount||1) + 1;
+        allDp[dpIdx].visitCount = (allDp[dpIdx].dreamIds||[]).length;
         placeChanged = true;
       }
     }
@@ -12104,7 +12104,7 @@ function addDream(){
       const _dp = _dpList[_dpIdx];
       if (!(_dp.dreamIds||[]).some(did => String(did) === String(_newId))) {
         _dp.dreamIds = [...(_dp.dreamIds||[]), String(_newId)];
-        _dp.visitCount = (_dp.visitCount||1) + 1;
+        _dp.visitCount = (_dp.dreamIds||[]).length;
         if (date && (!_dp.firstVisited || date < _dp.firstVisited)) _dp.firstVisited = date;
         _dpList[_dpIdx] = _dp;
         saveDreamPlaces(_dpList);
@@ -18577,11 +18577,13 @@ function renderDreamPlacesList() {
 
   function placeCard(p, i) {
     const color = DP_NATURE_COLORS[p.nature] || 'var(--moon)';
-    return `<div class="spirit-card" style="animation-delay:${i*0.04}s;--cc:${color};" onclick="openDreamPlace('${p.id}')">
+    const isRecent = p.firstVisited && (Date.now() - new Date(p.firstVisited+'T00:00:00').getTime()) < (1000*60*60*48);
+    return `<div class="spirit-card" style="animation-delay:${i*0.04}s;--cc:${color};${isRecent?'border-left:3px solid '+color+';':''}" onclick="openDreamPlace('${p.id}')">
       <div class="spirit-card-date" style="display:flex;align-items:center;gap:8px;">
         <span style="font-family:'Space Mono',monospace;font-size:.46rem;padding:2px 8px;border:1px solid ${color};color:${color};letter-spacing:.07em;text-transform:uppercase;">${DP_NATURE_LABELS[p.nature]||p.nature}</span>
         <span>first visited ${p.firstVisited||'unknown'}</span>
-        ${(p.visitCount||1) > 1 ? `<span style="color:rgba(201,185,154,.5);">${p.visitCount} visits</span>` : ''}
+        ${(function(){ var vc = (p.dreamIds&&p.dreamIds.length) ? p.dreamIds.length : (p.visitCount||1); return vc > 1 ? `<span style="color:rgba(201,185,154,.5);">${vc} visits</span>` : ''; })()}
+        ${isRecent ? `<span style="font-family:'Space Mono',monospace;font-size:.42rem;color:${color};letter-spacing:.08em;">✦ new</span>` : ''}
       </div>
       <div class="spirit-card-title">◈ ${p.name}</div>
       <div class="spirit-card-excerpt">${(p.feltQuality||'').slice(0,160)}${(p.feltQuality||'').length>160?'…':''}</div>
@@ -18595,13 +18597,20 @@ function renderDreamPlacesList() {
     return;
   }
 
-  const sections = [
+  const sectionsBase = [
     { key: 'locational', label: 'Locational', desc: 'Real and potentially navigable' },
     { key: 'ambiguous',  label: 'Ambiguous',  desc: 'Needs more visits to determine' },
     { key: 'symbolic',   label: 'Symbolic',   desc: 'Processing spaces — track meaning, not location' }
   ];
   const byNature = { locational: [], ambiguous: [], symbolic: [] };
   places.forEach(p => { if (byNature[p.nature]) byNature[p.nature].push(p); });
+
+  // Order sections by whichever has the most recent firstVisited place — newest content surfaces first
+  const sections = sectionsBase.slice().sort((a, b) => {
+    const aDate = (byNature[a.key][0] && byNature[a.key][0].firstVisited) || '';
+    const bDate = (byNature[b.key][0] && byNature[b.key][0].firstVisited) || '';
+    return bDate.localeCompare(aDate);
+  });
 
   list.innerHTML = sections.map(sec => {
     const items = byNature[sec.key];
@@ -18631,7 +18640,7 @@ function openDreamPlace(id) {
   }).join('');
 
   document.getElementById('view-inner').innerHTML = `
-    <div class="m-date">◈ ${DP_NATURE_LABELS[p.nature]||p.nature} · first visited ${p.firstVisited||'unknown'}${(p.visitCount||1)>1?' · '+p.visitCount+' visits':''}</div>
+    <div class="m-date">◈ ${DP_NATURE_LABELS[p.nature]||p.nature} · first visited ${p.firstVisited||'unknown'}${(function(){ var vc=(p.dreamIds&&p.dreamIds.length)?p.dreamIds.length:(p.visitCount||1); return vc>1?' · '+vc+' visits':''; })()}</div>
     <div class="m-title">${p.name}</div>
     ${(p.archetypes||[]).length ? `<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:20px;">${p.archetypes.map(a=>`<span style="font-family:'Space Mono',monospace;font-size:.52rem;padding:3px 10px;background:rgba(255,255,255,.04);border:1px solid ${color};color:${color};">${a}</span>`).join('')}</div>` : ''}
     <div class="m-sec"><div class="m-lbl">Felt Quality</div><div class="m-body"><p>${p.feltQuality||''}</p></div></div>
@@ -21682,7 +21691,7 @@ function linkPlaceToSavedDream(dreamIdOrBtn, placeId, btn) {
     var already = (allDp[idx].dreamIds||[]).some(function(did){return String(did)===String(dreamId);});
     if (!already) {
       allDp[idx].dreamIds = (allDp[idx].dreamIds||[]).concat(String(dreamId));
-      allDp[idx].visitCount = (allDp[idx].visitCount||1) + 1;
+      allDp[idx].visitCount = (allDp[idx].dreamIds||[]).length;
       if (typeof saveDreamPlaces==='function') saveDreamPlaces(allDp);
     }
   }
