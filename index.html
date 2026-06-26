@@ -513,14 +513,13 @@ h1 em { display:block; font-style:italic; font-weight:300; font-size:.42em; lett
   <!-- ══ TODAY PANEL ══ -->
   <div id="sanctum-panel-today" style="max-width:720px;margin:0 auto;">
 
-    <!-- ✦ TODAY'S FEELING ✦ -->
-    <div id="feeling-today-widget" style="margin-bottom:20px;"></div>
-
-    <!-- ✦ LIVE SKY ✦ -->
     <div id="sanctum-sky" style="margin-bottom:28px;">
       <div style="font-family:'Space Mono',monospace;font-size:.52rem;color:rgba(201,185,154,.4);letter-spacing:.12em;text-transform:uppercase;margin-bottom:14px;">✦ The Sky Right Now</div>
       <div id="sanctum-sky-inner" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(148px,1fr));gap:10px;"></div>
     </div>
+
+    <!-- ✦ TODAY'S FEELING ✦ -->
+    <div id="feeling-today-widget" style="margin-bottom:20px;"></div>
 
     <!-- ✦ DAILY HOROSCOPE CARDS ✦ -->
     <div id="sanctum-horoscope" style="margin-bottom:28px;">
@@ -1048,6 +1047,13 @@ h1 em { display:block; font-style:italic; font-weight:300; font-size:.42em; lett
           </div>
         </div>
         <input type="hidden" id="f-place-id" value="">
+      </div>
+      <div class="form-field" id="f-feeling-field">
+        <label>Feeling in this dream</label>
+        <input type="text" id="f-feeling-word" placeholder="e.g. Grief, Awe, Ease…"
+          style="margin-bottom:6px;"
+          oninput="renderFeelingChipsFor('f-feeling-word','f-feeling-chips')">
+        <div id="f-feeling-chips" style="display:flex;flex-wrap:wrap;gap:5px;min-height:0;"></div>
       </div>
       <div id="f-readings-area" style="display:none;margin-bottom:16px;">
         <div class="m-lbl" style="margin-bottom:10px;">Generated Readings</div>
@@ -13239,6 +13245,32 @@ function renderInsights(){
 }
 
 // openAdd redefined below with people-tagging support
+function renderFeelingChipsFor(inputId, chipsId) {
+  const input = document.getElementById(inputId);
+  const container = document.getElementById(chipsId);
+  if (!container) return;
+  const existing = getEmotionEntries().map(e => e.word);
+  if (!existing.length) return;
+  container.innerHTML = '';
+  existing.forEach(w => {
+    const chip = document.createElement('span');
+    chip.textContent = w;
+    chip.style.cssText = "font-family:'Cormorant Garamond',serif;font-size:.85rem;padding:3px 9px;border:1px solid rgba(201,107,138,.2);color:rgba(240,235,224,.5);cursor:pointer;transition:all .12s;";
+    chip.onclick = function() {
+      if (input) input.value = w;
+      container.querySelectorAll('span').forEach(c => { c.style.borderColor='rgba(201,107,138,.2)'; c.style.color='rgba(240,235,224,.5)'; });
+      chip.style.borderColor = 'rgba(201,107,138,.6)';
+      chip.style.color = 'rgba(240,235,224,.9)';
+    };
+    // Highlight if already selected
+    if (input && input.value.trim().toLowerCase() === w.toLowerCase()) {
+      chip.style.borderColor = 'rgba(201,107,138,.6)';
+      chip.style.color = 'rgba(240,235,224,.9)';
+    }
+    container.appendChild(chip);
+  });
+}
+
 function addDream(){
   const title=document.getElementById('f-title').value.trim()||'Untitled Dream';
   const date=document.getElementById('f-date').value||localDateStr();
@@ -13253,9 +13285,32 @@ function addDream(){
   if((body+title).toLowerCase().includes('mariam')&&!cats.includes('mariam'))cats.push('mariam');
   const _cAstro=(()=>{try{const s=(document.getElementById('add-ov')||{}).dataset?.computedAstro;return s?JSON.parse(s):null;}catch(e){return null;}})();
   const _people = [...document.querySelectorAll('#f-people-chips .pchip-check.selected')].map(el=>el.dataset.pid);
+  const _feelingWord = (document.getElementById('f-feeling-word')?.value || '').trim();
   const _newId = nextId++;
   var _moonStr = (_cAstro && _cAstro.moon) ? _cAstro.moon : '';
-  dreams.push({id:_newId,date,title,moon:_moonStr,ctx,body,interp,claude:claudeReading,astroReading:_astroReadingText||undefined,cats,people:_people,viv,userAdded:true,astro:_cAstro||undefined});
+  dreams.push({id:_newId,date,title,moon:_moonStr,ctx,body,interp,claude:claudeReading,astroReading:_astroReadingText||undefined,cats,people:_people,viv,feelingWord:_feelingWord||undefined,userAdded:true,astro:_cAstro||undefined});
+  saveUserDreams();
+  // Link dream to feeling entry
+  if (_feelingWord) {
+    const _fEntries = getEmotionEntries();
+    let _fEntry = _fEntries.find(e => e.word.toLowerCase() === _feelingWord.toLowerCase());
+    if (!_fEntry) {
+      const _val = CHECKIN_EMOTION_MAP.positive.includes(_feelingWord) ? 'positive'
+                 : CHECKIN_EMOTION_MAP.negative.includes(_feelingWord) ? 'negative' : 'neutral';
+      _fEntry = { id:'emotion_'+Date.now(), word:_feelingWord, dateAdded:date, valence:_val,
+        intensity:null, myNotes:'', myColor:'', myColorLabel:'', myElement:'', myTexture:'',
+        myTemperature:'', mySeason:'', mySensation:'', myImages:'', tags:[], sessions:[],
+        aiColors:[], aiElement:'', aiDirection:'', aiScents:[], aiSound:'',
+        aiBodySensation:'', aiCrystal:'', aiTimeOfDay:'', aiArchetype:'',
+        aiSeason:'', aiAffirmation:'', aiRitual:'' };
+      _fEntries.push(_fEntry);
+    }
+    if (!(_fEntry.sessions||[]).some(s => s.dreamId === String(_newId))) {
+      if (!_fEntry.sessions) _fEntry.sessions = [];
+      _fEntry.sessions.push({ date, notes: 'Dream: ' + title, dreamId: String(_newId) });
+    }
+    saveEmotionEntries(_fEntries);
+  }
   saveUserDreams();
   // Link dream to selected place
   const _selectedPlaceId = (document.getElementById('f-place-id')||{}).value || '';
@@ -13281,7 +13336,8 @@ function addDream(){
   const _fpsel = document.getElementById('f-place-selected'); if(_fpsel) _fpsel.innerHTML='';
   const _fppick = document.getElementById('f-place-picker'); if(_fppick) _fppick.style.display='none';
   const _fptbtn = document.getElementById('f-place-toggle-btn'); if(_fptbtn) _fptbtn.textContent='◈ Pick Place';
-  ['f-title','f-date','f-ctx','f-body','f-interp'].forEach(id=>{const el=document.getElementById(id);if(el){el.value='';el.style.color='';el.style.fontStyle='';delete el.dataset.manuallyEdited;}});
+  ['f-title','f-date','f-ctx','f-body','f-interp','f-feeling-word'].forEach(id=>{const el=document.getElementById(id);if(el){el.value='';el.style.color='';el.style.fontStyle='';delete el.dataset.manuallyEdited;}});
+  const _fChips = document.getElementById('f-feeling-chips'); if(_fChips) _fChips.innerHTML='';
   const _aOv=document.getElementById('add-ov');if(_aOv)delete _aOv.dataset.computedAstro;
   const ra=document.getElementById('f-readings-area'); if(ra) ra.style.display='none';
   const at=document.getElementById('f-astro-reading-preview'); if(at) at.style.display='none';
@@ -22416,6 +22472,8 @@ function openAdd() {
   document.getElementById('f-viv').value = 5;
   document.getElementById('f-viv-val').textContent = '5';
   document.getElementById('f-viv-dots').innerHTML = renderVivBar(5);
+  // Populate feeling chips from existing dictionary
+  setTimeout(() => renderFeelingChipsFor('f-feeling-word', 'f-feeling-chips'), 50);
   document.getElementById('add-ov').classList.add('open');
 }
 
