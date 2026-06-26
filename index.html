@@ -454,7 +454,6 @@ h1 em { display:block; font-style:italic; font-weight:300; font-size:.42em; lett
     <button class="sub-tab-btn" id="sub-btn-gateway" onclick="switchPractice('gateway',this)">◈ Gateway</button>
     <button class="sub-tab-btn" id="sub-btn-moonintent" onclick="switchPractice('moonintent',this)">🌑 Moon</button>
     <button class="sub-tab-btn" id="sub-btn-manifesting" onclick="switchPractice('manifesting',this)">✧ Manifesting</button>
-    <button class="sub-tab-btn" id="sub-btn-feelings" onclick="switchPractice('feelings',this)">💫 Feelings</button>
   </div>
   <!-- Tools sub-bar -->
   <div id="sub-bar-tools" style="display:none;white-space:nowrap;">
@@ -473,6 +472,7 @@ h1 em { display:block; font-style:italic; font-weight:300; font-size:.42em; lett
     <button class="sub-tab-btn active" id="sub-btn-channel-g" onclick="switchGrimoire('channel',this)">◈ The Channel</button>
     <button class="sub-tab-btn" id="sub-btn-charts" onclick="switchGrimoire('charts',this)">◉ Charts</button>
     <button class="sub-tab-btn" id="sub-btn-comms-g" onclick="switchGrimoire('comms',this)">📡 Signals</button>
+    <button class="sub-tab-btn" id="sub-btn-feelings-g" onclick="switchGrimoire('feelings',this)">💫 Feelings</button>
     <button class="sub-tab-btn" id="sub-btn-beings" onclick="switchGrimoire('beings',this)">✦ Beings</button>
     <button class="sub-tab-btn" id="sub-btn-visitations-g" onclick="switchGrimoire('visitations',this)">✦ Presences</button>
     <button class="sub-tab-btn" id="sub-btn-elixirs-g" onclick="switchGrimoire('elixirs',this)">⬡ Elixirs</button>
@@ -513,6 +513,9 @@ h1 em { display:block; font-style:italic; font-weight:300; font-size:.42em; lett
   <!-- ══ TODAY PANEL ══ -->
   <div id="sanctum-panel-today" style="max-width:720px;margin:0 auto;">
 
+    <!-- ✦ TODAY'S FEELING ✦ -->
+    <div id="feeling-today-widget" style="margin-bottom:20px;"></div>
+
     <!-- ✦ LIVE SKY ✦ -->
     <div id="sanctum-sky" style="margin-bottom:28px;">
       <div style="font-family:'Space Mono',monospace;font-size:.52rem;color:rgba(201,185,154,.4);letter-spacing:.12em;text-transform:uppercase;margin-bottom:14px;">✦ The Sky Right Now</div>
@@ -528,9 +531,6 @@ h1 em { display:block; font-style:italic; font-weight:300; font-size:.42em; lett
         <div class="horo-card-loading">Loading…</div>
       </div>
     </div>
-
-    <!-- ✦ TODAY'S FEELING ✦ -->
-    <div id="feeling-today-widget" style="margin-bottom:20px;"></div>
 
     <!-- ✦ DAILY MANTRA ✦ -->
     <div id="sanctum-mantra-wrap" style="margin-bottom:20px;">
@@ -10286,6 +10286,12 @@ function submitCheckin(skipBlurb) {
       myNotes: '',
       myColor: '',
       myColorLabel: '',
+      myElement: '',
+      myTexture: '',
+      myTemperature: '',
+      mySeason: '',
+      mySensation: '',
+      myImages: '',
       tags: [],
       sessions: [],
       aiColors: [], aiElement: '', aiDirection: '', aiScents: [], aiSound: '',
@@ -10378,7 +10384,6 @@ function openFeelingLogModal(word, existingEntryId, isFromWidget) {
   const entries = getEmotionEntries();
   const entry = existingEntryId ? entries.find(e => e.id === existingEntryId) : entries.find(e => e.word === word);
 
-  // Build modal
   const overlay = document.createElement('div');
   overlay.id = 'feeling-modal-overlay';
   overlay.style.cssText = 'position:fixed;inset:0;background:rgba(17,15,26,.85);z-index:9000;display:flex;align-items:flex-start;justify-content:center;padding:20px;overflow-y:auto;';
@@ -10386,8 +10391,15 @@ function openFeelingLogModal(word, existingEntryId, isFromWidget) {
   const modal = document.createElement('div');
   modal.style.cssText = 'background:#1a1626;border:1px solid rgba(201,107,138,.25);max-width:600px;width:100%;padding:28px;margin:auto;position:relative;';
 
-  // Today's session to show in the textarea
   const todaySession = entry ? (entry.sessions||[]).find(s => s.date === today) : null;
+
+  // Helper for a labeled single-line input
+  const field = (label, id, val, placeholder, type='text') =>
+    `<div style="margin-bottom:12px;">
+      <div style="font-family:'Space Mono',monospace;font-size:.41rem;color:rgba(201,185,154,.38);letter-spacing:.08em;text-transform:uppercase;margin-bottom:5px;">${label}</div>
+      <input type="${type}" id="${id}" value="${(val||'').replace(/"/g,'&quot;')}" placeholder="${placeholder}"
+        style="width:100%;background:rgba(255,255,255,.04);border:1px solid rgba(201,185,154,.12);color:var(--parchment);font-family:'Cormorant Garamond',serif;font-size:.95rem;padding:7px 11px;outline:none;box-sizing:border-box;">
+    </div>`;
 
   modal.innerHTML = `
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
@@ -10398,33 +10410,29 @@ function openFeelingLogModal(word, existingEntryId, isFromWidget) {
       <button onclick="document.getElementById('feeling-modal-overlay').remove()" style="background:none;border:none;color:rgba(201,185,154,.4);font-size:1.2rem;cursor:pointer;">✕</button>
     </div>
 
+    <!-- Session notes -->
     <div style="margin-bottom:18px;">
-      <div style="font-family:'Space Mono',monospace;font-size:.46rem;color:rgba(201,185,154,.45);letter-spacing:.08em;text-transform:uppercase;margin-bottom:8px;">What came up for you — colors, sensations, images, body feelings, sounds, anything</div>
-      <textarea id="feeling-session-notes" rows="6" placeholder="Write anything that arose when you felt into this emotion — colors, textures, sensations in the body, images, sounds, temperatures, memories, symbols…"
-        style="width:100%;background:rgba(255,255,255,.04);border:1px solid rgba(201,107,138,.2);color:var(--parchment);font-family:'Cormorant Garamond',serif;font-size:1rem;padding:10px 13px;outline:none;resize:vertical;line-height:1.7;box-sizing:border-box;">${todaySession ? todaySession.notes : ''}</textarea>
+      <div style="font-family:'Space Mono',monospace;font-size:.44rem;color:rgba(201,185,154,.45);letter-spacing:.08em;text-transform:uppercase;margin-bottom:8px;">Today's session — what came up?</div>
+      <textarea id="feeling-session-notes" rows="4" placeholder="Anything that arose — images, memories, symbols, words, body feelings…"
+        style="width:100%;background:rgba(255,255,255,.04);border:1px solid rgba(201,107,138,.18);color:var(--parchment);font-family:'Cormorant Garamond',serif;font-size:1rem;padding:10px 13px;outline:none;resize:vertical;line-height:1.7;box-sizing:border-box;">${todaySession ? todaySession.notes : ''}</textarea>
     </div>
 
     ${entry && entry.sessions && entry.sessions.filter(s => s.date !== today).length ? `
-    <div style="margin-bottom:18px;">
-      <div style="font-family:'Space Mono',monospace;font-size:.44rem;color:rgba(201,185,154,.3);letter-spacing:.07em;text-transform:uppercase;margin-bottom:8px;">Past sessions with ${word}</div>
-      <div style="display:flex;flex-direction:column;gap:6px;max-height:160px;overflow-y:auto;">
+    <div style="margin-bottom:16px;">
+      <div style="font-family:'Space Mono',monospace;font-size:.42rem;color:rgba(201,185,154,.28);letter-spacing:.07em;text-transform:uppercase;margin-bottom:6px;">Past sessions</div>
+      <div style="display:flex;flex-direction:column;gap:5px;max-height:120px;overflow-y:auto;">
         ${entry.sessions.filter(s => s.date !== today).slice().reverse().map(s => `
-          <div style="padding:8px 12px;background:rgba(255,255,255,.02);border-left:2px solid rgba(201,107,138,.2);">
-            <div style="font-family:'Space Mono',monospace;font-size:.44rem;color:rgba(201,185,154,.35);margin-bottom:4px;">${s.date}</div>
-            <div style="font-size:.9rem;color:rgba(240,235,224,.6);font-style:italic;line-height:1.6;">${(s.notes||'').slice(0,200)}${s.notes&&s.notes.length>200?'…':''}</div>
+          <div style="padding:7px 11px;background:rgba(255,255,255,.02);border-left:2px solid rgba(201,107,138,.18);">
+            <div style="font-family:'Space Mono',monospace;font-size:.42rem;color:rgba(201,185,154,.3);margin-bottom:3px;">${s.date}</div>
+            <div style="font-size:.88rem;color:rgba(240,235,224,.55);font-style:italic;line-height:1.55;">${(s.notes||'').slice(0,180)}${s.notes&&s.notes.length>180?'…':''}</div>
           </div>`).join('')}
       </div>
     </div>` : ''}
 
-    <div style="margin-bottom:18px;">
-      <div style="font-family:'Space Mono',monospace;font-size:.46rem;color:rgba(201,185,154,.45);letter-spacing:.08em;text-transform:uppercase;margin-bottom:8px;">Overall notes & reflections on this emotion (optional, saved to the card)</div>
-      <textarea id="feeling-main-notes" rows="3" placeholder="Ongoing thoughts on this feeling — how it shows up in your life, what it means to you, patterns you notice…"
-        style="width:100%;background:rgba(255,255,255,.04);border:1px solid rgba(201,107,138,.15);color:var(--parchment);font-family:'Cormorant Garamond',serif;font-size:.95rem;padding:10px 13px;outline:none;resize:vertical;line-height:1.7;box-sizing:border-box;">${entry ? (entry.myNotes||'') : ''}</textarea>
-    </div>
-
+    <!-- Valence + Intensity -->
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;">
       <div style="flex:1;min-width:120px;">
-        <div style="font-family:'Space Mono',monospace;font-size:.44rem;color:rgba(201,185,154,.35);letter-spacing:.07em;text-transform:uppercase;margin-bottom:6px;">Valence</div>
+        <div style="font-family:'Space Mono',monospace;font-size:.41rem;color:rgba(201,185,154,.35);letter-spacing:.07em;text-transform:uppercase;margin-bottom:5px;">Valence</div>
         <select id="feeling-valence" style="width:100%;background:rgba(255,255,255,.04);border:1px solid rgba(201,107,138,.15);color:var(--parchment);font-family:'Cormorant Garamond',serif;font-size:.95rem;padding:7px 10px;outline:none;">
           <option value="">—</option>
           <option value="positive" ${entry&&entry.valence==='positive'?'selected':''}>Positive</option>
@@ -10433,37 +10441,55 @@ function openFeelingLogModal(word, existingEntryId, isFromWidget) {
           <option value="complex" ${entry&&entry.valence==='complex'?'selected':''}>Complex</option>
         </select>
       </div>
-      <div style="flex:1;min-width:120px;">
-        <div style="font-family:'Space Mono',monospace;font-size:.44rem;color:rgba(201,185,154,.35);letter-spacing:.07em;text-transform:uppercase;margin-bottom:6px;">Intensity (1–5)</div>
+      <div style="flex:1;min-width:100px;">
+        <div style="font-family:'Space Mono',monospace;font-size:.41rem;color:rgba(201,185,154,.35);letter-spacing:.07em;text-transform:uppercase;margin-bottom:5px;">Intensity (1–5)</div>
         <input type="number" id="feeling-intensity" min="1" max="5" value="${entry&&entry.intensity||''}" placeholder="1–5"
           style="width:100%;background:rgba(255,255,255,.04);border:1px solid rgba(201,107,138,.15);color:var(--parchment);font-family:'Cormorant Garamond',serif;font-size:.95rem;padding:7px 10px;outline:none;">
       </div>
     </div>
 
-    <div style="margin-bottom:20px;padding:14px 16px;background:rgba(255,255,255,.02);border:1px solid rgba(201,185,154,.08);">
-      <div style="font-family:'Space Mono',monospace;font-size:.44rem;color:rgba(201,185,154,.4);letter-spacing:.08em;text-transform:uppercase;margin-bottom:10px;">◉ Your Color for This Emotion</div>
-      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
-        <div style="position:relative;">
+    <!-- Structured personal associations -->
+    <div style="margin-bottom:20px;padding:16px;background:rgba(255,255,255,.02);border:1px solid rgba(201,185,154,.08);">
+      <div style="font-family:'Space Mono',monospace;font-size:.44rem;color:rgba(201,185,154,.4);letter-spacing:.1em;text-transform:uppercase;margin-bottom:14px;">◉ Your Associations</div>
+
+      <!-- Color -->
+      <div style="margin-bottom:14px;">
+        <div style="font-family:'Space Mono',monospace;font-size:.41rem;color:rgba(201,185,154,.38);letter-spacing:.08em;text-transform:uppercase;margin-bottom:7px;">Color</div>
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
           <input type="color" id="feeling-my-color" value="${entry&&entry.myColor||'#c9a84c'}"
-            style="width:48px;height:48px;border:2px solid rgba(201,185,154,.2);border-radius:4px;background:none;cursor:pointer;padding:2px;">
-        </div>
-        <div style="flex:1;min-width:140px;">
-          <div style="font-family:'Space Mono',monospace;font-size:.41rem;color:rgba(201,185,154,.3);margin-bottom:5px;">Name it (optional)</div>
-          <input type="text" id="feeling-my-color-label" value="${entry&&entry.myColorLabel||''}" placeholder="e.g. warm gold, deep rose…"
-            style="width:100%;background:rgba(255,255,255,.03);border:1px solid rgba(201,185,154,.12);color:var(--parchment);font-family:'Cormorant Garamond',serif;font-size:.9rem;padding:6px 10px;outline:none;box-sizing:border-box;">
+            style="width:42px;height:42px;border:2px solid rgba(201,185,154,.2);border-radius:3px;background:none;cursor:pointer;padding:2px;flex-shrink:0;">
+          <input type="text" id="feeling-my-color-label" value="${entry&&entry.myColorLabel||''}" placeholder="Name it — e.g. robin's egg blue"
+            style="flex:1;min-width:120px;background:rgba(255,255,255,.03);border:1px solid rgba(201,185,154,.12);color:var(--parchment);font-family:'Cormorant Garamond',serif;font-size:.9rem;padding:6px 10px;outline:none;box-sizing:border-box;">
         </div>
       </div>
-      <div style="margin-top:8px;font-family:'Space Mono',monospace;font-size:.4rem;color:rgba(201,185,154,.25);">This is your color — it lives on the card and on the wheel. The AI will also suggest colors separately.</div>
+
+      ${field('Element', 'feeling-my-element', entry&&entry.myElement||'', 'e.g. Water, Air, Fire, Earth, Spirit…')}
+      ${field('Texture', 'feeling-my-texture', entry&&entry.myTexture||'', 'e.g. velvet, static, smooth stone…')}
+      ${field('Temperature', 'feeling-my-temperature', entry&&entry.myTemperature||'', 'e.g. warm, cool, neutral, electric…')}
+      ${field('Season', 'feeling-my-season', entry&&entry.mySeason||'', 'e.g. late summer, first frost, inner spring…')}
+      ${field('Sensation / Body', 'feeling-my-sensation', entry&&entry.mySensation||'', 'e.g. chest expansion, jaw release, grounding…')}
+
+      <div style="margin-bottom:12px;">
+        <div style="font-family:'Space Mono',monospace;font-size:.41rem;color:rgba(201,185,154,.38);letter-spacing:.08em;text-transform:uppercase;margin-bottom:5px;">Images (one per line)</div>
+        <textarea id="feeling-my-images" rows="2" placeholder="Any images or scenes that arose…"
+          style="width:100%;background:rgba(255,255,255,.04);border:1px solid rgba(201,185,154,.12);color:var(--parchment);font-family:'Cormorant Garamond',serif;font-size:.9rem;padding:7px 11px;outline:none;resize:vertical;line-height:1.6;box-sizing:border-box;">${entry&&entry.myImages||''}</textarea>
+      </div>
+
+      <div>
+        <div style="font-family:'Space Mono',monospace;font-size:.41rem;color:rgba(201,185,154,.38);letter-spacing:.08em;text-transform:uppercase;margin-bottom:5px;">Other / General Notes</div>
+        <textarea id="feeling-main-notes" rows="3" placeholder="Anything else — patterns, life context, how this feeling shows up for you…"
+          style="width:100%;background:rgba(255,255,255,.04);border:1px solid rgba(201,185,154,.12);color:var(--parchment);font-family:'Cormorant Garamond',serif;font-size:.9rem;padding:7px 11px;outline:none;resize:vertical;line-height:1.65;box-sizing:border-box;">${entry ? (entry.myNotes||'') : ''}</textarea>
+      </div>
     </div>
 
     <div style="display:flex;gap:8px;flex-wrap:wrap;">
       <button onclick="saveFeelingSession('${word}', ${entry ? "'"+entry.id+"'" : 'null'}, ${isFromWidget||false})"
         style="flex:1;font-family:'Space Mono',monospace;font-size:.52rem;letter-spacing:.09em;text-transform:uppercase;padding:11px 16px;background:rgba(201,107,138,.08);border:1px solid rgba(201,107,138,.4);color:rgba(201,107,138,.85);cursor:pointer;">
-        ✦ Save Session
+        ✦ Save
       </button>
       <button onclick="saveFeelingSessionAndGenerate('${word}', ${entry ? "'"+entry.id+"'" : 'null'}, ${isFromWidget||false})"
         style="flex:1;font-family:'Space Mono',monospace;font-size:.52rem;letter-spacing:.09em;text-transform:uppercase;padding:11px 16px;background:rgba(107,79,138,.08);border:1px solid rgba(107,79,138,.35);color:rgba(155,107,171,.8);cursor:pointer;">
-        ✦ Save + Generate AI Associations
+        ✦ Save + AI
       </button>
     </div>
     <div id="feeling-modal-status" style="margin-top:12px;font-family:'Space Mono',monospace;font-size:.48rem;color:rgba(201,185,154,.45);min-height:18px;"></div>
@@ -10480,6 +10506,12 @@ function saveFeelingSession(word, existingId, isFromWidget, thenGenerate) {
   const intensity = parseInt(document.getElementById('feeling-intensity')?.value || '') || null;
   const myColor = document.getElementById('feeling-my-color')?.value || '';
   const myColorLabel = (document.getElementById('feeling-my-color-label')?.value || '').trim();
+  const myElement = (document.getElementById('feeling-my-element')?.value || '').trim();
+  const myTexture = (document.getElementById('feeling-my-texture')?.value || '').trim();
+  const myTemperature = (document.getElementById('feeling-my-temperature')?.value || '').trim();
+  const mySeason = (document.getElementById('feeling-my-season')?.value || '').trim();
+  const mySensation = (document.getElementById('feeling-my-sensation')?.value || '').trim();
+  const myImages = (document.getElementById('feeling-my-images')?.value || '').trim();
   const today = new Date().toLocaleDateString('en-CA');
 
   const entries = getEmotionEntries();
@@ -10495,6 +10527,12 @@ function saveFeelingSession(word, existingId, isFromWidget, thenGenerate) {
       myNotes: myNotes,
       myColor: myColor || '',
       myColorLabel: myColorLabel || '',
+      myElement: myElement || '',
+      myTexture: myTexture || '',
+      myTemperature: myTemperature || '',
+      mySeason: mySeason || '',
+      mySensation: mySensation || '',
+      myImages: myImages || '',
       tags: [],
       sessions: [],
       aiColors: [], aiElement: '', aiDirection: '', aiScents: [], aiSound: '',
@@ -10508,6 +10546,12 @@ function saveFeelingSession(word, existingId, isFromWidget, thenGenerate) {
     if (myNotes) entry.myNotes = myNotes;
     if (myColor) entry.myColor = myColor;
     if (myColorLabel !== undefined) entry.myColorLabel = myColorLabel;
+    if (myElement) entry.myElement = myElement;
+    if (myTexture) entry.myTexture = myTexture;
+    if (myTemperature) entry.myTemperature = myTemperature;
+    if (mySeason) entry.mySeason = mySeason;
+    if (mySensation) entry.mySensation = mySensation;
+    if (myImages) entry.myImages = myImages;
   }
 
   // Upsert today's session
@@ -10545,15 +10589,11 @@ async function saveFeelingSessionAndGenerate(word, existingId, isFromWidget) {
     return;
   }
 
-  // Gather all session notes to give AI context
-  const allNotes = (entry.sessions||[]).map(s => '['+s.date+']: '+s.notes).join('\n');
+  const allNotes = (entry.sessions||[]).map(s => '['+s.date+']: '+s.notes).filter(s=>s.trim()).join('\n');
 
-  const prompt = `You are a synesthetic spiritual guide helping someone build a personal emotion dictionary through somatic and meditative exploration. The practitioner has been feeling into the emotion "${word}" and recorded what arose.
+  const prompt = `You are a synesthetic spiritual guide helping someone build a personal emotion dictionary through somatic and meditative exploration. The practitioner has been feeling into the emotion "${word}".
 
-THEIR PERSONAL NOTES & SESSION LOGS:
-${allNotes || '(No personal notes yet — generate based on the emotion alone)'}
-
-Generate associations for this emotion. These are your ARCHETYPAL/UNIVERSAL resonances — separate from what arose for her personally.
+Generate ARCHETYPAL/UNIVERSAL associations for this emotion — the symbolic, cross-cultural resonances that exist independently of any individual's experience.
 
 Respond ONLY in valid JSON. No markdown, no backticks, no preamble. Exactly this structure:
 {
@@ -10863,10 +10903,18 @@ function openFeelingDetailModal(entryId) {
       </div>
     </div>` : ''}
 
-    ${e.myNotes ? `
-    <div style="margin-bottom:20px;padding:14px 18px;background:rgba(255,255,255,.02);border-left:2px solid rgba(201,107,138,.3);">
-      <div style="font-family:'Space Mono',monospace;font-size:.43rem;color:rgba(201,185,154,.4);letter-spacing:.08em;text-transform:uppercase;margin-bottom:6px;">My Reflections</div>
-      <div style="font-size:.95rem;color:rgba(240,235,224,.75);font-style:italic;line-height:1.75;">${e.myNotes}</div>
+    ${(e.myNotes||e.myElement||e.myTexture||e.myTemperature||e.mySeason||e.mySensation||e.myImages) ? `
+    <div style="margin-bottom:20px;padding:16px 18px;background:rgba(201,107,138,.03);border:1px solid rgba(201,107,138,.12);">
+      <div style="font-family:'Space Mono',monospace;font-size:.43rem;color:rgba(201,107,138,.55);letter-spacing:.1em;text-transform:uppercase;margin-bottom:14px;">◉ Your Associations</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px 16px;">
+        ${e.myElement?`<div><div style="font-family:'Space Mono',monospace;font-size:.41rem;color:rgba(201,185,154,.35);text-transform:uppercase;margin-bottom:4px;">Element</div><div style="font-family:'Cormorant Garamond',serif;font-size:.95rem;color:rgba(240,235,224,.78);">${e.myElement}</div></div>`:''}
+        ${e.myTexture?`<div><div style="font-family:'Space Mono',monospace;font-size:.41rem;color:rgba(201,185,154,.35);text-transform:uppercase;margin-bottom:4px;">Texture</div><div style="font-family:'Cormorant Garamond',serif;font-size:.95rem;color:rgba(240,235,224,.78);">${e.myTexture}</div></div>`:''}
+        ${e.myTemperature?`<div><div style="font-family:'Space Mono',monospace;font-size:.41rem;color:rgba(201,185,154,.35);text-transform:uppercase;margin-bottom:4px;">Temperature</div><div style="font-family:'Cormorant Garamond',serif;font-size:.95rem;color:rgba(240,235,224,.78);">${e.myTemperature}</div></div>`:''}
+        ${e.mySeason?`<div><div style="font-family:'Space Mono',monospace;font-size:.41rem;color:rgba(201,185,154,.35);text-transform:uppercase;margin-bottom:4px;">Season</div><div style="font-family:'Cormorant Garamond',serif;font-size:.95rem;color:rgba(240,235,224,.78);">${e.mySeason}</div></div>`:''}
+        ${e.mySensation?`<div style="grid-column:span 2;"><div style="font-family:'Space Mono',monospace;font-size:.41rem;color:rgba(201,185,154,.35);text-transform:uppercase;margin-bottom:4px;">Sensation / Body</div><div style="font-family:'Cormorant Garamond',serif;font-size:.95rem;color:rgba(240,235,224,.78);">${e.mySensation}</div></div>`:''}
+        ${e.myImages?`<div style="grid-column:span 2;"><div style="font-family:'Space Mono',monospace;font-size:.41rem;color:rgba(201,185,154,.35);text-transform:uppercase;margin-bottom:4px;">Images</div><div style="font-family:'Cormorant Garamond',serif;font-size:.95rem;color:rgba(240,235,224,.78);font-style:italic;line-height:1.65;">${e.myImages}</div></div>`:''}
+        ${e.myNotes?`<div style="grid-column:span 2;"><div style="font-family:'Space Mono',monospace;font-size:.41rem;color:rgba(201,185,154,.35);text-transform:uppercase;margin-bottom:4px;">Other Notes</div><div style="font-family:'Cormorant Garamond',serif;font-size:.95rem;color:rgba(240,235,224,.75);font-style:italic;line-height:1.65;">${e.myNotes}</div></div>`:''}
+      </div>
     </div>` : ''}
 
     ${e.sessions && e.sessions.length ? `
@@ -10944,13 +10992,11 @@ async function generateFeelingAIForExisting(entryId) {
   const e = entries.find(x => x.id === entryId);
   if (!e) return;
 
-  const allNotes = (e.sessions||[]).map(s => '['+s.date+']: '+s.notes).join('\n');
-  const prompt = `You are a synesthetic spiritual guide helping someone build a personal emotion dictionary. The practitioner has been feeling into the emotion "${e.word}".
+  const allNotes = (e.sessions||[]).map(s => '['+s.date+']: '+s.notes).filter(s=>s.trim()).join('\n');
 
-THEIR PERSONAL NOTES:
-${allNotes || '(No personal notes yet — generate based on the emotion alone)'}
+  const prompt = `You are a synesthetic spiritual guide helping someone build a personal emotion dictionary. Generate ARCHETYPAL/UNIVERSAL associations for the emotion "${e.word}" — the symbolic, cross-cultural resonances that exist independently of any individual's experience.
 
-Generate archetypal/universal associations. Respond ONLY in valid JSON. No markdown, no backticks:
+Respond ONLY in valid JSON. No markdown, no backticks:
 {
   "colors": ["color1", "color2", "color3"],
   "element": "Fire | Water | Air | Earth | Spirit | Ether",
@@ -10984,10 +11030,13 @@ Generate archetypal/universal associations. Respond ONLY in valid JSON. No markd
     e.aiRitual = parsed.ritual || '';
     e.aiGeneratedDate = new Date().toLocaleDateString('en-CA');
     saveEmotionEntries(entries);
-    if (status) status.textContent = '✦ Done. Close and reopen to see AI associations.';
+    if (status) status.textContent = '✦ Done.';
     // Refresh dictionary if open
     const dest = document.getElementById('gt-content');
     if (dest && dest.querySelector('.feeling-dict-container')) renderFeelingsDictionary(dest);
+    // Re-open the detail modal to show updated AI associations
+    const overlay = document.getElementById('feeling-detail-overlay');
+    if (overlay) { overlay.remove(); openFeelingDetailModal(entryId); }
   } catch(err) {
     if (status) status.textContent = 'Error. Try again.';
   }
@@ -11063,21 +11112,25 @@ function renderFeelingTodayWidget() {
   const borderStrong  = hex ? hexToRgba(hex, .55) : 'rgba(201,107,138,.4)';
   const borderSoft    = hex ? hexToRgba(hex, .18) : 'rgba(201,107,138,.15)';
   const bgTint        = hex ? hexToRgba(hex, .05) : 'rgba(201,107,138,.03)';
-  const labelColor    = hex ? hexToRgba(hex, .6)  : 'rgba(201,107,138,.55)';
-  const wordColor     = hex ? hex                  : 'rgba(240,235,224,.92)';
+  const labelColor    = hex ? hexToRgba(hex, .7)  : 'rgba(201,107,138,.55)';
+  const wordColor     = 'rgba(240,235,224,.92)'; // always readable — color lives in border/accents
+  const swatchColor   = hex ? hex : null;
   const btnBorder     = hex ? hexToRgba(hex, .45) : 'rgba(201,107,138,.4)';
   const btnText       = hex ? hexToRgba(hex, .85) : 'rgba(201,107,138,.75)';
-  const loggedColor   = hex ? hexToRgba(hex, .5)  : 'rgba(201,107,138,.45)';
+  const loggedColor   = hex ? hexToRgba(hex, .55)  : 'rgba(201,107,138,.45)';
 
   el.innerHTML = `
     <div style="padding:16px 20px;background:${bgTint};border:1px solid ${borderSoft};border-left:2px solid ${borderStrong};">
       <div style="font-family:'Space Mono',monospace;font-size:.48rem;letter-spacing:.1em;text-transform:uppercase;color:${labelColor};margin-bottom:10px;">💫 Today's Feeling to Feel Into</div>
-      <div style="font-family:'Cormorant Garamond',serif;font-size:1.6rem;font-weight:300;font-style:italic;color:${wordColor};margin-bottom:10px;">${word}</div>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+        ${swatchColor ? `<div style="width:28px;height:28px;flex-shrink:0;background:${swatchColor};border:1px solid rgba(255,255,255,.15);" title="${entry.myColorLabel||swatchColor}"></div>` : ''}
+        <div style="font-family:'Cormorant Garamond',serif;font-size:1.6rem;font-weight:300;font-style:italic;color:${wordColor};">${word}</div>
+      </div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;">
         <button onclick="openTodayFeelingLog()" style="font-family:'Space Mono',monospace;font-size:.5rem;letter-spacing:.08em;text-transform:uppercase;padding:6px 14px;background:transparent;border:1px solid ${btnBorder};color:${btnText};cursor:pointer;">
           ${loggedToday ? '+ Add More' : '+ Log Associations'}
         </button>
-        <button onclick="switchTab('practice',document.getElementById('tab-btn-practice'));setTimeout(()=>switchPractice('feelings'),100);" style="font-family:'Space Mono',monospace;font-size:.5rem;letter-spacing:.08em;text-transform:uppercase;padding:6px 14px;background:transparent;border:1px solid rgba(201,185,154,.15);color:rgba(201,185,154,.4);cursor:pointer;">
+        <button onclick="switchTab('grimoire',document.getElementById('tab-btn-grimoire'));setTimeout(()=>switchGrimoire('feelings'),100);" style="font-family:'Space Mono',monospace;font-size:.5rem;letter-spacing:.08em;text-transform:uppercase;padding:6px 14px;background:transparent;border:1px solid rgba(201,185,154,.15);color:rgba(201,185,154,.4);cursor:pointer;">
           View Dictionary
         </button>
       </div>
@@ -11624,7 +11677,7 @@ function runGlobalSearch(raw) {
     deity: { label: 'Deity', color: 'rgba(201,168,76,.8)', icon: '✦', open: e => { switchTab('tools', document.getElementById('tab-btn-tools')); setTimeout(()=>switchTools('deities'), 100); } },
     garden: { label: 'Garden', color: 'rgba(80,160,100,.8)', icon: '🌱', open: e => { switchTab('practice', document.getElementById('tab-btn-practice')); setTimeout(()=>switchPractice('garden'), 100); } },
     dreamplace: { label: 'Dream Place', color: 'var(--teal)', icon: '◈', open: e => { switchTab('dreams', document.getElementById('tab-btn-dreams')); setTimeout(()=>{ switchDreams('dreamplaces'); setTimeout(()=>openDreamPlace(e.id), 150); }, 100); } },
-    emotion: { label: 'Feeling', color: 'rgba(201,107,138,.8)', icon: '💫', open: e => { switchTab('practice', document.getElementById('tab-btn-practice')); setTimeout(()=>switchPractice('feelings'), 100); } }
+    emotion: { label: 'Feeling', color: 'rgba(201,107,138,.8)', icon: '💫', open: e => { switchTab('grimoire', document.getElementById('tab-btn-grimoire')); setTimeout(()=>switchGrimoire('feelings'), 100); } }
   };
 
   function matchGeneral(e) {
@@ -11872,9 +11925,6 @@ function switchPractice(type, btn) {
   } else if (type === 'manifesting') {
     dest.innerHTML = '';
     renderManifestations(dest);
-  } else if (type === 'feelings') {
-    dest.innerHTML = '';
-    renderFeelingsDictionary(dest);
   } else if (type === 'gateway') {
     dest.innerHTML = '';
     renderGateway(dest);
@@ -11952,6 +12002,7 @@ function switchGrimoire(type, btn) {
   if (type === 'places') { dest.innerHTML = ''; renderPlaces(); return; }
   if (type === 'rituals') { dest.innerHTML = ''; renderRitualsTab(); return; }
   if (type === 'visitations') { dest.innerHTML = ''; renderVisitations(dest); return; }
+  if (type === 'feelings') { dest.innerHTML = ''; renderFeelingsDictionary(dest); return; }
   const panelMap = {charts:'charts', beings:'people', elixirs:'elixirs', songs:'songs', comms:'comms'};
   const panelId = panelMap[type] || type;
   const src = document.getElementById('tab-' + panelId);
@@ -12177,6 +12228,7 @@ function openDream(d){
     <button onclick="saveVivFromModal(${d.id},document.querySelector('#viv-edit-${d.id} input').value)" style="font-family:'Space Mono',monospace;font-size:.55rem;letter-spacing:.08em;padding:5px 12px;background:var(--moon);color:var(--ink);border:none;cursor:pointer;">Save</button>
   </div>
     <div class="flag-row">${flagChips}</div>
+    ${d.feelingWord ? `<div style="margin-bottom:12px;"><span onclick="switchTab('grimoire',document.getElementById('tab-btn-grimoire'));setTimeout(()=>switchGrimoire('feelings'),100);" style="display:inline-flex;align-items:center;gap:6px;font-family:'Space Mono',monospace;font-size:.48rem;padding:4px 11px;border:1px solid rgba(201,107,138,.3);color:rgba(201,107,138,.7);cursor:pointer;" title="View in Feelings Dictionary">💫 ${d.feelingWord}</span></div>` : ''}
     ${renderSigRow(d.id, dreamSig)}
     ${d.ctx?`<div class="m-sec"><div class="m-lbl">Waking Life Context</div><div class="m-ctx">${_safeCtx}</div></div>`:''}
     <div class="m-sec">
@@ -12594,7 +12646,37 @@ function openEditDream(dreamId) {
   placeToggleBtn.onclick=function(){var isOpen=edPlacePicker.style.display!=='none';edPlacePicker.style.display=isOpen?'none':'block';placeToggleBtn.textContent=isOpen?'◈ Pick Place':'✕ Close';};
   inner.appendChild(placeF);
 
-  // Buttons
+  // Feeling tag
+  var feelF = document.createElement('div');
+  feelF.className = 'form-field';
+  feelF.style.marginTop = '6px';
+  var feelLbl = document.createElement('label');
+  feelLbl.textContent = 'Feeling in this dream';
+  var feelDesc = document.createElement('div');
+  feelDesc.style.cssText = "font-family:'Space Mono',monospace;font-size:.48rem;color:rgba(201,185,154,.3);margin-bottom:8px;letter-spacing:.05em;";
+  feelDesc.textContent = 'Tag an emotion — this dream will show up as a session on that feeling\'s card.';
+  var feelInput = document.createElement('input');
+  feelInput.type = 'text';
+  feelInput.id = 'ed-feeling-word';
+  feelInput.value = d.feelingWord || '';
+  feelInput.placeholder = 'e.g. Grief, Awe, Ease…';
+  feelInput.style.cssText = "width:100%;background:rgba(255,255,255,.04);border:1px solid rgba(201,107,138,.18);color:var(--parchment);font-family:'Cormorant Garamond',serif;font-size:1rem;padding:7px 12px;outline:none;box-sizing:border-box;";
+  // Autocomplete from existing feelings
+  var feelHints = document.createElement('div');
+  feelHints.style.cssText = 'display:flex;flex-wrap:wrap;gap:5px;margin-top:6px;';
+  var existingFeelings = getEmotionEntries().map(function(e){ return e.word; });
+  existingFeelings.forEach(function(w) {
+    var chip = document.createElement('span');
+    chip.textContent = w;
+    chip.style.cssText = "font-family:'Cormorant Garamond',serif;font-size:.85rem;padding:3px 9px;border:1px solid rgba(201,107,138,.2);color:rgba(240,235,224,.5);cursor:pointer;transition:all .12s;";
+    chip.onclick = function() { feelInput.value = w; feelHints.querySelectorAll('span').forEach(function(c){c.style.borderColor='rgba(201,107,138,.2)';c.style.color='rgba(240,235,224,.5)';}); chip.style.borderColor='rgba(201,107,138,.6)'; chip.style.color='rgba(240,235,224,.9)'; };
+    feelHints.appendChild(chip);
+  });
+  feelF.appendChild(feelLbl);
+  feelF.appendChild(feelDesc);
+  feelF.appendChild(feelInput);
+  if (existingFeelings.length) feelF.appendChild(feelHints);
+  inner.appendChild(feelF);
   var btnRow = document.createElement('div');
   btnRow.style.cssText = 'display:flex;gap:10px;margin-top:22px;';
   var saveBtn = document.createElement('button');
@@ -12631,6 +12713,36 @@ function saveInlineEditDream(dreamId) {
   d.cats = [...document.querySelectorAll('#ed-cats input:checked')].map(function(i){ return i.value; });
   d.people = [...document.querySelectorAll('#ed-people-chips .pchip-check.selected')].map(function(el){ return el.dataset.pid; });
   if ((d.body + d.title).toLowerCase().includes('mariam') && !d.cats.includes('mariam')) d.cats.push('mariam');
+
+  // Save feeling tag + log dream as session on that emotion's card
+  var feelingWord = ((document.getElementById('ed-feeling-word')||{}).value||'').trim();
+  d.feelingWord = feelingWord || '';
+  if (feelingWord) {
+    var feelingEntries = getEmotionEntries();
+    var feelingEntry = feelingEntries.find(function(e){ return e.word.toLowerCase() === feelingWord.toLowerCase(); });
+    if (!feelingEntry) {
+      feelingEntry = {
+        id: 'emotion_' + Date.now(),
+        word: feelingWord,
+        dateAdded: d.date || new Date().toLocaleDateString('en-CA'),
+        valence: '', intensity: null, myNotes: '', myColor: '', myColorLabel: '',
+        myElement: '', myTexture: '', myTemperature: '', mySeason: '', mySensation: '', myImages: '',
+        tags: [], sessions: [],
+        aiColors: [], aiElement: '', aiDirection: '', aiScents: [], aiSound: '',
+        aiBodySensation: '', aiCrystal: '', aiTimeOfDay: '', aiArchetype: '',
+        aiSeason: '', aiAffirmation: '', aiRitual: ''
+      };
+      feelingEntries.push(feelingEntry);
+    }
+    // Add dream as a session (by dream date, note = dream title)
+    var dreamDate = d.date || new Date().toLocaleDateString('en-CA');
+    var existingSession = (feelingEntry.sessions||[]).find(function(s){ return s.date === dreamDate && s.dreamId === String(d.id); });
+    if (!existingSession) {
+      if (!feelingEntry.sessions) feelingEntry.sessions = [];
+      feelingEntry.sessions.push({ date: dreamDate, notes: 'Dream: ' + (d.title||'Untitled'), dreamId: String(d.id) });
+    }
+    saveEmotionEntries(feelingEntries);
+  }
 
   dreams[idx] = d;
   if (d.userAdded) saveUserDreams();
@@ -16922,7 +17034,7 @@ try { renderInsights(); } catch(e) { console.error('renderInsights crashed:', e)
         if (slot) slot.style.display = 'block';
         if (bar) bar.style.display = 'block';
         const lastPractice = localStorage.getItem('gt_last_practice') || 'workings';
-        const directSub = ['journal','workings','shadow','readings','gateway','moonintent','manifesting','feelings'].includes(lastTab) ? lastTab : lastPractice;
+        const directSub = ['journal','workings','shadow','readings','gateway','moonintent','manifesting'].includes(lastTab) ? lastTab : lastPractice;
         setTimeout(()=>switchPractice(directSub), 100);
       }
       else if (resolvedTab === 'tools') {
@@ -16948,7 +17060,7 @@ try { renderInsights(); } catch(e) { console.error('renderInsights crashed:', e)
         const bar = document.getElementById('sub-bar-grimoire');
         if (slot) slot.style.display = 'block';
         if (bar) bar.style.display = 'block';
-        const gm = {'charts':'charts','people':'beings','elixirs':'elixirs','songs':'songs','comms':'comms','channel':'channel','visitations':'visitations'};
+        const gm = {'charts':'charts','people':'beings','elixirs':'elixirs','songs':'songs','comms':'comms','channel':'channel','visitations':'visitations','feelings':'feelings'};
         setTimeout(()=>switchGrimoire(gm[lastTab]||'channel'), 100);
       }
       } else {
