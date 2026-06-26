@@ -10644,49 +10644,75 @@ function renderFeelingsDictionary(dest) {
 // colorNameToCSS — used for AI color text labels → approximate CSS color
 function colorNameToCSS(name) {
   const map = {
-    // blues
+    // blues / aquas / teals
     blue:'#3060c0', 'sky blue':'#5ab0d8', 'soft sky blue':'#7ec8e3', 'pale blue':'#a0c8e8',
-    'soft blue':'#7090c0', 'midnight blue':'#1a2060', 'royal blue':'#2050a0',
-    'electric blue':'#0070ff', 'deep blue':'#1a3080', 'cornflower blue':'#6495ed',
-    'powder blue':'#b0d0e8', 'steel blue':'#4682b4', 'ice blue':'#d0eaf8',
-    'robin egg blue':'#00cccc', "robin's egg blue":'#4fb3d8', 'robin egg':'#4fb3d8',
-    cyan:'#00b8d4', teal:'#3a8080', 'teal blue':'#3a8898',
+    'pale sky blue':'#90c8e0', 'soft blue':'#7090c0', 'midnight blue':'#1a2060',
+    'royal blue':'#2050a0', 'electric blue':'#0070ff', 'deep blue':'#1a3080',
+    'cornflower blue':'#6495ed', 'powder blue':'#b0d0e8', 'steel blue':'#4682b4',
+    'ice blue':'#d0eaf8', 'soft aquamarine':'#5cc8b8', 'aquamarine':'#5cc8b8',
+    'pale aquamarine':'#a0e0d8', 'seafoam':'#6cc8a8', 'sea foam':'#6cc8a8',
+    'robin egg blue':'#4fb3d8', "robin's egg blue":'#4fb3d8', 'robin egg':'#4fb3d8',
+    cyan:'#00b8d4', teal:'#3a8080', 'teal blue':'#3a8898', turquoise:'#40c0b0',
+    'soft teal':'#5a9898', 'cerulean':'#2a8ac0', 'periwinkle':'#7070c0',
     // greens
     green:'#3a8040', emerald:'#2e8b57', 'forest green':'#2d5a1b', 'sage green':'#87a878',
     sage:'#87a878', 'soft green':'#7ab87a', lime:'#6ab830', olive:'#8a8a2a',
-    'moss green':'#6a8a4a', 'mint green':'#98e0c0', mint:'#98e0c0',
-    // reds/pinks/roses
+    'moss green':'#6a8a4a', 'mint green':'#98e0c0', mint:'#98e0c0', jade:'#3a8060',
+    'pale green':'#a0d0a0', 'soft sage':'#a0b890',
+    // reds / pinks / roses / corals
     red:'#cc2020', scarlet:'#cc2020', crimson:'#9b1a1a', 'deep red':'#7a1010',
     pink:'#d060a0', 'hot pink':'#e040a0', 'soft pink':'#e0b0bc', 'dusty rose':'#c08090',
     rose:'#c06070', coral:'#e8705a', salmon:'#e89070', 'warm pink':'#e090a0',
     'blush pink':'#e8b0b8', blush:'#e8b0b8', 'deep rose':'#a03050',
-    // purples/violets
+    'pale rose':'#f0c0c8', 'soft coral':'#f0907a',
+    // purples / violets
     purple:'#7a3fa0', 'deep purple':'#5a2080', violet:'#6b4f8a', lavender:'#b09dc0',
     'soft violet':'#9a80c0', indigo:'#4b4080', magenta:'#c040a0', lilac:'#c8a0d8',
     mauve:'#b090a0', 'dusty purple':'#9070a0', amethyst:'#9b60c0',
-    // yellows/golds/oranges
+    'pale lavender':'#d0c0e0', 'soft lavender':'#c0b0d8',
+    // yellows / golds / oranges
     yellow:'#d8c030', 'bright yellow':'#f0e030', 'pale yellow':'#f5e880',
     gold:'#c9a84c', amber:'#c9852a', 'warm gold':'#c9a84c', orange:'#e08020',
     'warm orange':'#e08030', peach:'#f0c08a', 'soft gold':'#d4b870',
-    // whites/creams/neutrals
+    'pale gold':'#e8d090', saffron:'#e8a020',
+    // whites / creams / ivories — these are LIGHT, need special handling
     white:'#f0ece0', 'pearl white':'#f0ede0', pearl:'#f0ede0', 'warm white':'#f5f0e0',
-    'cool white':'#e8f0f5', cream:'#f5eed8', ivory:'#f5f0e0', beige:'#e8d8b8',
-    'soft white':'#f0ece8', alabaster:'#f2efe8', 'off white':'#f0ece0',
-    // greys/silvers/blacks
+    'cool white':'#e8f0f5', cream:'#f5eed8', ivory:'#f5f0e0', 'warm ivory':'#f2eed8',
+    beige:'#e8d8b8', 'soft white':'#f0ece8', alabaster:'#f2efe8', 'off white':'#f0ece0',
+    'pale cream':'#f5f0e0', linen:'#f0e8d8',
+    // greys / silvers
     grey:'#909090', gray:'#909090', silver:'#c0c0c8', 'warm grey':'#9a9088',
-    'cool grey':'#8890a0', charcoal:'#404850', black:'#1a1626', 'deep black':'#0a0a14',
-    // browns/earths
+    'cool grey':'#8890a0', charcoal:'#404850', 'soft grey':'#a8a8a8',
+    // blacks
+    black:'#1a1626', 'deep black':'#0a0a14',
+    // browns / earths
     brown:'#8a6040', tan:'#c8a870', terracotta:'#c86040', rust:'#b04030',
-    copper:'#b07040', sienna:'#a05030', ochre:'#c89030',
+    copper:'#b07040', sienna:'#a05030', ochre:'#c89030', umber:'#7a5030',
   };
+
   const key = (name||'').toLowerCase().trim();
+  // Exact match
   if (map[key]) return map[key];
-  // Partial match — try each map key as substring
+  // Full substring match — key contains a known color name
   for (const [k, v] of Object.entries(map)) {
-    if (key.includes(k) || k.includes(key)) return v;
+    if (key.includes(k)) return v;
   }
-  // Last resort: return the name as-is (may work if it's a valid CSS color word)
-  return key;
+  // Word-by-word match — try each word in the name against map keys
+  const words = key.split(/\s+/);
+  for (const word of words) {
+    if (word.length > 3 && map[word]) return map[word];
+  }
+  // CSS named colors that browsers know but aren't in our map
+  const cssNative = ['aquamarine','chartreuse','chocolate','crimson','cyan','firebrick',
+    'fuchsia','goldenrod','hotpink','khaki','lavender','limegreen','magenta','maroon',
+    'mediumblue','navy','olive','orchid','peru','plum','powderblue','rosybrown',
+    'royalblue','seagreen','sienna','skyblue','slateblue','tan','thistle','tomato',
+    'turquoise','violet','wheat','yellowgreen'];
+  for (const word of words) {
+    if (cssNative.includes(word)) return word;
+  }
+  // Last resort: grey tint so swatch is always visible
+  return '#707080';
 }
 
 // hexToHue — extract HSL hue 0-360 from a hex string like #c9a84c
@@ -10859,7 +10885,7 @@ function openFeelingDetailModal(entryId) {
     <div style="margin-bottom:20px;padding:16px 18px;background:rgba(107,79,138,.04);border:1px solid rgba(107,79,138,.18);">
       <div style="font-family:'Space Mono',monospace;font-size:.43rem;color:rgba(155,107,171,.6);letter-spacing:.1em;text-transform:uppercase;margin-bottom:14px;">✦ Archetypal Associations (AI-generated ${e.aiGeneratedDate||''})</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px 16px;">
-        ${e.aiColors&&e.aiColors.length?`<div style="grid-column:span 2;"><div style="font-family:'Space Mono',monospace;font-size:.41rem;color:rgba(201,185,154,.35);text-transform:uppercase;margin-bottom:8px;">AI-Suggested Colors</div><div style="display:flex;flex-direction:column;gap:5px;">${e.aiColors.map(c=>`<div style="display:flex;align-items:center;gap:8px;"><span style="display:inline-block;width:18px;height:18px;flex-shrink:0;background:${colorNameToCSS(c)};border:1px solid rgba(255,255,255,.15);border-radius:2px;"></span><span style="font-family:'Cormorant Garamond',serif;font-size:.9rem;color:rgba(240,235,224,.65);">${c}</span></div>`).join('')}</div></div>`:''}
+        ${e.aiColors&&e.aiColors.length?`<div style="grid-column:span 2;"><div style="font-family:'Space Mono',monospace;font-size:.41rem;color:rgba(201,185,154,.35);text-transform:uppercase;margin-bottom:8px;">AI-Suggested Colors</div><div style="display:flex;flex-direction:column;gap:6px;">${e.aiColors.map(c=>{const css=colorNameToCSS(c);return `<div style="display:flex;align-items:center;gap:10px;"><div style="width:20px;height:20px;flex-shrink:0;background:${css};border:1px solid rgba(255,255,255,.35);border-radius:3px;box-shadow:inset 0 0 0 1px rgba(0,0,0,.2);"></div><span style="font-family:'Cormorant Garamond',serif;font-size:.95rem;color:rgba(240,235,224,.7);">${c}</span></div>`;}).join('')}</div></div>`:''}
         ${e.aiElement?`<div><div style="font-family:'Space Mono',monospace;font-size:.41rem;color:rgba(201,185,154,.35);text-transform:uppercase;margin-bottom:4px;">Element</div><div style="font-size:.9rem;color:rgba(240,235,224,.7);">${e.aiElement}</div></div>`:''}
         ${e.aiDirection?`<div><div style="font-family:'Space Mono',monospace;font-size:.41rem;color:rgba(201,185,154,.35);text-transform:uppercase;margin-bottom:4px;">Direction</div><div style="font-size:.9rem;color:rgba(240,235,224,.7);">${e.aiDirection}</div></div>`:''}
         ${e.aiScents&&e.aiScents.length?`<div><div style="font-family:'Space Mono',monospace;font-size:.41rem;color:rgba(201,185,154,.35);text-transform:uppercase;margin-bottom:4px;">Scents</div><div style="font-size:.9rem;color:rgba(240,235,224,.7);">${e.aiScents.join(', ')}</div></div>`:''}
