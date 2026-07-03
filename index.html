@@ -1214,6 +1214,8 @@ const ASTRO_GLOSSARY = {
   'Jupiter Rx': {emoji:'♃', title:'Jupiter Retrograde', def:'Jupiter expands, protects, and brings opportunity. In retrograde, growth turns inward — philosophical questions, questioning beliefs, and inner abundance rather than outer luck. Dreams may feel larger, more philosophical, or deal with questions of faith and meaning.'},
   'Saturn Rx':  {emoji:'♄', title:'Saturn Retrograde', def:'Saturn governs structure, discipline, karma, and time. In retrograde, old structures are reviewed, past responsibilities resurface, and the soul does internal audit. Dreams during Saturn Rx often involve authority, confinement, obligation, and the weight of the past.'},
   'Pluto Rx':   {emoji:'♇', title:'Pluto Retrograde', def:'Pluto governs transformation, power, death, and what is buried. In retrograde, the transformation goes underground — shadow work, confronting what is hidden, and deep psychological clearing. Dreams during Pluto Rx can be especially intense, involving themes of death, rebirth, power, and what lives in the unconscious.'},
+  'Uranus Rx':  {emoji:'♅', title:'Uranus Retrograde', def:'Uranus governs sudden change, awakening, rebellion, and liberation. In retrograde, the disruption turns inward — revolutions happen internally rather than in outer circumstances, and old patterns of freedom vs. conformity are reexamined before anything visibly breaks. Dreams during Uranus Rx often involve unexpected internal realizations, glitching or shifting environments, and a felt sense of something about to change.'},
+  'Neptune Rx': {emoji:'♆', title:'Neptune Retrograde', def:'Neptune governs dreams, illusion, spirituality, and dissolution. In retrograde, the veil thins in a different way — illusions that once felt real are questioned, spiritual practice is reviewed rather than expanded, and clarity briefly cuts through fog that has built up. Dreams during Neptune Rx can be unusually lucid or, conversely, confusing in a way that demands closer interpretation — the psychic channel is active but asks to be double-checked against reality.'},
 
   // Sun signs
   'Aries':      {emoji:'♈', title:'Sun in Aries', def:'The self igniting. Initiative, urgency, the "I am" principle. Dreams may carry a raw, immediate energy — action without hesitation, confrontation, new beginnings.'},
@@ -4882,7 +4884,9 @@ function renderSkyWidget() {
       detail: planet === 'Venus'   ? 'love · values · what you want' :
               planet === 'Mars'    ? 'drive · action · assertion' :
               planet === 'Jupiter' ? 'expansion · luck · philosophy' :
-              planet === 'Saturn'  ? 'structure · karma · discipline' : 'reflection',
+              planet === 'Saturn'  ? 'structure · karma · discipline' :
+              planet === 'Uranus'  ? 'awakening · rebellion · sudden change' :
+              planet === 'Neptune' ? 'dreams · illusion · spiritual review' : 'reflection',
       energy: '',
       color: 'rgba(180,120,200,.8)',
       border: 'rgba(180,120,200,.2)',
@@ -6139,7 +6143,7 @@ function fmt(d){if(!d||typeof d!=="string")return"—";const[y,m,day]=d.split('-
 
 function renderGlossary() {
   const moonKeys = ['New Moon','Waxing Crescent','First Quarter','Waxing Gibbous','Full Moon','Waning Gibbous','Last Quarter','Waning Crescent'];
-  const retroKeys = ['Mercury Rx','Venus Rx','Mars Rx','Jupiter Rx','Saturn Rx','Pluto Rx'];
+  const retroKeys = ['Mercury Rx','Venus Rx','Mars Rx','Jupiter Rx','Saturn Rx','Uranus Rx','Neptune Rx','Pluto Rx'];
   const sunKeys = ['Aries','Taurus','Gemini','Cancer','Leo','Virgo','Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces'];
   const specialKeys = ['Eclipse','Solstice','Pluto in Aquarius','Saturn in Pisces'];
 
