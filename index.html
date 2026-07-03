@@ -1101,6 +1101,19 @@ h1 em { display:block; font-style:italic; font-weight:300; font-size:.42em; lett
       </div>
       <div class="form-field"><label>Date</label><input type="date" id="s-date"></div>
       <div class="form-field"><label>Title</label><input type="text" id="s-title" placeholder="A short title for this entry"></div>
+      <div class="form-field" id="s-prompt-row" style="display:none;">
+        <label style="display:flex;align-items:center;justify-content:space-between;">
+          <span>Prompt <span style="font-weight:300;opacity:.5">(optional)</span></span>
+          <button type="button" onclick="openManagePromptsModal()" style="background:none;border:none;color:rgba(201,185,154,.4);font-family:'Space Mono',monospace;font-size:.48rem;letter-spacing:.06em;cursor:pointer;text-transform:uppercase;">⚙ Manage Saved</button>
+        </label>
+        <select id="s-prompt-select" onchange="applySavedPrompt(this.value)" style="width:100%;background:rgba(255,255,255,.04);border:1px solid rgba(201,185,154,.22);color:var(--parchment);font-family:'Space Mono',monospace;font-size:.62rem;padding:8px 11px;outline:none;cursor:pointer;margin-bottom:8px;">
+          <option value="">— Select a saved prompt (optional) —</option>
+        </select>
+        <div style="display:flex;gap:8px;">
+          <input type="text" id="s-prompt-text" placeholder="Type a prompt to work through, or pick one above…" style="flex:1;">
+          <button type="button" onclick="saveCurrentPromptToBank()" style="font-family:'Space Mono',monospace;font-size:.48rem;letter-spacing:.06em;text-transform:uppercase;padding:0 12px;border:1px solid rgba(201,185,154,.25);background:transparent;color:rgba(201,185,154,.6);cursor:pointer;white-space:nowrap;">+ Save for Later</button>
+        </div>
+      </div>
       <div class="form-field">
         <label>Tags <span style="font-weight:300;opacity:.5">(comma separated)</span></label>
         <input type="text" id="s-tags" placeholder="grief, ancestors, integration…">
@@ -4384,6 +4397,77 @@ const SPIRIT_PRELOADED = [
 
 let SPIRIT_ENTRIES = [];
 let spiritNextId = 1;
+
+// ── Journal Prompt Bank ─────────────────────────────────────
+const JOURNAL_PROMPTS_LS = 'gt_journal_prompts';
+function getJournalPrompts() {
+  try { return JSON.parse(localStorage.getItem(JOURNAL_PROMPTS_LS) || '[]'); } catch(e) { return []; }
+}
+function saveJournalPrompts(list) {
+  try { localStorage.setItem(JOURNAL_PROMPTS_LS, JSON.stringify(list)); return true; } catch(e) { return false; }
+}
+function populateSPromptSelect() {
+  const sel = document.getElementById('s-prompt-select');
+  if (!sel) return;
+  const prompts = getJournalPrompts().slice().sort((a,b) => (b.dateAdded||'').localeCompare(a.dateAdded||''));
+  sel.innerHTML = '<option value="">— Select a saved prompt (optional) —</option>' +
+    prompts.map(p => `<option value="${p.id}">${(p.text.length > 70 ? p.text.slice(0,70)+'…' : p.text).replace(/"/g,'&quot;')}</option>`).join('');
+}
+function applySavedPrompt(id) {
+  if (!id) return;
+  const prompts = getJournalPrompts();
+  const p = prompts.find(x => String(x.id) === String(id));
+  const textEl = document.getElementById('s-prompt-text');
+  if (p && textEl) textEl.value = p.text;
+}
+function saveCurrentPromptToBank() {
+  const textEl = document.getElementById('s-prompt-text');
+  const text = textEl ? textEl.value.trim() : '';
+  if (!text) { gtAlert('Type or select a prompt first.'); return; }
+  const prompts = getJournalPrompts();
+  if (prompts.some(p => p.text.toLowerCase() === text.toLowerCase())) {
+    gtAlert('That prompt is already saved.');
+    return;
+  }
+  prompts.push({ id: 'prompt_' + Date.now(), text, dateAdded: localDateStr() });
+  if (saveJournalPrompts(prompts)) {
+    populateSPromptSelect();
+    gtAlert('✦ Prompt saved for later.');
+  }
+}
+function openManagePromptsModal() {
+  const prompts = getJournalPrompts().slice().sort((a,b) => (b.dateAdded||'').localeCompare(a.dateAdded||''));
+  const overlay = document.createElement('div');
+  overlay.id = 'manage-prompts-overlay';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(17,15,26,.88);z-index:9500;display:flex;align-items:flex-start;justify-content:center;padding:20px;overflow-y:auto;';
+  overlay.onclick = (e) => { if (e.target === overlay) overlay.remove(); };
+
+  const modal = document.createElement('div');
+  modal.style.cssText = 'background:#1a1820;border:1px solid rgba(201,185,154,.2);max-width:520px;width:100%;padding:26px;margin:auto;';
+  modal.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;">
+      <div style="font-family:'Space Mono',monospace;font-size:.55rem;letter-spacing:.1em;text-transform:uppercase;color:var(--moon);">✦ Saved Prompts</div>
+      <button onclick="document.getElementById('manage-prompts-overlay').remove()" style="background:none;border:none;color:rgba(201,185,154,.4);font-size:1.1rem;cursor:pointer;">✕</button>
+    </div>
+    <div id="manage-prompts-list" style="display:flex;flex-direction:column;gap:8px;max-height:400px;overflow-y:auto;">
+      ${prompts.length ? prompts.map(p => `
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;padding:10px 12px;background:rgba(255,255,255,.02);border:1px solid rgba(201,185,154,.1);">
+          <div style="font-family:'Cormorant Garamond',serif;font-size:.92rem;color:rgba(240,235,224,.8);line-height:1.6;flex:1;">${p.text}</div>
+          <button onclick="deleteSavedPrompt('${p.id}')" style="background:none;border:none;color:rgba(180,80,80,.6);font-size:.9rem;cursor:pointer;flex-shrink:0;">✕</button>
+        </div>`).join('') : '<div style="font-family:\'Cormorant Garamond\',serif;font-size:.9rem;color:rgba(201,185,154,.35);font-style:italic;">No saved prompts yet.</div>'}
+    </div>`;
+  overlay.appendChild(modal);
+  document.body.appendChild(overlay);
+}
+function deleteSavedPrompt(id) {
+  let prompts = getJournalPrompts();
+  prompts = prompts.filter(p => String(p.id) !== String(id));
+  saveJournalPrompts(prompts);
+  document.getElementById('manage-prompts-overlay')?.remove();
+  openManagePromptsModal();
+  populateSPromptSelect();
+}
+
 let activeSpiritTagFilter = { journal:null, workings:null, shadow:null, readings:null, gateway:null };
 
 // ── PERSISTENCE ──────────────────────────────
@@ -5559,6 +5643,7 @@ function renderSpiritTab(type) {
     card.innerHTML = `
       <div class="spirit-card-date" style="display:flex;align-items:center;gap:8px;">${fmt(entry.date)}${entrySeason ? `<span style="font-family:'Space Mono',monospace;font-size:.52rem;color:${SEASON_GLYPHS[entrySeason.phase.id].color};letter-spacing:.06em;">${SEASON_GLYPHS[entrySeason.phase.id].emoji} ${entrySeason.phase.season} · Day ${entrySeason.dayOfCycle}</span>` : ''}</div>
       <div class="spirit-card-title">${entry?.title||''}</div>
+      ${entry.prompt ? `<div style="font-family:'Cormorant Garamond',serif;font-size:.82rem;font-style:italic;color:rgba(201,168,76,.65);margin-bottom:4px;">✎ ${entry.prompt.length>90?entry.prompt.slice(0,90)+'…':entry.prompt}</div>` : ''}
       <div class="spirit-card-excerpt">${(entry.body||'').replace(/\n/g,' ').slice(0,160)}${(entry.body||'').length>160?'…':''}</div>
       ${(entry.tags||[]).length ? `<div class="spirit-card-tags">${entry.tags.map(t=>`<span class="spirit-card-tag">${t}</span>`).join('')}</div>` : ''}
       ${entry.moon ? `<div class="spirit-card-moon">☽ ${entry.moon}</div>` : ''}
@@ -5595,6 +5680,14 @@ function openSpiritEntry(entry) {
   titleEl.className = 'spirit-modal-title';
   titleEl.textContent = entry.title || '';
   viewInner.appendChild(titleEl);
+
+  // Prompt (journal entries)
+  if (entry.prompt) {
+    var promptEl = document.createElement('div');
+    promptEl.style.cssText = "font-family:'Cormorant Garamond',serif;font-size:.95rem;font-style:italic;color:rgba(201,168,76,.75);line-height:1.6;margin-bottom:14px;padding:10px 14px;background:rgba(201,168,76,.04);border-left:2px solid rgba(201,168,76,.25);";
+    promptEl.textContent = '✎ ' + entry.prompt;
+    viewInner.appendChild(promptEl);
+  }
 
   // Tags
   if ((entry.tags||[]).length) {
@@ -5774,6 +5867,13 @@ function openSpiritAdd(type, entry) {
   if (craftRow) craftRow.style.display = typeToUse === 'shadow' ? 'block' : 'none';
   const craftMode = document.getElementById('s-craft-mode');
   if (craftMode) craftMode.checked = false;
+  const promptRow = document.getElementById('s-prompt-row');
+  if (promptRow) promptRow.style.display = typeToUse === 'journal' ? 'block' : 'none';
+  const promptTextEl = document.getElementById('s-prompt-text');
+  if (promptTextEl) promptTextEl.value = entry ? (entry.prompt||'') : '';
+  const promptSelectEl = document.getElementById('s-prompt-select');
+  if (promptSelectEl) promptSelectEl.value = '';
+  if (typeToUse === 'journal') populateSPromptSelect();
   const tags = entry ? (entry.tags||[]) : [];
   document.getElementById('s-tags').value = tags.join(', ');
   renderTagChips(tags);
@@ -5979,6 +6079,8 @@ function saveSpiritEntry() {
   const tagsRaw = document.getElementById('s-tags').value;
   const body = document.getElementById('s-body').value.trim();
   const moon = document.getElementById('s-moon').value.trim();
+  const promptTextEl = document.getElementById('s-prompt-text');
+  const prompt = (type === 'journal' && promptTextEl) ? promptTextEl.value.trim() : '';
   if (!title || !body || !date) { gtAlert('Date, title, and entry are required.'); return; }
   const tags = tagsRaw.split(',').map(t=>t.trim()).filter(Boolean);
 
@@ -6001,19 +6103,21 @@ function saveSpiritEntry() {
       SPIRIT_ENTRIES[idx] = {
         ...SPIRIT_ENTRIES[idx],
         date, title, tags, body, moon, type,
+        ...(prompt ? {prompt} : {}),
         ...(_currentEntryImage ? {image: _currentEntryImage} : (SPIRIT_ENTRIES[idx].image ? {image: SPIRIT_ENTRIES[idx].image} : {})),
         ...(updatedWave ? {wave: updatedWave} : {}),
         ...(updatedTrack ? {track: updatedTrack} : {}),
         ...(updatedClaude ? {claude: updatedClaude} : {}),
         ...(updatedAstro ? {astroReading: updatedAstro} : {})
       };
+      if (!prompt) delete SPIRIT_ENTRIES[idx].prompt;
       if (oldType !== type) setTimeout(()=>renderSpiritTab(oldType), 50);
     }
   } else {
     const wave = (type === 'gateway' && waveEl) ? waveEl.value : undefined;
     const trackEl = document.getElementById('s-track');
     const track = (type === 'gateway' && trackEl && trackEl.value) ? parseInt(trackEl.value) : undefined;
-    SPIRIT_ENTRIES.push({ id:spiritNextId++, type, date, title, tags, body, moon, createdAt: localDateTimeStr(), ...(_currentEntryImage ? {image: _currentEntryImage} : {}), ...(wave?{wave}:{}),...(track?{track}:{}), ...(generatedClaude?{claude:generatedClaude}:{}), ...(generatedAstro?{astroReading:generatedAstro}:{}) });
+    SPIRIT_ENTRIES.push({ id:spiritNextId++, type, date, title, tags, body, moon, createdAt: localDateTimeStr(), ...(prompt?{prompt}:{}), ...(_currentEntryImage ? {image: _currentEntryImage} : {}), ...(wave?{wave}:{}),...(track?{track}:{}), ...(generatedClaude?{claude:generatedClaude}:{}), ...(generatedAstro?{astroReading:generatedAstro}:{}) });
   }
   if (_spiritDraftTimer) { clearTimeout(_spiritDraftTimer); _spiritDraftTimer = null; }
   const saved = saveSpiritEntries();
@@ -11639,7 +11743,8 @@ function runGlobalSearch(raw) {
       || (e.tags||[]).some(t => t.toLowerCase().includes(q))
       || (e.moon||'').toLowerCase().includes(q)
       || (e.ctx||'').toLowerCase().includes(q)
-      || (e.interp||'').toLowerCase().includes(q);
+      || (e.interp||'').toLowerCase().includes(q)
+      || (e.prompt||'').toLowerCase().includes(q);
   }
 
   function excerpt(text, q) {
