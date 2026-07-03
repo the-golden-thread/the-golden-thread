@@ -10412,9 +10412,10 @@ function openFeelingLogModal(word, existingEntryId, isFromWidget) {
 
   modal.innerHTML = `
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
-      <div>
+      <div style="flex:1;">
         <div style="font-family:'Space Mono',monospace;font-size:.48rem;letter-spacing:.1em;text-transform:uppercase;color:rgba(201,107,138,.55);margin-bottom:4px;">💫 Feeling Into</div>
-        <div style="font-family:'Cormorant Garamond',serif;font-size:1.8rem;font-weight:300;font-style:italic;color:var(--parchment);">${word}</div>
+        <input id="feeling-word-input" type="text" value="${(word||'').replace(/"/g,'&quot;')}"
+          style="width:100%;background:transparent;border:none;border-bottom:1px solid rgba(201,107,138,.25);color:var(--parchment);font-family:'Cormorant Garamond',serif;font-size:1.8rem;font-weight:300;font-style:italic;padding:2px 0 4px;outline:none;box-sizing:border-box;">
       </div>
       <button onclick="document.getElementById('feeling-modal-overlay').remove()" style="background:none;border:none;color:rgba(201,185,154,.4);font-size:1.2rem;cursor:pointer;">✕</button>
     </div>
@@ -10535,15 +10536,20 @@ function saveFeelingSession(word, existingId, isFromWidget, thenGenerate) {
   const mySensation = (document.getElementById('feeling-my-sensation')?.value || '').trim();
   const myImages = (document.getElementById('feeling-my-images')?.value || '').trim();
   const mySpotifyUrl = (document.getElementById('feeling-my-spotify')?.value || '').trim();
+  const editedWord = (document.getElementById('feeling-word-input')?.value || word || '').trim();
   const today = new Date().toLocaleDateString('en-CA');
 
   const entries = getEmotionEntries();
   let entry = existingId ? entries.find(e => e.id === existingId) : entries.find(e => e.word === word);
 
+  // Guard against renaming into a word that already belongs to a different entry
+  const wordTaken = editedWord && entries.some(e => e.word.toLowerCase() === editedWord.toLowerCase() && (!entry || e.id !== entry.id));
+  const finalWord = (editedWord && !wordTaken) ? editedWord : (entry ? entry.word : word);
+
   if (!entry) {
     entry = {
       id: 'emotion_' + Date.now(),
-      word: word,
+      word: finalWord,
       dateAdded: today,
       valence: valence || 'positive',
       intensity: intensity,
@@ -10566,6 +10572,7 @@ function saveFeelingSession(word, existingId, isFromWidget, thenGenerate) {
     };
     entries.push(entry);
   } else {
+    entry.word = finalWord;
     if (valence) entry.valence = valence;
     if (intensity) entry.intensity = intensity;
     if (myNotes) entry.myNotes = myNotes;
@@ -10595,7 +10602,7 @@ function saveFeelingSession(word, existingId, isFromWidget, thenGenerate) {
   saveEmotionEntries(entries);
 
   const status = document.getElementById('feeling-modal-status');
-  if (status) status.textContent = 'Saved.';
+  if (status) status.textContent = wordTaken ? `Saved. (Name "${editedWord}" is already in use — kept "${finalWord}".)` : 'Saved.';
 
   // Always refresh widget — color may have just been set
   renderFeelingTodayWidget();
@@ -11002,7 +11009,7 @@ function openFeelingDetailModal(entryId) {
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px;">
       <button onclick="document.getElementById('feeling-detail-overlay').remove();openFeelingLogModal('${e.word}','${e.id}',false)"
         style="flex:1;font-family:'Space Mono',monospace;font-size:.5rem;letter-spacing:.08em;text-transform:uppercase;padding:9px 14px;background:transparent;border:1px solid rgba(201,107,138,.3);color:rgba(201,107,138,.7);cursor:pointer;">
-        + Log Session
+        ✎ Edit / Log Session
       </button>
       ${hasAI ? `
       <button data-eid="${e.id}" onclick="regenerateFeelingAI(this.dataset.eid)"
