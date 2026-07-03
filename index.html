@@ -10399,6 +10399,9 @@ function openFeelingLogModal(word, existingEntryId, isFromWidget) {
 
   const todaySession = entry ? (entry.sessions||[]).find(s => s.date === today) : null;
 
+  // Reset in-memory photo state to reflect this entry (null = unchanged/no photo yet)
+  _currentFeelingImage = (entry && entry.myPhoto) || null;
+
   // Helper for a labeled single-line input
   const field = (label, id, val, placeholder, type='text') =>
     `<div style="margin-bottom:12px;">
@@ -10481,6 +10484,19 @@ function openFeelingLogModal(word, existingEntryId, isFromWidget) {
           style="width:100%;background:rgba(255,255,255,.04);border:1px solid rgba(201,185,154,.12);color:var(--parchment);font-family:'Cormorant Garamond',serif;font-size:.9rem;padding:7px 11px;outline:none;resize:vertical;line-height:1.6;box-sizing:border-box;">${entry&&entry.myImages||''}</textarea>
       </div>
 
+      <div style="margin-bottom:14px;">
+        <div style="font-family:'Space Mono',monospace;font-size:.41rem;color:rgba(201,185,154,.38);letter-spacing:.08em;text-transform:uppercase;margin-bottom:7px;">Photo (optional)</div>
+        <div id="feeling-image-preview" style="display:${entry&&entry.myPhoto?'block':'none'};margin-bottom:8px;position:relative;max-width:220px;">
+          <img id="feeling-image-preview-img" src="${entry&&entry.myPhoto||''}" style="max-width:100%;max-height:180px;object-fit:contain;border:1px solid rgba(201,185,154,.2);display:block;">
+          <button type="button" onclick="clearFeelingImage()" style="position:absolute;top:4px;right:4px;background:rgba(17,15,26,.85);border:1px solid rgba(201,185,154,.3);color:rgba(240,235,224,.7);font-size:.65rem;padding:2px 7px;cursor:pointer;">✕</button>
+        </div>
+        <input type="file" accept="image/*" id="feeling-image-input" style="display:none;" onchange="handleFeelingImageUpload(this)">
+        <button type="button" onclick="document.getElementById('feeling-image-input').click()" style="font-family:'Space Mono',monospace;font-size:.5rem;letter-spacing:.07em;text-transform:uppercase;padding:7px 14px;background:transparent;border:1px solid rgba(201,185,154,.2);color:rgba(201,185,154,.55);cursor:pointer;">📷 ${entry&&entry.myPhoto?'Change Photo':'Add Photo'}</button>
+        <span id="feeling-image-status" style="font-family:'Space Mono',monospace;font-size:.42rem;color:rgba(201,185,154,.35);margin-left:8px;"></span>
+      </div>
+
+      ${field('Song (Spotify link, optional)', 'feeling-my-spotify', entry&&entry.mySpotifyUrl||'', 'Paste a Spotify track/album link…')}
+
       <div>
         <div style="font-family:'Space Mono',monospace;font-size:.41rem;color:rgba(201,185,154,.38);letter-spacing:.08em;text-transform:uppercase;margin-bottom:5px;">Other / General Notes</div>
         <textarea id="feeling-main-notes" rows="3" placeholder="Anything else — patterns, life context, how this feeling shows up for you…"
@@ -10518,6 +10534,7 @@ function saveFeelingSession(word, existingId, isFromWidget, thenGenerate) {
   const mySeason = (document.getElementById('feeling-my-season')?.value || '').trim();
   const mySensation = (document.getElementById('feeling-my-sensation')?.value || '').trim();
   const myImages = (document.getElementById('feeling-my-images')?.value || '').trim();
+  const mySpotifyUrl = (document.getElementById('feeling-my-spotify')?.value || '').trim();
   const today = new Date().toLocaleDateString('en-CA');
 
   const entries = getEmotionEntries();
@@ -10539,6 +10556,8 @@ function saveFeelingSession(word, existingId, isFromWidget, thenGenerate) {
       mySeason: mySeason || '',
       mySensation: mySensation || '',
       myImages: myImages || '',
+      myPhoto: _currentFeelingImage || '',
+      mySpotifyUrl: mySpotifyUrl || '',
       tags: [],
       sessions: [],
       aiColors: [], aiElement: '', aiDirection: '', aiScents: [], aiSound: '',
@@ -10558,6 +10577,8 @@ function saveFeelingSession(word, existingId, isFromWidget, thenGenerate) {
     if (mySeason) entry.mySeason = mySeason;
     if (mySensation) entry.mySensation = mySensation;
     if (myImages) entry.myImages = myImages;
+    if (_currentFeelingImage !== null) entry.myPhoto = _currentFeelingImage;
+    if (mySpotifyUrl) entry.mySpotifyUrl = mySpotifyUrl;
   }
 
   // Upsert today's session
@@ -10862,7 +10883,11 @@ function renderFeelingCard(e) {
     ${e.valence ? `<div style="font-family:'Space Mono',monospace;font-size:.43rem;color:${valenceColor};letter-spacing:.06em;text-transform:uppercase;margin-bottom:7px;">${e.valence}</div>` : ''}
     ${swatchRow}
     ${e.myNotes ? `<div style="font-size:.85rem;color:rgba(240,235,224,.45);font-style:italic;line-height:1.5;">${e.myNotes.slice(0,80)}${e.myNotes.length>80?'…':''}</div>` : ''}
-    <div style="margin-top:8px;font-family:'Space Mono',monospace;font-size:.42rem;color:rgba(201,185,154,.25);">${sessionCount} session${sessionCount!==1?'s':''} · ${e.dateAdded||''}</div>
+    <div style="margin-top:8px;display:flex;align-items:center;gap:8px;font-family:'Space Mono',monospace;font-size:.42rem;color:rgba(201,185,154,.25);">
+      <span>${sessionCount} session${sessionCount!==1?'s':''} · ${e.dateAdded||''}</span>
+      ${e.myPhoto ? '<span title="Has photo">📷</span>' : ''}
+      ${e.mySpotifyUrl ? '<span title="Has song">🎵</span>' : ''}
+    </div>
   </div>`;
 }
 
@@ -10921,6 +10946,18 @@ function openFeelingDetailModal(entryId) {
         ${e.myImages?`<div style="grid-column:span 2;"><div style="font-family:'Space Mono',monospace;font-size:.41rem;color:rgba(201,185,154,.35);text-transform:uppercase;margin-bottom:4px;">Images</div><div style="font-family:'Cormorant Garamond',serif;font-size:.95rem;color:rgba(240,235,224,.78);font-style:italic;line-height:1.65;">${e.myImages}</div></div>`:''}
         ${e.myNotes?`<div style="grid-column:span 2;"><div style="font-family:'Space Mono',monospace;font-size:.41rem;color:rgba(201,185,154,.35);text-transform:uppercase;margin-bottom:4px;">Other Notes</div><div style="font-family:'Cormorant Garamond',serif;font-size:.95rem;color:rgba(240,235,224,.75);font-style:italic;line-height:1.65;">${e.myNotes}</div></div>`:''}
       </div>
+    </div>` : ''}
+
+    ${e.myPhoto ? `
+    <div style="margin-bottom:20px;">
+      <div style="font-family:'Space Mono',monospace;font-size:.42rem;color:rgba(201,185,154,.35);letter-spacing:.08em;text-transform:uppercase;margin-bottom:8px;">Photo</div>
+      <img src="${e.myPhoto}" title="Tap to expand" style="max-width:100%;max-height:280px;object-fit:contain;border:1px solid rgba(201,185,154,.15);cursor:pointer;display:block;" onclick="this.style.maxHeight=(this.style.maxHeight==='none'?'280px':'none');">
+    </div>` : ''}
+
+    ${e.mySpotifyUrl ? `
+    <div style="margin-bottom:20px;">
+      <div style="font-family:'Space Mono',monospace;font-size:.42rem;color:rgba(201,185,154,.35);letter-spacing:.08em;text-transform:uppercase;margin-bottom:8px;">Song</div>
+      ${spotifyEmbedUrl(e.mySpotifyUrl) ? `<iframe src="${spotifyEmbedUrl(e.mySpotifyUrl)}" width="100%" height="152" frameborder="0" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" style="border:1px solid rgba(201,185,154,.12);display:block;"></iframe>` : `<a href="${e.mySpotifyUrl}" target="_blank" rel="noopener" style="display:inline-block;font-family:'Space Mono',monospace;font-size:.5rem;letter-spacing:.06em;padding:8px 14px;border:1px solid rgba(201,107,138,.3);color:rgba(201,107,138,.8);text-decoration:none;">🎵 Open in Spotify</a>`}
     </div>` : ''}
 
     ${e.sessions && e.sessions.length ? `
@@ -23766,6 +23803,69 @@ function loadEntryImageForEdit(imageData) {
   var status = document.getElementById('s-image-status');
   var kb = Math.round(imageData.length * 0.75 / 1024);
   if (status) status.textContent = '✓ ' + kb + 'KB (saved)';
+}
+
+// ── IMAGE + SONG HANDLING FOR FEELINGS DICTIONARY ────────────────────
+
+// In-memory store for the current feeling-log photo upload (null = no change / no photo)
+var _currentFeelingImage = null;
+
+function handleFeelingImageUpload(input) {
+  var file = input.files && input.files[0];
+  if (!file) return;
+  var status = document.getElementById('feeling-image-status');
+  if (status) status.textContent = 'Compressing…';
+
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    var img = new Image();
+    img.onload = function() {
+      // Compress to max 800px wide/tall, JPEG quality 0.6 → ~50-100KB
+      var MAX = 800;
+      var w = img.width, h = img.height;
+      if (w > MAX || h > MAX) {
+        if (w > h) { h = Math.round(h * MAX / w); w = MAX; }
+        else { w = Math.round(w * MAX / h); h = MAX; }
+      }
+      var canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      var ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, w, h);
+      var compressed = canvas.toDataURL('image/jpeg', 0.6);
+      _currentFeelingImage = compressed;
+
+      var preview = document.getElementById('feeling-image-preview');
+      var previewImg = document.getElementById('feeling-image-preview-img');
+      if (preview) preview.style.display = 'block';
+      if (previewImg) previewImg.src = compressed;
+
+      var kb = Math.round(compressed.length * 0.75 / 1024);
+      if (status) status.textContent = '✓ ' + kb + 'KB';
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+function clearFeelingImage() {
+  _currentFeelingImage = ''; // explicit empty string = "clear on save", distinct from null ("no change")
+  var preview = document.getElementById('feeling-image-preview');
+  var input = document.getElementById('feeling-image-input');
+  var status = document.getElementById('feeling-image-status');
+  if (preview) preview.style.display = 'none';
+  if (input) input.value = '';
+  if (status) status.textContent = '';
+}
+
+// Convert a normal Spotify share link into its embeddable player URL.
+// Returns null if the URL doesn't look like a recognizable Spotify link.
+function spotifyEmbedUrl(url) {
+  if (!url) return null;
+  try {
+    var m = url.match(/open\.spotify\.com\/(?:intl-[a-z]{2}\/)?(track|album|playlist|artist|episode|show)\/([a-zA-Z0-9]+)/);
+    if (m) return 'https://open.spotify.com/embed/' + m[1] + '/' + m[2];
+  } catch (err) {}
+  return null;
 }
 
 // ── DIAGNOSTIC — call gt_debug() in console to see layout ──
