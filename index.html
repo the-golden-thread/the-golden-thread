@@ -440,7 +440,6 @@ h1 em { display:block; font-style:italic; font-weight:300; font-size:.42em; lett
     <button class="sub-tab-btn" id="sub-btn-symbols-d" onclick="switchDreams('symbols',this)">&#10022; Symbols</button>
     <button class="sub-tab-btn" id="sub-btn-threads-d" onclick="switchDreams('threads',this)">∞ Threads</button>
     <button class="sub-tab-btn" id="sub-btn-magic-d" onclick="switchDreams('magic',this)">✦ Magic</button>
-    <button class="sub-tab-btn" id="sub-btn-presleep" onclick="switchDreams('presleep',this)">◑ Pre-Sleep</button>
     <button class="sub-tab-btn" id="sub-btn-dreamplaces" onclick="switchDreams('dreamplaces',this)">◈ Places</button>
   </div>
   <!-- Practice sub-bar -->
@@ -4826,6 +4825,7 @@ function renderSkyWidget() {
   // Build tiles
   const tiles = [
     {
+      kind: 'moon',
       emoji: astro.moonEmoji,
       glyph: SIGN_GLYPHS[astro.moonSign] || '',
       label: 'Moon',
@@ -4839,6 +4839,7 @@ function renderSkyWidget() {
       bg: 'rgba(201,185,154,.04)'
     },
     {
+      kind: 'sun',
       emoji: '☀️',
       glyph: SIGN_GLYPHS[astro.sunSign] || '',
       label: 'Sun',
@@ -4855,6 +4856,8 @@ function renderSkyWidget() {
   // Always show Mercury — direct or retrograde
   const mercuryRx = retroPlanets.includes('Mercury');
   tiles.push({
+    kind: 'mercury',
+    mercuryRx: mercuryRx,
     emoji: mercuryRx ? '℞' : '☿',
     glyph: '',
     label: 'Mercury',
@@ -4869,6 +4872,8 @@ function renderSkyWidget() {
   // Show other active retrogrades
   retroPlanets.filter(p => p !== 'Mercury').forEach(planet => {
     tiles.push({
+      kind: 'retro',
+      planet: planet,
       emoji: '℞',
       glyph: '',
       label: planet + ' Rx',
@@ -4888,6 +4893,8 @@ function renderSkyWidget() {
   if (phase) {
     const sg = SEASON_GLYPHS[phase.phase.id];
     tiles.push({
+      kind: 'season',
+      phaseId: phase.phase.id,
       emoji: phase.phase.emoji,
       glyph: sg ? sg.emoji : '',
       label: 'Inner Season',
@@ -4901,8 +4908,10 @@ function renderSkyWidget() {
     });
   }
 
-  el.innerHTML = tiles.map(t => `
-    <div style="padding:16px 14px;background:${t.bg};border:1px solid ${t.border};border-top:2px solid ${t.color};position:relative;overflow:hidden;">
+  window.__skyTiles = tiles;
+
+  el.innerHTML = tiles.map((t,i) => `
+    <div onclick="openSkyTileModal(${i})" style="cursor:pointer;padding:16px 14px;background:${t.bg};border:1px solid ${t.border};border-top:2px solid ${t.color};position:relative;overflow:hidden;transition:border-color .15s;" onmouseover="this.style.borderColor='${t.color}'" onmouseout="this.style.borderColor='${t.border}';this.style.borderTopColor='${t.color}'">
       <div style="position:absolute;right:10px;top:8px;font-size:1.6rem;opacity:.08;pointer-events:none;">${t.glyph||t.emoji}</div>
       <div style="display:flex;align-items:center;gap:7px;margin-bottom:8px;">
         <span style="font-size:1.2rem;line-height:1;">${t.emoji}</span>
@@ -4915,6 +4924,77 @@ function renderSkyWidget() {
       ${t.energy ? `<div style="font-family:'Space Mono',monospace;font-size:.44rem;color:${t.color};opacity:.6;margin-top:4px;">${t.energy}</div>` : ''}
     </div>
   `).join('');
+}
+
+// ── Sky Tile Detail Modal ─────────────────────────────────────
+function openSkyTileModal(idx) {
+  const tiles = window.__skyTiles || [];
+  const t = tiles[idx];
+  if (!t) return;
+
+  let sections = [];
+
+  if (t.kind === 'moon') {
+    const phaseG = ASTRO_GLOSSARY[t.sub];
+    if (phaseG) sections.push({ title: `${phaseG.emoji} ${phaseG.title} · ${t.pct}% illuminated`, body: phaseG.def });
+    sections.push({ title: `${t.glyph} Moon in ${t.value}`, body: `Keywords: ${t.detail}.${t.energy ? ' This phase carries a quality of ' + t.energy + '.' : ''} The moon's placement colors your emotional and intuitive undercurrent for the day — worth noting alongside dreams and gut reactions.` });
+  } else if (t.kind === 'sun') {
+    const sunG = ASTRO_GLOSSARY[t.value];
+    if (sunG) sections.push({ title: `${sunG.emoji} ${sunG.title}`, body: sunG.def });
+    sections.push({ title: 'Keywords', body: t.detail });
+  } else if (t.kind === 'mercury') {
+    if (t.mercuryRx) {
+      const g = ASTRO_GLOSSARY['Mercury Rx'];
+      if (g) sections.push({ title: `${g.emoji} ${g.title}`, body: g.def });
+    } else {
+      sections.push({ title: '☿ Mercury Direct', body: 'Mercury is moving forward — communication, thought, contracts, travel, and technology flow without the usual retrograde friction. Conversations land as intended, plans hold, and the mind moves ahead rather than reviewing the past. A good window for signing agreements, sending the message you\'ve been sitting on, or starting new communication-based work.' });
+    }
+  } else if (t.kind === 'retro') {
+    const g = ASTRO_GLOSSARY[t.planet + ' Rx'];
+    if (g) sections.push({ title: `${g.emoji} ${g.title}`, body: g.def });
+  } else if (t.kind === 'season') {
+    const phaseDef = PHASES.find(p => p.id === t.phaseId);
+    if (phaseDef) {
+      sections.push({ title: `${phaseDef.emoji} ${phaseDef.name} · ${phaseDef.season} · Days ${phaseDef.days}`, body: `${phaseDef.tagline}\n\n${phaseDef.body}` });
+      if (phaseDef.food?.length) sections.push({ title: '🍲 Food', list: phaseDef.food });
+      if (phaseDef.movement?.length) sections.push({ title: '🌿 Movement', list: phaseDef.movement });
+      if (phaseDef.spirit?.length) sections.push({ title: '✦ Spirit Practice', list: phaseDef.spirit });
+      if (phaseDef.archiveNote) sections.push({ title: '◈ Archive Note', body: phaseDef.archiveNote });
+    }
+  }
+
+  const overlay = document.createElement('div');
+  overlay.id = 'sky-tile-overlay';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(17,15,26,.88);z-index:9000;display:flex;align-items:flex-start;justify-content:center;padding:20px;overflow-y:auto;';
+  overlay.onclick = (e) => { if (e.target === overlay) overlay.remove(); };
+
+  const modal = document.createElement('div');
+  modal.style.cssText = `background:#1a1820;border:1px solid ${t.border};border-top:2px solid ${t.color};max-width:560px;width:100%;padding:26px;margin:auto;position:relative;`;
+
+  modal.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:18px;">
+      <div>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+          <span style="font-size:1.4rem;line-height:1;">${t.emoji}</span>
+          <span style="font-family:'Space Mono',monospace;font-size:.5rem;color:${t.color};letter-spacing:.12em;text-transform:uppercase;">${t.label}</span>
+        </div>
+        <div style="font-family:'Cormorant Garamond',serif;font-size:1.6rem;font-weight:300;color:var(--parchment);">${t.value}</div>
+        <div style="font-family:'Space Mono',monospace;font-size:.5rem;color:rgba(201,185,154,.4);margin-top:2px;">${t.sub}</div>
+      </div>
+      <button onclick="document.getElementById('sky-tile-overlay').remove()" style="background:none;border:none;color:rgba(201,185,154,.4);font-size:1.2rem;cursor:pointer;">✕</button>
+    </div>
+    ${t.pct !== undefined ? `<div style="height:2px;background:rgba(255,255,255,.06);margin-bottom:20px;"><div style="height:100%;width:${t.pct}%;background:${t.color};"></div></div>` : ''}
+    ${sections.map(s => `
+      <div style="margin-bottom:18px;">
+        <div style="font-family:'Space Mono',monospace;font-size:.48rem;color:${t.color};letter-spacing:.09em;text-transform:uppercase;margin-bottom:8px;">${s.title}</div>
+        ${s.body ? `<div style="font-size:.95rem;font-weight:300;line-height:1.85;color:rgba(240,235,224,.82);white-space:pre-line;">${s.body}</div>` : ''}
+        ${s.list ? `<ul style="margin:0;padding-left:18px;font-size:.9rem;font-weight:300;line-height:1.9;color:rgba(240,235,224,.75);">${s.list.map(li=>`<li>${li}</li>`).join('')}</ul>` : ''}
+      </div>
+    `).join('') || `<div style="font-family:'Space Mono',monospace;font-size:.6rem;color:rgba(201,185,154,.35);">No further detail available for this placement.</div>`}
+  `;
+
+  overlay.appendChild(modal);
+  document.body.appendChild(overlay);
 }
 
 
@@ -7486,13 +7566,12 @@ function renderWithinList() {
         ${hasHomework ? `<span style="font-family:'Space Mono',monospace;font-size:.45rem;padding:2px 7px;border:1px solid rgba(201,185,154,.15);color:rgba(201,185,154,.5);">Homework${logCount?' · '+logCount+' log note'+(logCount>1?'s':''):''}</span>` : ''}
       </div>
       <div style="margin-top:12px;display:flex;gap:8px;align-items:center;" onclick="event.stopPropagation()">
-        <button onclick="generateWithinEntryReading('${e.id}',this)" class="astro-gen-btn" style="font-size:.5rem;padding:6px 14px;">✦ Reading</button>
-        ${e.withinReading ? '<span style="font-family:\'Space Mono\',monospace;font-size:.44rem;color:rgba(201,185,154,.35);">reading saved</span>' : ''}
+        ${e.withinReading
+          ? `<button onclick="toggleWithinReading('${e.id}',this)" class="astro-gen-btn" style="font-size:.5rem;padding:6px 14px;">▸ Show Reading</button>`
+          : `<button onclick="generateWithinEntryReading('${e.id}',this)" class="astro-gen-btn" style="font-size:.5rem;padding:6px 14px;">✦ Reading</button>`
+        }
       </div>
-      ${e.withinReading ? `<div style="margin-top:10px;padding:14px;background:rgba(107,79,138,.04);border:1px solid rgba(107,79,138,.12);border-left:2px solid rgba(107,79,138,.3);">
-        <div style="font-family:'Space Mono',monospace;font-size:.44rem;letter-spacing:.08em;text-transform:uppercase;color:rgba(155,107,171,.5);margin-bottom:8px;">✦ Reading</div>
-        <div id="within-reading-${e.id}" style="font-family:'Cormorant Garamond',serif;font-size:.9rem;color:rgba(240,235,224,.75);line-height:1.8;">${e.withinReading.split('\n\n').map(p=>`<p style="margin-bottom:10px;">${p}</p>`).join('')}</div>
-      </div>` : `<div id="within-reading-${e.id}"></div>`}
+      <div id="within-reading-${e.id}" data-reading="${e.withinReading ? encodeURIComponent(e.withinReading) : ''}" onclick="event.stopPropagation()"></div>
     </div>`;
   }).join('');
 }
@@ -7631,176 +7710,6 @@ function deleteWithinLogEntry(entryId, logIdx) {
 // ═══════════════════════════════════════════════════════════
 // DREAM MAGIC
 // ═══════════════════════════════════════════════════════════
-// ─── PRE-SLEEP LOG ───────────────────────────────────────────────────────────
-const PRESLEEP_LS = 'gt_presleep_log';
-
-function getPreSleepEntries() {
-  try { return JSON.parse(localStorage.getItem(PRESLEEP_LS) || '[]'); } catch(e) { return []; }
-}
-function savePreSleepEntries(entries) {
-  try { localStorage.setItem(PRESLEEP_LS, JSON.stringify(entries)); } catch(e) {}
-}
-
-const PRESLEEP_ITEMS = [
-  { id:'ormus',       label:'Ormus Gold capsule',            icon:'◈' },
-  { id:'lotus',       label:'Blue lotus tea',                icon:'❀' },
-  { id:'roller',      label:'Dreamy Sleep roller',           icon:'✦' },
-  { id:'intention',   label:'Intention / incubation set',    icon:'○' },
-  { id:'mugwort',     label:'Mugwort sachet under pillow',   icon:'☽' },
-  { id:'braid',       label:'Beltane dream braid under pillow', icon:'∞' },
-  { id:'crystals',    label:'Reset crystals on nightstand',  icon:'◇' },
-  { id:'cleanse',     label:'Cleansed crystals',             icon:'◈' },
-  { id:'realitycheck',label:'Reality check practice today',  icon:'◉' },
-];
-
-function renderPreSleep(dest) {
-  if (!dest) return;
-  const entries = getPreSleepEntries().slice().sort((a,b) => b.date.localeCompare(a.date));
-  const today = localDateStr();
-  const todayEntry = entries.find(e => e.date === today);
-
-  dest.innerHTML = `
-    <div style="max-width:680px;margin:0 auto;padding:24px 0 80px;">
-      <div style="font-family:'Space Mono',monospace;font-size:.55rem;letter-spacing:.12em;text-transform:uppercase;color:var(--moon);margin-bottom:4px;">◑ Pre-Sleep</div>
-      <div style="font-family:'Cormorant Garamond',serif;font-size:.95rem;color:rgba(201,185,154,.4);font-style:italic;margin-bottom:28px;">Track what you bring to the threshold each night.</div>
-
-      <div id="presleep-form-wrap"></div>
-
-      <div style="margin-top:40px;">
-        <div style="font-family:'Space Mono',monospace;font-size:.48rem;letter-spacing:.1em;text-transform:uppercase;color:rgba(201,185,154,.4);margin-bottom:16px;">Past Entries</div>
-        <div id="presleep-history"></div>
-      </div>
-    </div>`;
-
-  renderPreSleepForm(todayEntry, today);
-  renderPreSleepHistory(entries);
-}
-
-function renderPreSleepForm(existing, date) {
-  const wrap = document.getElementById('presleep-form-wrap');
-  if (!wrap) return;
-  const checked = existing ? (existing.items || []) : [];
-  const note = existing ? (existing.note || '') : '';
-  const lucid = existing ? !!existing.lucid : false;
-
-  wrap.innerHTML = `
-    <div style="background:rgba(255,255,255,.02);border:1px solid rgba(201,185,154,.14);padding:20px 22px;">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;">
-        <div style="font-family:'Cormorant Garamond',serif;font-size:1.15rem;color:var(--parchment);">Tonight — ${date}</div>
-        ${existing ? '<span style="font-family:monospace;font-size:.44rem;letter-spacing:.08em;text-transform:uppercase;color:rgba(201,185,154,.4);">saved</span>' : ''}
-      </div>
-
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:0;">
-        ${PRESLEEP_ITEMS.map(item => `
-          <label style="display:flex;align-items:center;gap:10px;padding:9px 4px;cursor:pointer;border-bottom:1px solid rgba(201,185,154,.06);">
-            <div style="width:18px;height:18px;border:1px solid rgba(201,185,154,${checked.includes(item.id)?'.6':'.22'});background:${checked.includes(item.id)?'rgba(201,185,154,.15)':'transparent'};display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s;">
-              ${checked.includes(item.id)?'<span style="color:var(--moon);font-size:.7rem;">✓</span>':''}
-            </div>
-            <input type="checkbox" id="ps-${item.id}" ${checked.includes(item.id)?'checked':''} style="display:none;" onchange="presleepCheckChange()">
-            <span style="font-family:'Space Mono',monospace;font-size:.44rem;letter-spacing:.05em;color:rgba(201,185,154,${checked.includes(item.id)?'.85':'.5'});line-height:1.4;">${item.icon} ${item.label}</span>
-          </label>`).join('')}
-      </div>
-
-      <div style="margin-top:16px;">
-        <label style="font-family:'Space Mono',monospace;font-size:.46rem;letter-spacing:.08em;text-transform:uppercase;color:rgba(201,185,154,.45);display:block;margin-bottom:6px;">Intention for tonight</label>
-        <textarea id="ps-note" rows="2" placeholder="what you are asking for, opening to, or working with..." style="width:100%;background:rgba(255,255,255,.03);border:1px solid rgba(201,185,154,.18);color:var(--parchment);font-family:'Cormorant Garamond',serif;font-size:.95rem;padding:9px 12px;outline:none;resize:vertical;box-sizing:border-box;line-height:1.6;">${note}</textarea>
-      </div>
-
-      <div style="margin-top:12px;display:flex;align-items:center;justify-content:space-between;">
-        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
-          <div style="width:18px;height:18px;border:1px solid rgba(155,107,171,${lucid?'.6':'.3'});background:${lucid?'rgba(155,107,171,.15)':'transparent'};display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-            ${lucid?'<span style="color:#9b6bab;font-size:.7rem;">✓</span>':''}
-          </div>
-          <input type="checkbox" id="ps-lucid" ${lucid?'checked':''} style="display:none;" onchange="presleepCheckChange()">
-          <span style="font-family:'Space Mono',monospace;font-size:.44rem;letter-spacing:.05em;color:rgba(155,107,171,${lucid?'.85':'.5'});">◉ Lucid dreaming intention active</span>
-        </label>
-        <button onclick="savePreSleepEntry('${date}')" style="font-family:'Space Mono',monospace;font-size:.5rem;letter-spacing:.08em;text-transform:uppercase;padding:9px 20px;border:1px solid rgba(201,185,154,.35);background:transparent;color:rgba(201,185,154,.75);cursor:pointer;">Save</button>
-      </div>
-    </div>`;
-}
-
-function presleepCheckChange() {
-  // Refresh checkbox visual states without full re-render
-  PRESLEEP_ITEMS.forEach(item => {
-    const cb = document.getElementById('ps-' + item.id);
-    if (!cb) return;
-    const label = cb.closest('label');
-    if (!label) return;
-    const box = label.querySelector('div');
-    const span = label.querySelector('span');
-    if (cb.checked) {
-      box.style.border = '1px solid rgba(201,185,154,.6)';
-      box.style.background = 'rgba(201,185,154,.15)';
-      box.innerHTML = '<span style="color:var(--moon);font-size:.7rem;">✓</span>';
-      if (span) span.style.color = 'rgba(201,185,154,.85)';
-    } else {
-      box.style.border = '1px solid rgba(201,185,154,.22)';
-      box.style.background = 'transparent';
-      box.innerHTML = '';
-      if (span) span.style.color = 'rgba(201,185,154,.5)';
-    }
-  });
-  // lucid checkbox
-  const lcb = document.getElementById('ps-lucid');
-  if (lcb) {
-    const label = lcb.closest('label');
-    const box = label ? label.querySelector('div') : null;
-    const span = label ? label.querySelector('span') : null;
-    if (box) {
-      box.style.border = lcb.checked ? '1px solid rgba(155,107,171,.6)' : '1px solid rgba(155,107,171,.3)';
-      box.style.background = lcb.checked ? 'rgba(155,107,171,.15)' : 'transparent';
-      box.innerHTML = lcb.checked ? '<span style="color:#9b6bab;font-size:.7rem;">✓</span>' : '';
-    }
-    if (span) span.style.color = lcb.checked ? 'rgba(155,107,171,.85)' : 'rgba(155,107,171,.5)';
-  }
-}
-
-function savePreSleepEntry(date) {
-  const items = PRESLEEP_ITEMS.map(i => i.id).filter(id => {
-    const cb = document.getElementById('ps-' + id);
-    return cb && cb.checked;
-  });
-  const note = (document.getElementById('ps-note') || {}).value || '';
-  const lucid = !!(document.getElementById('ps-lucid') || {}).checked;
-
-  const entries = getPreSleepEntries().filter(e => e.date !== date);
-  entries.push({ date, items, note, lucid, savedAt: localDateTimeStr() });
-  savePreSleepEntries(entries);
-
-  // Refresh
-  const dest = document.getElementById('gt-content');
-  if (dest) renderPreSleep(dest);
-}
-
-function renderPreSleepHistory(entries) {
-  const hist = document.getElementById('presleep-history');
-  if (!hist) return;
-  const past = entries.filter(e => e.date !== localDateStr()).sort((a,b) => b.date.localeCompare(a.date)).slice(0, 30);
-  if (!past.length) {
-    hist.innerHTML = '<div style="font-family:serif;font-size:.95rem;color:rgba(201,185,154,.3);font-style:italic;">No past entries yet.</div>';
-    return;
-  }
-  hist.innerHTML = past.map(e => {
-    const checkedItems = PRESLEEP_ITEMS.filter(i => (e.items||[]).includes(i.id));
-    const total = PRESLEEP_ITEMS.length;
-    const count = checkedItems.length;
-    const pct = Math.round(count/total*100);
-    const barFill = Math.round(pct / 10);
-    return `
-      <div style="border-bottom:1px solid rgba(201,185,154,.08);padding:12px 4px;">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
-          <div style="font-family:'Space Mono',monospace;font-size:.46rem;letter-spacing:.08em;color:rgba(201,185,154,.5);">${e.date}${e.lucid ? ' &nbsp;<span style="color:#9b6bab;">◉ lucid</span>' : ''}</div>
-          <div style="font-family:'Space Mono',monospace;font-size:.44rem;color:rgba(201,185,154,.4);">${count}/${total}</div>
-        </div>
-        <div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:${e.note?'8px':'0'};">
-          ${checkedItems.map(i => `<span style="font-family:'Space Mono',monospace;font-size:.42rem;letter-spacing:.04em;padding:2px 7px;border:1px solid rgba(201,185,154,.15);color:rgba(201,185,154,.55);">${i.icon} ${i.label}</span>`).join('')}
-        </div>
-        ${e.note ? `<div style="font-family:'Cormorant Garamond',serif;font-size:.88rem;color:rgba(240,235,224,.45);font-style:italic;">${e.note}</div>` : ''}
-      </div>`;
-  }).join('');
-}
-// ─── END PRE-SLEEP LOG ────────────────────────────────────────────────────────
-
 
 function renderDreamMagic(dest) {
   if (!dest) return;
@@ -8019,6 +7928,25 @@ function deleteDreamMagicEntry(idx) {
 // WITHIN READINGS
 // ═══════════════════════════════════════════════════════════
 
+function toggleWithinReading(entryId, btnEl) {
+  const div = document.getElementById('within-reading-' + entryId);
+  if (!div) return;
+  const isOpen = div.dataset.open === '1';
+  if (isOpen) {
+    div.innerHTML = '';
+    div.dataset.open = '0';
+    if (btnEl) btnEl.textContent = '▸ Show Reading';
+  } else {
+    const text = decodeURIComponent(div.dataset.reading || '');
+    div.innerHTML = `<div style="margin-top:10px;padding:14px;background:rgba(107,79,138,.04);border:1px solid rgba(107,79,138,.12);border-left:2px solid rgba(107,79,138,.3);">
+      <div style="font-family:'Space Mono',monospace;font-size:.44rem;letter-spacing:.08em;text-transform:uppercase;color:rgba(155,107,171,.5);margin-bottom:8px;">✦ Reading</div>
+      <div style="font-family:'Cormorant Garamond',serif;font-size:.9rem;color:rgba(240,235,224,.75);line-height:1.8;">${text.split('\n\n').map(p=>`<p style="margin-bottom:10px;">${p}</p>`).join('')}</div>
+    </div>`;
+    div.dataset.open = '1';
+    if (btnEl) btnEl.textContent = '▾ Hide Reading';
+  }
+}
+
 async function generateWithinEntryReading(entryId, btnEl) {
   const apiKey = getApiKey();
   if (!apiKey) { gtAlert('Add your Anthropic API key in Settings first.'); return; }
@@ -8071,18 +7999,25 @@ Write a reading that: honors what was worked in this session, connects the guida
     const idx = entries.findIndex(x => x.id === entryId);
     if (idx > -1) { entries[idx].withinReading = text; saveWithinEntries(entries); }
 
-    // Display in card
+    // Display in card, expanded (just generated) and mark as toggleable going forward
     const readingDiv = document.getElementById('within-reading-' + entryId);
     if (readingDiv) {
-      readingDiv.innerHTML = `<div style="padding:14px;background:rgba(107,79,138,.04);border:1px solid rgba(107,79,138,.12);border-left:2px solid rgba(107,79,138,.3);">
+      readingDiv.dataset.reading = encodeURIComponent(text);
+      readingDiv.dataset.open = '1';
+      readingDiv.innerHTML = `<div style="margin-top:10px;padding:14px;background:rgba(107,79,138,.04);border:1px solid rgba(107,79,138,.12);border-left:2px solid rgba(107,79,138,.3);">
         <div style="font-family:'Space Mono',monospace;font-size:.44rem;letter-spacing:.08em;text-transform:uppercase;color:rgba(155,107,171,.5);margin-bottom:8px;">✦ Reading</div>
         ${text.split('\n\n').map(p=>`<p style="font-family:'Cormorant Garamond',serif;font-size:.9rem;color:rgba(240,235,224,.75);line-height:1.8;margin-bottom:10px;">${p}</p>`).join('')}
       </div>`;
     }
+    if (btnEl) {
+      btnEl.textContent = '▾ Hide Reading';
+      btnEl.setAttribute('onclick', "toggleWithinReading('" + entryId + "',this)");
+    }
   } catch(err) {
     gtAlert('Error generating reading: ' + err.message);
+    if (btnEl) btnEl.textContent = '✦ Reading';
   } finally {
-    if (btnEl) { btnEl.disabled = false; btnEl.textContent = '✦ Reading'; }
+    if (btnEl) { btnEl.disabled = false; }
   }
 }
 
@@ -11886,9 +11821,6 @@ function switchDreams(type, btn) {
   } else if (type === 'magic') {
     dest.innerHTML = '';
     renderDreamMagic(dest);
-  } else if (type === 'presleep') {
-    dest.innerHTML = '';
-    renderPreSleep(dest);
   } else if (type === 'dreamplaces') {
     dest.innerHTML = '';
     renderDreamPlaces(dest);
