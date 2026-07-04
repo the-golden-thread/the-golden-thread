@@ -4435,6 +4435,12 @@ function saveCurrentPromptToBank() {
     gtAlert('✦ Prompt saved for later.');
   }
 }
+function removePromptFromBank(text) {
+  if (!text) return;
+  const prompts = getJournalPrompts();
+  const filtered = prompts.filter(p => p.text.trim().toLowerCase() !== text.trim().toLowerCase());
+  if (filtered.length !== prompts.length) saveJournalPrompts(filtered);
+}
 function openManagePromptsModal() {
   const prompts = getJournalPrompts().slice().sort((a,b) => (b.dateAdded||'').localeCompare(a.dateAdded||''));
   const overlay = document.createElement('div');
@@ -6122,6 +6128,7 @@ function saveSpiritEntry() {
   if (_spiritDraftTimer) { clearTimeout(_spiritDraftTimer); _spiritDraftTimer = null; }
   const saved = saveSpiritEntries();
   if (!saved) return; // storage error — don't close form so user can copy text
+  if (prompt) removePromptFromBank(prompt);
   clearSpiritDraft();
   closeSpiritAdd(null, true); // true = skip unsaved check, this is a legitimate save
   if (type === 'gateway') {
