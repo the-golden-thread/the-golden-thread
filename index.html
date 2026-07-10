@@ -1333,6 +1333,9 @@ async function generateAstroReading(dreamId) {
     }
   } catch(e) {}
 
+  // Clear any cached reading so old long versions don't persist
+  try { localStorage.removeItem(cacheKey); } catch(e) {}
+
   // Show spinner
   if (el) {
     el.style.display = 'flex';
@@ -1348,7 +1351,7 @@ async function generateAstroReading(dreamId) {
 
   const natalCtx = getNatalContext();
   const natalLine = natalCtx ? `\nHer natal chart context: ${natalCtx.summary || 'Sun in Libra 17°'}` : '\nThis is Skye, born October 10 1992, Sun in Libra 17°.';
-  const prompt = 'You are a personal astrologer interpreting a dream journal entry for Tiff (born October 10, 1992, 2:37 PM EDT, Taunton MA — Sun in Libra 17°). Be insightful, specific, and grounded. Connect the astrological conditions to her natal chart AND to what happened in this specific dream.' + natalLine + '\n\n'
+  const prompt = 'You are a personal astrologer interpreting a dream journal entry for Tiff (born October 10, 1992, 2:37 PM EDT, Taunton MA — Sun in Libra 17°). Be specific and grounded.' + natalLine + '\n\n'
     + 'DREAM: "' + d.title + '"\n'
     + d.body.slice(0, 20000) + (d.body.length > 20000 ? '...' : '') + '\n\n'
     + 'ASTROLOGICAL CONDITIONS ON THIS DATE:\n'
@@ -1356,7 +1359,7 @@ async function generateAstroReading(dreamId) {
     + '- Sun in: ' + sunSign + '\n'
     + (retros ? '- Active retrogrades: ' + retros + '\n' : '')
     + (events ? '- Sky event: ' + events + '\n' : '')
-    + '\nWrite a focused astrological interpretation (3-5 sentences). Explain what the moon phase and sign mean for dreaming, note how any retrogrades may have colored the themes, and connect directly to specific elements of this dream. Use accessible language. Write as flowing prose, no bullet points.';
+    + '\nWrite exactly 2-3 sentences of astrological context. Name the moon phase and sign and what it means for dreaming, then make one specific connection to an element of this dream. No more than 3 sentences. Flowing prose, no bullet points.';
 
   try {
     const apiKey = getApiKey();
@@ -1371,7 +1374,7 @@ async function generateAstroReading(dreamId) {
     }
     const data = await claudeAPI(apiKey, {
         model: 'claude-sonnet-4-6',
-        max_tokens: 1000,
+        max_tokens: 300,
         messages: [{ role: 'user', content: prompt }]
       });
     const text = data.content?.find(c => c.type === 'text')?.text || '';
