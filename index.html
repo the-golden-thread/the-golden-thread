@@ -436,11 +436,11 @@ h1 em { display:block; font-style:italic; font-weight:300; font-size:.42em; lett
   <!-- Dreams sub-bar -->
   <div id="sub-bar-dreams" style="display:none;white-space:nowrap;">
     <button class="sub-tab-btn active" id="sub-btn-archive" onclick="switchDreams('archive',this)">◎ Archive</button>
-    <button class="sub-tab-btn" id="sub-btn-dreamplaces" onclick="switchDreams('dreamplaces',this)">◈ Places</button>
     <button class="sub-tab-btn" id="sub-btn-incubation" onclick="switchDreams('incubation',this)">○ Incubation</button>
     <button class="sub-tab-btn" id="sub-btn-symbols-d" onclick="switchDreams('symbols',this)">&#10022; Symbols</button>
     <button class="sub-tab-btn" id="sub-btn-threads-d" onclick="switchDreams('threads',this)">∞ Threads</button>
     <button class="sub-tab-btn" id="sub-btn-magic-d" onclick="switchDreams('magic',this)">✦ Magic</button>
+    <button class="sub-tab-btn" id="sub-btn-dreamplaces" onclick="switchDreams('dreamplaces',this)">◈ Places</button>
   </div>
   <!-- Practice sub-bar -->
   <div id="sub-bar-practice" style="display:none;white-space:nowrap;">
@@ -549,6 +549,8 @@ h1 em { display:block; font-style:italic; font-weight:300; font-size:.42em; lett
     <!-- ✦ PROPHECY WATCH ✦ -->
     <div id="prophecy-watch-widget" style="margin-bottom:24px;"></div>
 
+    <!-- ✦ GARDEN WIDGET ✦ -->
+    <div id="garden-today-widget" style="margin-bottom:20px;"></div>
 
     <!-- ✦ TODAY'S READING ✦ (on demand) -->
     <div id="sanctum-daily" style="margin-bottom:36px;">
@@ -672,6 +674,7 @@ h1 em { display:block; font-style:italic; font-weight:300; font-size:.42em; lett
     <div style="display:flex;gap:7px;align-items:center;flex-wrap:wrap;width:100%;">
       <button id="cat-filter-toggle" onclick="toggleCatFilters()" style="font-family:'Space Mono',monospace;font-size:.58rem;letter-spacing:.07em;text-transform:uppercase;padding:6px 12px;border:1px solid rgba(201,185,154,.2);background:transparent;color:rgba(201,185,154,.65);cursor:pointer;transition:all .2s;white-space:nowrap;">◈ Categories</button>
       <button id="notable-toggle-btn" onclick="toggleNotableFilter()" style="font-family:'Space Mono',monospace;font-size:.58rem;letter-spacing:.07em;text-transform:uppercase;padding:6px 12px;border:1px solid rgba(201,185,154,.2);background:transparent;color:rgba(201,185,154,.65);cursor:pointer;transition:all .2s;white-space:nowrap;">★ Notable</button>
+      <button id="beings-toggle-btn" onclick="toggleBeingsFilter()" style="font-family:'Space Mono',monospace;font-size:.58rem;letter-spacing:.07em;text-transform:uppercase;padding:6px 12px;border:1px solid rgba(201,185,154,.2);background:transparent;color:rgba(201,185,154,.65);cursor:pointer;transition:all .2s;white-space:nowrap;">◎ Beings</button>
     </div>
     <div id="filter-tags-panel" style="display:none;width:100%;margin-top:4px;">
       <div class="filter-scroll" id="filter-tags"></div>
@@ -684,17 +687,21 @@ h1 em { display:block; font-style:italic; font-weight:300; font-size:.42em; lett
       <button onclick="setActiveFlagFilter('notable')" id="flag-btn-notable" style="font-family:'Space Mono',monospace;font-size:.55rem;letter-spacing:.06em;padding:5px 11px;border:1px solid rgba(201,185,154,.2);background:transparent;color:rgba(201,185,154,.6);cursor:pointer;">💡 Notable</button>
       <button onclick="setActiveFlagFilter('sync1010')" id="flag-btn-sync1010" style="font-family:'Space Mono',monospace;font-size:.55rem;letter-spacing:.06em;padding:5px 11px;border:1px solid rgba(201,168,76,.25);background:transparent;color:rgba(201,168,76,.7);cursor:pointer;">✦ 1010</button>
     </div>
+    <div id="beings-filter-panel" style="display:none;width:100%;gap:6px;flex-wrap:wrap;margin-top:4px;"></div>
     <div class="viv-filter">
       <label>Min vividness</label>
       <input type="range" id="viv-min" min="1" max="10" value="1" oninput="document.getElementById('viv-min-val').textContent=this.value;renderDreams();">
       <span id="viv-min-val">1</span>
     </div>
-    <div id="season-filter-row" style="display:none;width:100%;gap:6px;flex-wrap:wrap;margin-top:2px;padding:8px 0 4px;">
-      <span style="font-family:'Space Mono',monospace;font-size:.52rem;letter-spacing:.08em;text-transform:uppercase;color:rgba(201,185,154,.4);align-self:center;">Inner Season</span>
-      <button class="season-filter-btn" data-phase="menstruation" onclick="toggleSeasonFilter('menstruation')" style="font-family:'Space Mono',monospace;font-size:.58rem;letter-spacing:.06em;padding:5px 11px;border:1px solid rgba(147,185,221,.3);background:transparent;color:rgba(147,185,221,.7);cursor:pointer;transition:all .2s;border-radius:2px;">❄️ Winter</button>
-      <button class="season-filter-btn" data-phase="follicular" onclick="toggleSeasonFilter('follicular')" style="font-family:'Space Mono',monospace;font-size:.58rem;letter-spacing:.06em;padding:5px 11px;border:1px solid rgba(134,197,134,.3);background:transparent;color:rgba(134,197,134,.7);cursor:pointer;transition:all .2s;border-radius:2px;">🌿 Spring</button>
-      <button class="season-filter-btn" data-phase="ovulation" onclick="toggleSeasonFilter('ovulation')" style="font-family:'Space Mono',monospace;font-size:.58rem;letter-spacing:.06em;padding:5px 11px;border:1px solid rgba(240,205,100,.3);background:transparent;color:rgba(240,205,100,.7);cursor:pointer;transition:all .2s;border-radius:2px;">🌕 Summer</button>
-      <button class="season-filter-btn" data-phase="luteal" onclick="toggleSeasonFilter('luteal')" style="font-family:'Space Mono',monospace;font-size:.58rem;letter-spacing:.06em;padding:5px 11px;border:1px solid rgba(205,133,80,.3);background:transparent;color:rgba(205,133,80,.7);cursor:pointer;transition:all .2s;border-radius:2px;">🍂 Autumn</button>
+    <div id="season-filter-row" style="display:none;width:100%;gap:8px;align-items:center;margin-top:2px;padding:6px 0 4px;">
+      <span style="font-family:'Space Mono',monospace;font-size:.52rem;letter-spacing:.08em;text-transform:uppercase;color:rgba(201,185,154,.4);white-space:nowrap;flex-shrink:0;">Inner Season</span>
+      <select id="season-filter-select" onchange="setSeasonFromDropdown(this.value)" style="flex:1;background:rgba(255,255,255,.04);border:1px solid rgba(201,185,154,.2);color:var(--parchment);font-family:'Space Mono',monospace;font-size:.58rem;padding:5px 10px;outline:none;cursor:pointer;">
+        <option value="">All seasons</option>
+        <option value="menstruation">❄️ Winter</option>
+        <option value="follicular">🌿 Spring</option>
+        <option value="ovulation">🌕 Summer</option>
+        <option value="luteal">🍂 Autumn</option>
+      </select>
     </div>
     <div style="width:100%;padding:10px 0 4px;border-top:1px solid rgba(201,185,154,.07);margin-top:4px;">
       <div style="font-family:'Space Mono',monospace;font-size:.5rem;color:rgba(201,185,154,.35);letter-spacing:.1em;text-transform:uppercase;margin-bottom:8px;">✦ Anniversary Filter — all years</div>
@@ -1106,12 +1113,8 @@ h1 em { display:block; font-style:italic; font-weight:300; font-size:.42em; lett
       <div class="form-field" id="s-prompt-row" style="display:none;">
         <label style="display:flex;align-items:center;justify-content:space-between;">
           <span>Prompt <span style="font-weight:300;opacity:.5">(optional)</span></span>
-          <div style="display:flex;gap:8px;align-items:center;">
-            <button type="button" onclick="recommendJournalPrompt()" id="s-prompt-recommend-btn" style="background:none;border:none;color:rgba(155,107,171,.7);font-family:'Space Mono',monospace;font-size:.48rem;letter-spacing:.06em;cursor:pointer;text-transform:uppercase;">✦ Recommend</button>
-            <button type="button" onclick="openManagePromptsModal()" style="background:none;border:none;color:rgba(201,185,154,.4);font-family:'Space Mono',monospace;font-size:.48rem;letter-spacing:.06em;cursor:pointer;text-transform:uppercase;">⚙ Manage Saved</button>
-          </div>
+          <button type="button" onclick="openManagePromptsModal()" style="background:none;border:none;color:rgba(201,185,154,.4);font-family:'Space Mono',monospace;font-size:.48rem;letter-spacing:.06em;cursor:pointer;text-transform:uppercase;">⚙ Manage Saved</button>
         </label>
-        <div id="s-prompt-recommend-status" style="font-family:'Space Mono',monospace;font-size:.48rem;color:rgba(155,107,171,.55);min-height:14px;margin-bottom:4px;"></div>
         <select id="s-prompt-select" onchange="applySavedPrompt(this.value)" style="width:100%;background:rgba(255,255,255,.04);border:1px solid rgba(201,185,154,.22);color:var(--parchment);font-family:'Space Mono',monospace;font-size:.62rem;padding:8px 11px;outline:none;cursor:pointer;margin-bottom:8px;">
           <option value="">— Select a saved prompt (optional) —</option>
         </select>
@@ -1322,7 +1325,6 @@ async function generateAstroReading(dreamId) {
   const cacheKey = lsKey('astro', dreamId);
   try {
     const cached = localStorage.getItem(cacheKey);
-    // Invalidate if too long (old readings were 1000+ chars; new ones are ~300)
     if (cached && cached.length < 800) {
       if (el) {
         el.style.display = 'block';
@@ -1332,13 +1334,9 @@ async function generateAstroReading(dreamId) {
       if (btn) btn.style.display = 'none';
       return;
     } else if (cached) {
-      // Stale long reading — clear it and regenerate
       localStorage.removeItem(cacheKey);
     }
   } catch(e) {}
-
-  // Clear any cached reading so old long versions don't persist
-  try { localStorage.removeItem(cacheKey); } catch(e) {}
 
   // Show spinner
   if (el) {
@@ -1355,7 +1353,7 @@ async function generateAstroReading(dreamId) {
 
   const natalCtx = getNatalContext();
   const natalLine = natalCtx ? `\nHer natal chart context: ${natalCtx.summary || 'Sun in Libra 17°'}` : '\nThis is Skye, born October 10 1992, Sun in Libra 17°.';
-  const prompt = 'You are a personal astrologer interpreting a dream journal entry for Tiff (born October 10, 1992, 2:37 PM EDT, Taunton MA — Sun in Libra 17°). Be specific and grounded.' + natalLine + '\n\n'
+  const prompt = 'You are a personal astrologer interpreting a dream journal entry for Tiff (born October 10, 1992, 2:37 PM EDT, Taunton MA — Sun in Libra 17°). Be insightful, specific, and grounded. Connect the astrological conditions to her natal chart AND to what happened in this specific dream.' + natalLine + '\n\n'
     + 'DREAM: "' + d.title + '"\n'
     + d.body.slice(0, 20000) + (d.body.length > 20000 ? '...' : '') + '\n\n'
     + 'ASTROLOGICAL CONDITIONS ON THIS DATE:\n'
@@ -4474,19 +4472,12 @@ function openManagePromptsModal() {
       <div style="font-family:'Space Mono',monospace;font-size:.55rem;letter-spacing:.1em;text-transform:uppercase;color:var(--moon);">✦ Saved Prompts</div>
       <button onclick="document.getElementById('manage-prompts-overlay').remove()" style="background:none;border:none;color:rgba(201,185,154,.4);font-size:1.1rem;cursor:pointer;">✕</button>
     </div>
-    <div id="manage-prompts-list" style="display:flex;flex-direction:column;gap:8px;max-height:340px;overflow-y:auto;margin-bottom:16px;">
+    <div id="manage-prompts-list" style="display:flex;flex-direction:column;gap:8px;max-height:400px;overflow-y:auto;">
       ${prompts.length ? prompts.map(p => `
         <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;padding:10px 12px;background:rgba(255,255,255,.02);border:1px solid rgba(201,185,154,.1);">
           <div style="font-family:'Cormorant Garamond',serif;font-size:.92rem;color:rgba(240,235,224,.8);line-height:1.6;flex:1;">${p.text}</div>
           <button onclick="deleteSavedPrompt('${p.id}')" style="background:none;border:none;color:rgba(180,80,80,.6);font-size:.9rem;cursor:pointer;flex-shrink:0;">✕</button>
         </div>`).join('') : '<div style="font-family:\'Cormorant Garamond\',serif;font-size:.9rem;color:rgba(201,185,154,.35);font-style:italic;">No saved prompts yet.</div>'}
-    </div>
-    <div style="border-top:1px solid rgba(201,185,154,.1);padding-top:14px;">
-      <div style="font-family:'Space Mono',monospace;font-size:.5rem;letter-spacing:.09em;text-transform:uppercase;color:rgba(201,185,154,.4);margin-bottom:8px;">Batch Import</div>
-      <div style="font-family:'Cormorant Garamond',serif;font-size:.82rem;color:rgba(201,185,154,.35);font-style:italic;margin-bottom:8px;">Paste prompts below — one per line. Duplicates are skipped.</div>
-      <textarea id="batch-import-text" rows="5" placeholder="What am I being asked to release right now?&#10;Where in my body does this feeling live?&#10;What would I do if I knew I couldn't fail?" style="width:100%;background:rgba(255,255,255,.03);border:1px solid rgba(201,185,154,.18);color:var(--parchment);font-family:'Cormorant Garamond',serif;font-size:.9rem;padding:9px 12px;outline:none;resize:vertical;line-height:1.6;box-sizing:border-box;"></textarea>
-      <button onclick="batchImportPrompts()" style="margin-top:8px;width:100%;font-family:'Space Mono',monospace;font-size:.52rem;letter-spacing:.09em;text-transform:uppercase;padding:10px;background:rgba(107,79,138,.08);border:1px solid rgba(107,79,138,.3);color:rgba(155,107,171,.8);cursor:pointer;">✦ Import All</button>
-      <div id="batch-import-status" style="font-family:'Space Mono',monospace;font-size:.48rem;color:rgba(155,107,171,.55);min-height:14px;margin-top:6px;text-align:center;"></div>
     </div>`;
   overlay.appendChild(modal);
   document.body.appendChild(overlay);
@@ -4498,125 +4489,6 @@ function deleteSavedPrompt(id) {
   document.getElementById('manage-prompts-overlay')?.remove();
   openManagePromptsModal();
   populateSPromptSelect();
-}
-
-function batchImportPrompts() {
-  const raw = (document.getElementById('batch-import-text')?.value || '').trim();
-  const statusEl = document.getElementById('batch-import-status');
-  if (!raw) { if (statusEl) statusEl.textContent = 'Nothing to import.'; return; }
-
-  const lines = raw.split('\n').map(l => l.trim()).filter(Boolean);
-  const existing = getJournalPrompts();
-  const existingTexts = new Set(existing.map(p => p.text.toLowerCase()));
-
-  let added = 0, skipped = 0;
-  const updated = [...existing];
-  lines.forEach(text => {
-    if (existingTexts.has(text.toLowerCase())) { skipped++; return; }
-    updated.push({ id: 'prompt_' + Date.now() + '_' + Math.random().toString(36).slice(2,6), text, dateAdded: localDateStr() });
-    existingTexts.add(text.toLowerCase());
-    added++;
-  });
-
-  if (added > 0) {
-    saveJournalPrompts(updated);
-    populateSPromptSelect();
-    if (statusEl) statusEl.textContent = `✦ ${added} added${skipped ? `, ${skipped} skipped` : ''}.`;
-    // Refresh list in modal
-    document.getElementById('manage-prompts-overlay')?.remove();
-    openManagePromptsModal();
-  } else {
-    if (statusEl) statusEl.textContent = skipped ? `All ${skipped} already saved.` : 'Nothing added.';
-  }
-}
-
-async function recommendJournalPrompt() {
-  const apiKey = localStorage.getItem('gt_anthropic_key');
-  if (!apiKey) { gtAlert('Add your API key in Settings first.'); return; }
-
-  const btn = document.getElementById('s-prompt-recommend-btn');
-  const statusEl = document.getElementById('s-prompt-recommend-status');
-  const textEl = document.getElementById('s-prompt-text');
-  if (btn) btn.textContent = '… thinking';
-  if (statusEl) statusEl.textContent = 'Reading your archive…';
-
-  try {
-    // Gather context
-    const savedPrompts = getJournalPrompts();
-    const savedList = savedPrompts.map(p => p.text).join('\n');
-
-    // Recent journal/shadow entries (last 5)
-    const recentEntries = SPIRIT_ENTRIES
-      .filter(e => ['journal','shadow','workings'].includes(e.type))
-      .slice().sort((a,b) => (b.date||'').localeCompare(a.date||''))
-      .slice(0, 5)
-      .map(e => `[${e.type} — ${e.date}] ${e.title}: ${(e.body||'').slice(0,200)}`)
-      .join('\n\n');
-
-    // Current cycle + sky
-    let cycleCtx = '';
-    try {
-      const cd = JSON.parse(localStorage.getItem('gt_cycle_data') || '{}');
-      if (cd.lastPeriod) {
-        const daysIn = Math.round((new Date() - new Date(cd.lastPeriod)) / 86400000);
-        cycleCtx = `Inner season: day ${daysIn} of cycle.`;
-      }
-    } catch(e) {}
-
-    const entryType = document.getElementById('s-type')?.value || 'journal';
-
-    const aiPrompt = `You are a depth guide for Tiff — witch, dreamworker, Pure Generator 4/6, Libra Sun/Aries Moon/Cap Rising/Scorpio stellium. She is about to write a ${entryType} entry and wants a recommended journaling prompt.
-
-HER RECENT ENTRIES:
-${recentEntries || '(none available)'}
-
-${cycleCtx}
-
-HER SAVED PROMPT LIBRARY (${savedPrompts.length} prompts):
-${savedList || '(empty — no saved prompts yet)'}
-
-TASK:
-1. If one of her saved prompts is particularly resonant with what she seems to be moving through right now, recommend it — return it verbatim, prefixed with "SAVED: "
-2. If nothing in the library quite fits, generate a new prompt tailored to what's alive in her archive right now — specific, not generic, no platitudes. Prefix with "NEW: "
-
-Return ONLY the prefix and the prompt text. Nothing else. No explanation. No quotation marks.`;
-
-    const data = await claudeAPI(apiKey, {
-      model: 'claude-sonnet-4-6',
-      max_tokens: 200,
-      messages: [{ role: 'user', content: aiPrompt }]
-    });
-
-    const raw = (data?.content?.[0]?.text || '').trim();
-    let isNew = false;
-    let promptText = raw;
-
-    if (raw.startsWith('SAVED: ')) {
-      promptText = raw.slice(7).trim();
-      if (statusEl) statusEl.textContent = '✦ Selected from your saved prompts';
-    } else if (raw.startsWith('NEW: ')) {
-      promptText = raw.slice(5).trim();
-      isNew = true;
-      if (statusEl) statusEl.textContent = '✦ Generated for what you\'re moving through';
-    } else {
-      promptText = raw;
-      if (statusEl) statusEl.textContent = '✦ Recommended';
-    }
-
-    if (textEl) textEl.value = promptText;
-    if (btn) btn.textContent = '✦ Recommend';
-
-    // If new, offer to save
-    if (isNew && promptText) {
-      setTimeout(() => {
-        if (statusEl) statusEl.innerHTML = `✦ Generated for what you\'re moving through &nbsp;<button onclick="saveCurrentPromptToBank()" style="font-family:'Space Mono',monospace;font-size:.46rem;letter-spacing:.06em;background:none;border:1px solid rgba(155,107,171,.35);color:rgba(155,107,171,.7);padding:2px 8px;cursor:pointer;">+ Save</button>`;
-      }, 100);
-    }
-
-  } catch(err) {
-    if (statusEl) statusEl.textContent = 'Error — try again.';
-    if (btn) btn.textContent = '✦ Recommend';
-  }
 }
 
 let activeSpiritTagFilter = { journal:null, workings:null, shadow:null, readings:null, gateway:null };
@@ -6593,9 +6465,8 @@ let activeSeasonFilter = null;
 
 function toggleSeasonFilter(phaseId) {
   activeSeasonFilter = (activeSeasonFilter === phaseId) ? null : phaseId;
-  document.querySelectorAll('.season-filter-btn').forEach(btn => {
-    btn.classList.toggle('season-filter-active', btn.dataset.phase === activeSeasonFilter);
-  });
+  const sel = document.getElementById('season-filter-select');
+  if (sel) sel.value = activeSeasonFilter || '';
   renderDreams();
 }
 
@@ -12260,6 +12131,7 @@ function switchGrimoire(type, btn) {
 
 
 
+
 function toggleDreamFilters() {
   const panel = document.getElementById('dream-filters-panel');
   const btn = document.getElementById('dream-filter-toggle');
@@ -12267,6 +12139,72 @@ function toggleDreamFilters() {
   const open = panel.style.display !== 'none';
   panel.style.display = open ? 'none' : 'block';
   if (btn) btn.textContent = open ? '⊕ Search & Filter' : '⊖ Search & Filter';
+}
+
+function setSeasonFromDropdown(value) {
+  activeSeasonFilter = value || null;
+  renderDreams();
+}
+
+let activeBeingFilter = null;
+
+function toggleBeingsFilter() {
+  const panel = document.getElementById('beings-filter-panel');
+  const btn = document.getElementById('beings-toggle-btn');
+  if (!panel) return;
+  const open = panel.style.display !== 'none';
+  panel.style.display = open ? 'none' : 'flex';
+  if (!open) buildBeingsFilter();
+  updateBeingsFilterBtn();
+}
+
+function buildBeingsFilter() {
+  const panel = document.getElementById('beings-filter-panel');
+  if (!panel) return;
+  panel.innerHTML = '';
+  const peopleInDreams = new Map();
+  dreams.forEach(function(d) {
+    (d.people || []).forEach(function(pid) {
+      peopleInDreams.set(pid, (peopleInDreams.get(pid) || 0) + 1);
+    });
+  });
+  const all = document.createElement('button');
+  all.textContent = 'All';
+  all.style.cssText = 'font-family:Space Mono,monospace;font-size:.55rem;letter-spacing:.06em;padding:5px 11px;border:1px solid rgba(201,185,154,.35);background:' + (activeBeingFilter === null ? 'rgba(201,185,154,.1)' : 'transparent') + ';color:var(--moon);cursor:pointer;';
+  all.onclick = function() { activeBeingFilter = null; buildBeingsFilter(); renderDreams(); updateBeingsFilterBtn(); };
+  panel.appendChild(all);
+  const sorted = Array.from(peopleInDreams.entries()).sort(function(a,b){return b[1]-a[1];});
+  sorted.forEach(function(entry) {
+    const pid = entry[0], count = entry[1];
+    const person = PEOPLE.find(function(p){return p.id===pid;});
+    const name = person ? person.name : pid;
+    const col = person ? person.col : 'rgba(201,185,154,.5)';
+    const btn = document.createElement('button');
+    const isActive = activeBeingFilter === pid;
+    btn.style.cssText = 'font-family:Space Mono,monospace;font-size:.55rem;letter-spacing:.06em;padding:5px 11px;border:1px solid ' + (isActive ? col : 'rgba(201,185,154,.2)') + ';background:' + (isActive ? col+'22' : 'transparent') + ';color:' + (isActive ? col : 'rgba(201,185,154,.6)') + ';cursor:pointer;';
+    btn.textContent = name + ' (' + count + ')';
+    btn.onclick = function() { activeBeingFilter = pid; buildBeingsFilter(); renderDreams(); updateBeingsFilterBtn(); };
+    panel.appendChild(btn);
+  });
+}
+
+function updateBeingsFilterBtn() {
+  const btn = document.getElementById('beings-toggle-btn');
+  const panel = document.getElementById('beings-filter-panel');
+  if (!btn) return;
+  const isOpen = panel && panel.style.display !== 'none';
+  if (activeBeingFilter === null) {
+    btn.textContent = isOpen ? '⊖ Beings' : '◎ Beings';
+    btn.style.borderColor = isOpen ? 'var(--moon)' : 'rgba(201,185,154,.2)';
+    btn.style.color = isOpen ? 'var(--moon)' : 'rgba(201,185,154,.65)';
+    btn.style.background = 'transparent';
+  } else {
+    const person = PEOPLE.find(function(p){return p.id===activeBeingFilter;});
+    btn.textContent = (isOpen ? '⊖ ' : '◎ ') + (person ? person.name : activeBeingFilter);
+    btn.style.borderColor = 'var(--moon)';
+    btn.style.color = isOpen ? 'var(--moon)' : 'var(--ink)';
+    btn.style.background = isOpen ? 'transparent' : 'var(--moon)';
+  }
 }
 
 function toggleCatFilters() {
@@ -12306,16 +12244,16 @@ function updateCatFilterBtn() {
   if (!btn) return;
   const isOpen = panel && panel.style.display !== 'none';
   if (activeFilter === 'all') {
-    btn.textContent = isOpen ? '✕ Categories' : '◈ Categories';
+    btn.textContent = isOpen ? '⊖ Categories' : '◈ Categories';
     btn.style.borderColor = isOpen ? 'var(--moon)' : 'rgba(201,185,154,.2)';
     btn.style.color = isOpen ? 'var(--moon)' : 'rgba(201,185,154,.65)';
     btn.style.background = 'transparent';
   } else {
     const cat = CATS.find(c=>c.id===activeFilter);
-    btn.textContent = '◈ ' + (cat ? cat.lbl : 'Category');
+    btn.textContent = (isOpen ? '⊖ ' : '◈ ') + (cat ? cat.lbl : 'Category');
     btn.style.borderColor = 'var(--moon)';
-    btn.style.color = 'var(--ink)';
-    btn.style.background = 'var(--moon)';
+    btn.style.color = isOpen ? 'var(--moon)' : 'var(--ink)';
+    btn.style.background = isOpen ? 'transparent' : 'var(--moon)';
   }
 }
 
@@ -12371,6 +12309,7 @@ function renderDreams(){
     })();
     const mviv = (d.viv||1) >= vivMin;
     const mc=activeFilter==='all'||d.cats.includes(activeFilter);
+    if (activeBeingFilter && !(d.people||[]).includes(activeBeingFilter)) return false;
     // Notable filter
     if (activeNotableFilter) {
       const flags = loadDreamFlags(d.id);
@@ -12508,7 +12447,6 @@ function openDream(d){
     <div class="m-sec">
       <div class="m-lbl">Your Interpretation (editable)</div>
       <textarea class="m-interp-edit" id="interp-edit-${d.id}" placeholder="Add your interpretation… it saves automatically." oninput="saveUserInterp(${d.id},this.value)">${userInterp}</textarea>
-
     </div>
     <div style="margin-bottom:16px;"><button class="astro-gen-btn" style="width:100%;justify-content:center;" onclick="generateDreamAllReadings(${d.id},this)"><span>✦</span> ${(d.claude||d.astroReading) ? 'Regenerate Reading' : 'Generate Reading'}</button></div>
     ${d.astro ? `<div class="m-sec">
@@ -16092,7 +16030,7 @@ if ('serviceWorker' in navigator) {
 
 
 // ── GENERATE READINGS (Add Dream form) ───────
-// ── DREAM READING BUFFERS (so addDream always gets clean text) ──
+// ── DREAM READING BUFFERS ──
 let _fFormClaudeReading = '';
 let _fFormAstroReading = '';
 
@@ -16108,7 +16046,6 @@ async function generateDreamReadings() {
   const btn = document.getElementById('f-gen-btn');
   if (btn) { btn.disabled = true; btn.textContent = '⟳ Generating…'; }
 
-  // Clear buffers
   _fFormClaudeReading = '';
   _fFormAstroReading = '';
 
@@ -16136,13 +16073,13 @@ async function generateFormAstroReading(dreamContext, moon, apiKey) {
 
   const natalCtx2 = getNatalContext();
   const natalLine2 = natalCtx2 ? `Her natal chart: ${natalCtx2.summary || 'Sun in Libra 17°'}` : 'This is Skye, born October 10 1992, Sun in Libra 17°.';
-  const prompt = 'You are a personal astrologer interpreting a dream journal entry for Tiff (born October 10, 1992 — Sun in Libra 17°). ' + natalLine2 + '\n\n'
+  const prompt = 'You are a personal astrologer interpreting a dream journal entry for Tiff (born October 10, 1992 — Sun in Libra 17°). ' + natalLine2 + ' Be specific and grounded — connect the astrological conditions to her natal chart and to what happened in this dream.\n\n'
     + dreamContext + '\n\n'
-    + (moon ? 'Moon phase: ' + moon + '\n\n' : '')
-    + 'Write a brief astrological context note (2-3 sentences only). Name the moon phase and sign, note one or two relevant natal or transit connections to the dream content. No repetition of the dream. Flowing prose, no bullet points.';
+    + (moon ? 'Moon phase noted: ' + moon + '\n\n' : '')
+    + 'Write a focused astrological interpretation (3-5 sentences). Use accessible language. Flowing prose, no bullet points.';
 
   try {
-    const data = await claudeAPI(apiKey, {model:'claude-sonnet-4-6',max_tokens:300,messages:[{role:'user',content:prompt}]});
+    const data = await claudeAPI(apiKey, {model:'claude-sonnet-4-6',max_tokens:1000,messages:[{role:'user',content:prompt}]});
     const text = (data.content?.find(c=>c.type==='text')?.text||'').trim();
     _fFormAstroReading = text;
     txt.innerHTML = text.split('\n').filter(p=>p.trim()).map(p=>`<p>${p}</p>`).join('');
@@ -16161,10 +16098,10 @@ async function generateFormClaudeReading(dreamContext, apiKey) {
   const prompt = 'You are a dream analyst and spiritual companion with deep knowledge of Jungian psychology, archetypes, and spiritual symbolism. Analyze this dream with insight and care.\n\n'
     + dreamContext + '\n\n'
     + 'RULES — follow these exactly:\n'
-    + '- Read the dream text word for word. Every detail you mention must be explicitly stated in the dream text above.\n'
+    + '- Every detail you mention must be explicitly stated in the dream text above.\n'
     + '- Do not infer what characters did, said, felt, or intended beyond what is written.\n'
-    + '- Do not add physical actions, dialogue, or motivations that are not in the dream text.\n'
-    + '- If the dream says a character appeared and left without comment — do not describe what they did or did not do beyond that.\n'
+    + '- Do not add physical actions, dialogue, or motivations not in the dream text.\n'
+    + '- If a character appeared and left — say only that, nothing more.\n'
     + '- Use phrases like "appears," "seems," "may represent" rather than stating interpretations as facts.\n\n'
     + 'Write your reading as two paragraphs, no more than 10 sentences total. First paragraph: the central symbols and what they may represent. Second paragraph: the emotional or psychological theme and what the dream may be communicating. Be specific to this dream. No bullet points.';
 
