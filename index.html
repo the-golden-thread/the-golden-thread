@@ -1322,7 +1322,8 @@ async function generateAstroReading(dreamId) {
   const cacheKey = lsKey('astro', dreamId);
   try {
     const cached = localStorage.getItem(cacheKey);
-    if (cached) {
+    // Invalidate if too long (old readings were 1000+ chars; new ones are ~300)
+    if (cached && cached.length < 800) {
       if (el) {
         el.style.display = 'block';
         el.className = 'm-astro-reading';
@@ -1330,6 +1331,9 @@ async function generateAstroReading(dreamId) {
       }
       if (btn) btn.style.display = 'none';
       return;
+    } else if (cached) {
+      // Stale long reading — clear it and regenerate
+      localStorage.removeItem(cacheKey);
     }
   } catch(e) {}
 
