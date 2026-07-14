@@ -5715,6 +5715,8 @@ function toggleHerb(id) {
 }
 
 
+let activeSpiritTagFilter = { journal:null, workings:null, shadow:null, readings:null, gateway:null };
+
 function renderSpiritTab(type) {
   if (!type) return;
   const entries = SPIRIT_ENTRIES.filter(e => e.type === type);
