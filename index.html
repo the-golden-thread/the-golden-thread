@@ -9920,6 +9920,1114 @@ function renderDeityImage(slot, imgUrl, deityName) {
 
 
 
+// ══════════════════════════════════════════════════════════
+// ✦ DAILY FEELING CHECK-IN BANNER
+// ══════════════════════════════════════════════════════════
+
+const CHECKIN_EMOTION_MAP = {
+  positive: [
+    'Joy','Gratitude','Serenity','Awe','Love','Curiosity','Contentment',
+    'Enthusiasm','Delight','Wonder','Radiance','Peace','Tenderness','Warmth',
+    'Clarity','Aliveness','Expansiveness','Reverence','Playfulness','Vitality',
+    'Bliss','Ease','Confidence','Trust','Presence','Sweetness','Luminosity',
+    'Courage','Grace','Abundance','Devotion','Surrender','Ecstasy','Openness',
+    'Pride','Hope','Inspiration','Connection','Excitement','Relief'
+  ],
+  neutral: [
+    'Calm','Neutral','Stillness','Contemplative','Pensive','Reflective',
+    'Tired','Restless','Distracted','Uncertain','Ambivalent','Numb',
+    'Nostalgic','Bored','Waiting','Steady','Grounded','Observing'
+  ],
+  negative: [
+    'Grief','Sadness','Longing','Loneliness','Anxiety','Fear','Anger',
+    'Frustration','Shame','Guilt','Overwhelm','Confusion','Despair',
+    'Resentment','Jealousy','Regret','Dread','Irritation','Exhaustion',
+    'Heartache','Disgust','Betrayal','Emptiness','Inadequacy','Disconnection'
+  ]
+};
+
+const CHECKIN_GROUP_LABELS = {
+  positive: { label: 'Expansive', color: 'rgba(201,107,138,.75)', bg: 'rgba(201,107,138,.06)' },
+  neutral:  { label: 'Neutral / Steady', color: 'rgba(201,185,154,.65)', bg: 'rgba(201,185,154,.04)' },
+  negative: { label: 'Challenging', color: 'rgba(107,79,138,.75)', bg: 'rgba(107,79,138,.06)' }
+};
+
+function getCheckinKey() {
+  return 'gt_checkin_' + new Date().toLocaleDateString('en-CA');
+}
+
+function hasCheckedInToday() {
+  try { return !!localStorage.getItem(getCheckinKey()); } catch(e) { return false; }
+}
+
+function markCheckinDone(word) {
+  try { localStorage.setItem(getCheckinKey(), word); } catch(e) {}
+}
+
+function renderCheckinBanner() {
+  const el = document.querySelector('#gt-content #feeling-checkin-banner') || document.getElementById('feeling-checkin-banner');
+  if (!el) return;
+  if (hasCheckedInToday()) { el.style.display = 'none'; return; }
+
+  el.style.display = 'block';
+  _checkinStep = 'collapsed';
+  _checkinSelectedGroup = '';
+  _checkinSelectedWord = '';
+
+  el.innerHTML = `
+    <div id="checkin-inner" onclick="expandCheckin()" style="cursor:pointer;padding:10px 16px;background:linear-gradient(135deg,rgba(201,168,76,.04),rgba(107,79,138,.04));border:1px solid rgba(201,185,154,.11);border-left:2px solid rgba(201,185,154,.2);position:relative;transition:all .2s;"
+      onmouseover="this.style.borderColor='rgba(201,185,154,.22)'" onmouseout="this.style.borderColor='rgba(201,185,154,.11)'">
+      <div style="display:flex;align-items:center;justify-content:space-between;">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span style="font-family:'Cormorant Garamond',serif;font-size:.95rem;font-weight:300;font-style:italic;color:rgba(240,235,224,.5);">How are you feeling right now?</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span style="font-family:'Space Mono',monospace;font-size:.38rem;color:rgba(201,185,154,.22);letter-spacing:.07em;">tap</span>
+          <button onclick="event.stopPropagation();dismissCheckin()" style="background:none;border:none;color:rgba(201,185,154,.18);font-size:.8rem;cursor:pointer;padding:1px 3px;">✕</button>
+        </div>
+      </div>
+    </div>`;
+}
+
+let _checkinStep = 'collapsed';
+let _checkinSelectedGroup = '';
+let _checkinSelectedWord = '';
+
+function expandCheckin() {
+  if (_checkinStep !== 'collapsed') return;
+  _checkinStep = 'group';
+
+  const allBuiltIn = new Set([...CHECKIN_EMOTION_MAP.positive, ...CHECKIN_EMOTION_MAP.neutral, ...CHECKIN_EMOTION_MAP.negative].map(w => w.toLowerCase()));
+  const userWords = getEmotionEntries().map(e => e.word).filter(w => !allBuiltIn.has(w.toLowerCase()));
+
+  const inner = document.getElementById('checkin-inner');
+  if (!inner) return;
+  inner.onclick = null;
+  inner.style.cursor = 'default';
+  inner.onmouseover = null;
+  inner.onmouseout = null;
+  inner.style.borderColor = 'rgba(201,185,154,.18)';
+  inner.style.background = 'rgba(17,15,26,.5)';
+
+  inner.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+      <div style="font-family:'Cormorant Garamond',serif;font-size:1.15rem;font-weight:300;font-style:italic;color:rgba(240,235,224,.75);">How are you feeling right now?</div>
+      <button onclick="dismissCheckin()" style="background:none;border:none;color:rgba(201,185,154,.25);font-size:.95rem;cursor:pointer;padding:0 0 0 10px;flex-shrink:0;">✕</button>
+    </div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;">
+      ${[
+        { key:'positive', label:'Expansive', color:'rgba(201,107,138,.75)', bg:'rgba(201,107,138,.07)', border:'rgba(201,107,138,.3)' },
+        { key:'neutral',  label:'Neutral',   color:'rgba(201,185,154,.65)', bg:'rgba(201,185,154,.05)', border:'rgba(201,185,154,.2)' },
+        { key:'negative', label:'Challenging',color:'rgba(107,79,138,.75)', bg:'rgba(107,79,138,.07)',  border:'rgba(107,79,138,.3)' }
+      ].map(g => `
+        <button data-group="${g.key}" onclick="selectCheckinGroup(this)"
+          style="flex:1;min-width:90px;font-family:'Cormorant Garamond',serif;font-size:1rem;font-weight:300;font-style:italic;padding:12px 10px;background:${g.bg};border:1px solid ${g.border};color:${g.color};cursor:pointer;transition:all .15s;">
+          ${g.label}
+        </button>`).join('')}
+    </div>
+    ${userWords.length ? `<div style="margin-top:10px;font-family:'Space Mono',monospace;font-size:.41rem;color:rgba(201,185,154,.25);">Your custom words appear under Neutral</div>` : ''}
+    <div id="checkin-emotion-list" style="display:none;margin-top:16px;padding-top:14px;border-top:1px solid rgba(201,185,154,.08);"></div>
+    <div id="checkin-blurb-section" style="display:none;margin-top:14px;padding-top:14px;border-top:1px solid rgba(201,185,154,.08);">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+        <div style="font-family:'Cormorant Garamond',serif;font-size:1.05rem;font-style:italic;color:rgba(240,235,224,.8);">Feeling <span id="checkin-selected-word-display" style="color:rgba(201,107,138,.9);"></span></div>
+        <button onclick="backToEmotions()" style="background:none;border:none;color:rgba(201,185,154,.3);font-family:'Space Mono',monospace;font-size:.42rem;cursor:pointer;letter-spacing:.05em;">↩ back</button>
+      </div>
+      <textarea id="checkin-blurb" rows="3" placeholder="What's going on? A quick note, or nothing at all."
+        style="width:100%;background:rgba(255,255,255,.04);border:1px solid rgba(201,185,154,.13);color:var(--parchment);font-family:'Cormorant Garamond',serif;font-size:.95rem;padding:9px 12px;outline:none;resize:vertical;line-height:1.65;box-sizing:border-box;margin-bottom:10px;"></textarea>
+      <div style="display:flex;gap:8px;">
+        <button onclick="submitCheckin(false)" style="flex:1;font-family:'Space Mono',monospace;font-size:.5rem;letter-spacing:.09em;text-transform:uppercase;padding:9px 14px;background:rgba(201,107,138,.08);border:1px solid rgba(201,107,138,.3);color:rgba(201,107,138,.8);cursor:pointer;">✦ Log It</button>
+        <button onclick="submitCheckin(true)" style="font-family:'Space Mono',monospace;font-size:.5rem;letter-spacing:.07em;text-transform:uppercase;padding:9px 14px;background:transparent;border:1px solid rgba(201,185,154,.1);color:rgba(201,185,154,.28);cursor:pointer;">Just the feeling</button>
+      </div>
+    </div>
+    <div id="checkin-done-msg" style="display:none;padding:10px 0 0;font-family:'Cormorant Garamond',serif;font-size:1rem;font-style:italic;color:rgba(201,185,154,.55);">Logged. ✦</div>
+  `;
+}
+
+function selectCheckinGroup(btn) {
+  const key = btn.dataset.group;
+  _checkinSelectedGroup = key;
+  _checkinStep = 'emotion';
+
+  // Highlight selected group button
+  btn.parentNode.querySelectorAll('button[data-group]').forEach(b => {
+    b.style.opacity = b === btn ? '1' : '0.35';
+  });
+
+  const allBuiltIn = new Set([...CHECKIN_EMOTION_MAP.positive, ...CHECKIN_EMOTION_MAP.neutral, ...CHECKIN_EMOTION_MAP.negative].map(w => w.toLowerCase()));
+  const userWords = getEmotionEntries().map(e => e.word).filter(w => !allBuiltIn.has(w.toLowerCase()));
+
+  let words = [...CHECKIN_EMOTION_MAP[key]];
+  if (key === 'neutral') words = [...words, ...userWords];
+
+  const g = CHECKIN_GROUP_LABELS[key];
+  const listEl = document.getElementById('checkin-emotion-list');
+  if (!listEl) return;
+  listEl.style.display = 'block';
+  listEl.innerHTML = `
+    <div style="font-family:'Space Mono',monospace;font-size:.41rem;color:${g.color};letter-spacing:.09em;text-transform:uppercase;margin-bottom:8px;">${g.label}</div>
+    <div style="display:flex;flex-wrap:wrap;gap:5px;">
+      ${words.map(w => `<button
+          data-word="${w}"
+          onclick="selectCheckinEmotion(this)"
+          style="font-family:'Cormorant Garamond',serif;font-size:.92rem;font-weight:300;padding:5px 12px;background:${g.bg};border:1px solid ${g.color.replace('.75','.22').replace('.65','.18')};color:rgba(240,235,224,.72);cursor:pointer;transition:all .12s;"
+          onmouseover="this.style.background='${g.bg.replace('.07','.14').replace('.05','.1').replace('.06','.12')}';this.style.color='rgba(240,235,224,.95)'"
+          onmouseout="this.style.background='${g.bg}';this.style.color='rgba(240,235,224,.72)'"
+          >${w}</button>`).join('')}
+    </div>`;
+  // Scroll emotion list into view
+  setTimeout(() => listEl.scrollIntoView({ behavior:'smooth', block:'nearest' }), 50);
+}
+
+function selectCheckinEmotion(btn) {
+  _checkinSelectedWord = btn.dataset.word;
+  _checkinStep = 'blurb';
+
+  const listEl = document.getElementById('checkin-emotion-list');
+  const blurb = document.getElementById('checkin-blurb-section');
+  const wordEl = document.getElementById('checkin-selected-word-display');
+  if (listEl) listEl.style.display = 'none';
+  if (blurb) blurb.style.display = 'block';
+  if (wordEl) wordEl.textContent = _checkinSelectedWord;
+  // Hide group buttons too
+  const groupBtns = document.querySelector('#checkin-inner div[style*="display:flex;gap:10px"]');
+  if (groupBtns) groupBtns.style.display = 'none';
+  setTimeout(() => document.getElementById('checkin-blurb')?.focus(), 100);
+}
+
+function backToEmotions() {
+  _checkinStep = 'emotion';
+  _checkinSelectedWord = '';
+  const blurb = document.getElementById('checkin-blurb-section');
+  const listEl = document.getElementById('checkin-emotion-list');
+  const groupBtns = document.querySelector('#checkin-inner div[style*="display:flex;gap:10px"]');
+  if (blurb) blurb.style.display = 'none';
+  if (listEl) listEl.style.display = 'block';
+  if (groupBtns) groupBtns.style.display = 'flex';
+  // Reset group button opacity
+  document.querySelectorAll('#checkin-inner button[data-group]').forEach(b => { b.style.opacity = '1'; });
+}
+
+function clearCheckinSelection() {
+  backToEmotions();
+}
+
+function submitCheckin(skipBlurb) {
+  const word = _checkinSelectedWord;
+  if (!word) return;
+  const notes = skipBlurb ? '' : (document.getElementById('checkin-blurb')?.value || '').trim();
+  const today = new Date().toLocaleDateString('en-CA');
+
+  const entries = getEmotionEntries();
+  let entry = entries.find(e => e.word === word);
+  if (!entry) {
+    const val = CHECKIN_EMOTION_MAP.positive.includes(word) ? 'positive'
+              : CHECKIN_EMOTION_MAP.negative.includes(word) ? 'negative' : 'neutral';
+    entry = {
+      id: 'emotion_' + Date.now(),
+      word,
+      dateAdded: today,
+      valence: val,
+      intensity: null,
+      myNotes: '',
+      myColor: '',
+      myColorLabel: '',
+      myElement: '',
+      myTexture: '',
+      myTemperature: '',
+      mySeason: '',
+      mySensation: '',
+      myImages: '',
+      tags: [],
+      sessions: [],
+      aiColors: [], aiElement: '', aiDirection: '', aiScents: [], aiSound: '',
+      aiBodySensation: '', aiCrystal: '', aiTimeOfDay: '', aiArchetype: '',
+      aiSeason: '', aiAffirmation: '', aiRitual: ''
+    };
+    entries.push(entry);
+  }
+
+  if (notes) {
+    const existingSession = (entry.sessions||[]).find(s => s.date === today);
+    if (existingSession) {
+      existingSession.notes = existingSession.notes ? existingSession.notes + '\n' + notes : notes;
+    } else {
+      if (!entry.sessions) entry.sessions = [];
+      entry.sessions.push({ date: today, notes });
+    }
+  } else if (!skipBlurb) {
+    // Log empty session so it still shows up as a session
+    if (!(entry.sessions||[]).find(s => s.date === today)) {
+      if (!entry.sessions) entry.sessions = [];
+      entry.sessions.push({ date: today, notes: '' });
+    }
+  }
+
+  saveEmotionEntries(entries);
+  markCheckinDone(word);
+
+  const blurbSection = document.getElementById('checkin-blurb-section');
+  const done = document.getElementById('checkin-done-msg');
+  if (blurbSection) blurbSection.style.display = 'none';
+  if (done) { done.style.display = 'block'; done.innerHTML = `Logged <em>${word}</em>. ✦`; }
+
+  renderFeelingTodayWidget();
+  setTimeout(() => {
+    const el = document.querySelector('#gt-content #feeling-checkin-banner') || document.getElementById('feeling-checkin-banner');
+    if (el) { el.style.opacity = '0'; el.style.transition = 'opacity .6s'; setTimeout(() => { el.style.display = 'none'; }, 650); }
+  }, 1800);
+}
+
+function dismissCheckin() {
+  markCheckinDone('dismissed');
+  const el = document.querySelector('#gt-content #feeling-checkin-banner') || document.getElementById('feeling-checkin-banner');
+  if (el) el.style.display = 'none';
+}
+
+// ══════════════════════════════════════════════════════════
+// ✦ FEELING DICTIONARY MODULE
+// ══════════════════════════════════════════════════════════
+
+function getEmotionEntries() {
+  try { return JSON.parse(localStorage.getItem('gt_emotions') || '[]'); } catch(e) { return []; }
+}
+function saveEmotionEntries(arr) {
+  try { localStorage.setItem('gt_emotions', JSON.stringify(arr)); } catch(e) {}
+}
+function getEmotionById(id) {
+  return getEmotionEntries().find(e => e.id === id) || null;
+}
+
+// Pool of daily positive emotions for the Sanctum widget
+const DAILY_FEELING_POOL = [
+  'Joy','Gratitude','Serenity','Awe','Love','Curiosity','Contentment',
+  'Enthusiasm','Delight','Wonder','Radiance','Peace','Tenderness','Warmth',
+  'Clarity','Aliveness','Expansiveness','Reverence','Playfulness','Vitality',
+  'Bliss','Ease','Confidence','Trust','Presence','Sweetness','Luminosity',
+  'Courage','Grace','Abundance','Devotion','Surrender','Ecstasy','Openness'
+];
+
+function getDailyFeelingWord() {
+  const today = new Date().toLocaleDateString('en-CA');
+  // Deterministic from today's date — no randomness on refresh
+  let cached;
+  try { cached = JSON.parse(localStorage.getItem('gt_daily_feeling') || 'null'); } catch(e) {}
+  if (cached && cached.date === today) return cached.word;
+  // Seed from date string
+  const seed = today.split('').reduce((a, c) => a + c.charCodeAt(0), 0);
+  const word = DAILY_FEELING_POOL[seed % DAILY_FEELING_POOL.length];
+  try { localStorage.setItem('gt_daily_feeling', JSON.stringify({ date: today, word })); } catch(e) {}
+  return word;
+}
+
+function openTodayFeelingLog() {
+  const word = getDailyFeelingWord();
+  openFeelingLogModal(word, null, true);
+}
+
+function openFeelingLogModal(word, existingEntryId, isFromWidget) {
+  const today = new Date().toLocaleDateString('en-CA');
+  const entries = getEmotionEntries();
+  const entry = existingEntryId ? entries.find(e => e.id === existingEntryId) : entries.find(e => e.word === word);
+
+  const overlay = document.createElement('div');
+  overlay.id = 'feeling-modal-overlay';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(17,15,26,.85);z-index:9000;display:flex;align-items:flex-start;justify-content:center;padding:20px;overflow-y:auto;';
+
+  const modal = document.createElement('div');
+  modal.style.cssText = 'background:#1a1626;border:1px solid rgba(201,107,138,.25);max-width:600px;width:100%;padding:28px;margin:auto;position:relative;';
+
+  const todaySession = entry ? (entry.sessions||[]).find(s => s.date === today) : null;
+
+  // Reset in-memory photo state to reflect this entry (null = unchanged/no photo yet)
+  _currentFeelingImage = (entry && entry.myPhoto) || null;
+
+  // Helper for a labeled single-line input
+  const field = (label, id, val, placeholder, type='text') =>
+    `<div style="margin-bottom:12px;">
+      <div style="font-family:'Space Mono',monospace;font-size:.41rem;color:rgba(201,185,154,.38);letter-spacing:.08em;text-transform:uppercase;margin-bottom:5px;">${label}</div>
+      <input type="${type}" id="${id}" value="${(val||'').replace(/"/g,'&quot;')}" placeholder="${placeholder}"
+        style="width:100%;background:rgba(255,255,255,.04);border:1px solid rgba(201,185,154,.12);color:var(--parchment);font-family:'Cormorant Garamond',serif;font-size:.95rem;padding:7px 11px;outline:none;box-sizing:border-box;">
+    </div>`;
+
+  modal.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+      <div style="flex:1;">
+        <div style="font-family:'Space Mono',monospace;font-size:.48rem;letter-spacing:.1em;text-transform:uppercase;color:rgba(201,107,138,.55);margin-bottom:4px;">💫 Feeling Into</div>
+        <input id="feeling-word-input" type="text" value="${(word||'').replace(/"/g,'&quot;')}"
+          style="width:100%;background:transparent;border:none;border-bottom:1px solid rgba(201,107,138,.25);color:var(--parchment);font-family:'Cormorant Garamond',serif;font-size:1.8rem;font-weight:300;font-style:italic;padding:2px 0 4px;outline:none;box-sizing:border-box;">
+      </div>
+      <button onclick="document.getElementById('feeling-modal-overlay').remove()" style="background:none;border:none;color:rgba(201,185,154,.4);font-size:1.2rem;cursor:pointer;">✕</button>
+    </div>
+
+    <!-- Session notes -->
+    <div style="margin-bottom:18px;">
+      <div style="font-family:'Space Mono',monospace;font-size:.44rem;color:rgba(201,185,154,.45);letter-spacing:.08em;text-transform:uppercase;margin-bottom:8px;">Today's session — what came up?</div>
+      <textarea id="feeling-session-notes" rows="4" placeholder="Anything that arose — images, memories, symbols, words, body feelings…"
+        style="width:100%;background:rgba(255,255,255,.04);border:1px solid rgba(201,107,138,.18);color:var(--parchment);font-family:'Cormorant Garamond',serif;font-size:1rem;padding:10px 13px;outline:none;resize:vertical;line-height:1.7;box-sizing:border-box;">${todaySession ? todaySession.notes : ''}</textarea>
+    </div>
+
+    ${entry && entry.sessions && entry.sessions.filter(s => s.date !== today).length ? `
+    <div style="margin-bottom:16px;">
+      <div style="font-family:'Space Mono',monospace;font-size:.42rem;color:rgba(201,185,154,.28);letter-spacing:.07em;text-transform:uppercase;margin-bottom:6px;">Past sessions</div>
+      <div style="display:flex;flex-direction:column;gap:5px;max-height:120px;overflow-y:auto;">
+        ${entry.sessions.filter(s => s.date !== today).slice().reverse().map(s => `
+          <div style="padding:7px 11px;background:rgba(255,255,255,.02);border-left:2px solid rgba(201,107,138,.18);">
+            <div style="font-family:'Space Mono',monospace;font-size:.42rem;color:rgba(201,185,154,.3);margin-bottom:3px;">${s.date}</div>
+            <div style="font-size:.88rem;color:rgba(240,235,224,.55);font-style:italic;line-height:1.55;">${(s.notes||'').slice(0,180)}${s.notes&&s.notes.length>180?'…':''}</div>
+          </div>`).join('')}
+      </div>
+    </div>` : ''}
+
+    <!-- Valence + Intensity -->
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;">
+      <div style="flex:1;min-width:120px;">
+        <div style="font-family:'Space Mono',monospace;font-size:.41rem;color:rgba(201,185,154,.35);letter-spacing:.07em;text-transform:uppercase;margin-bottom:5px;">Valence</div>
+        <select id="feeling-valence" style="width:100%;background:rgba(255,255,255,.04);border:1px solid rgba(201,107,138,.15);color:var(--parchment);font-family:'Cormorant Garamond',serif;font-size:.95rem;padding:7px 10px;outline:none;">
+          <option value="">—</option>
+          <option value="positive" ${entry&&entry.valence==='positive'?'selected':''}>Positive</option>
+          <option value="neutral" ${entry&&entry.valence==='neutral'?'selected':''}>Neutral</option>
+          <option value="negative" ${entry&&entry.valence==='negative'?'selected':''}>Negative / Challenging</option>
+          <option value="complex" ${entry&&entry.valence==='complex'?'selected':''}>Complex</option>
+        </select>
+      </div>
+      <div style="flex:1;min-width:100px;">
+        <div style="font-family:'Space Mono',monospace;font-size:.41rem;color:rgba(201,185,154,.35);letter-spacing:.07em;text-transform:uppercase;margin-bottom:5px;">Intensity (1–5)</div>
+        <input type="number" id="feeling-intensity" min="1" max="5" value="${entry&&entry.intensity||''}" placeholder="1–5"
+          style="width:100%;background:rgba(255,255,255,.04);border:1px solid rgba(201,107,138,.15);color:var(--parchment);font-family:'Cormorant Garamond',serif;font-size:.95rem;padding:7px 10px;outline:none;">
+      </div>
+    </div>
+
+    <!-- Structured personal associations -->
+    <div style="margin-bottom:20px;padding:16px;background:rgba(255,255,255,.02);border:1px solid rgba(201,185,154,.08);">
+      <div style="font-family:'Space Mono',monospace;font-size:.44rem;color:rgba(201,185,154,.4);letter-spacing:.1em;text-transform:uppercase;margin-bottom:14px;">◉ Your Associations</div>
+
+      <!-- Color -->
+      <div style="margin-bottom:14px;">
+        <div style="font-family:'Space Mono',monospace;font-size:.41rem;color:rgba(201,185,154,.38);letter-spacing:.08em;text-transform:uppercase;margin-bottom:7px;">Color</div>
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+          <input type="color" id="feeling-my-color" value="${entry&&entry.myColor||'#c9a84c'}"
+            style="width:42px;height:42px;border:2px solid rgba(201,185,154,.2);border-radius:3px;background:none;cursor:pointer;padding:2px;flex-shrink:0;">
+          <input type="text" id="feeling-my-color-label" value="${entry&&entry.myColorLabel||''}" placeholder="Name it — e.g. robin's egg blue"
+            style="flex:1;min-width:120px;background:rgba(255,255,255,.03);border:1px solid rgba(201,185,154,.12);color:var(--parchment);font-family:'Cormorant Garamond',serif;font-size:.9rem;padding:6px 10px;outline:none;box-sizing:border-box;">
+        </div>
+      </div>
+
+      ${field('Element', 'feeling-my-element', entry&&entry.myElement||'', 'e.g. Water, Air, Fire, Earth, Spirit…')}
+      ${field('Texture', 'feeling-my-texture', entry&&entry.myTexture||'', 'e.g. velvet, static, smooth stone…')}
+      ${field('Temperature', 'feeling-my-temperature', entry&&entry.myTemperature||'', 'e.g. warm, cool, neutral, electric…')}
+      ${field('Season', 'feeling-my-season', entry&&entry.mySeason||'', 'e.g. late summer, first frost, inner spring…')}
+      ${field('Sensation / Body', 'feeling-my-sensation', entry&&entry.mySensation||'', 'e.g. chest expansion, jaw release, grounding…')}
+
+      <div style="margin-bottom:12px;">
+        <div style="font-family:'Space Mono',monospace;font-size:.41rem;color:rgba(201,185,154,.38);letter-spacing:.08em;text-transform:uppercase;margin-bottom:5px;">Images (one per line)</div>
+        <textarea id="feeling-my-images" rows="2" placeholder="Any images or scenes that arose…"
+          style="width:100%;background:rgba(255,255,255,.04);border:1px solid rgba(201,185,154,.12);color:var(--parchment);font-family:'Cormorant Garamond',serif;font-size:.9rem;padding:7px 11px;outline:none;resize:vertical;line-height:1.6;box-sizing:border-box;">${entry&&entry.myImages||''}</textarea>
+      </div>
+
+      <div style="margin-bottom:14px;">
+        <div style="font-family:'Space Mono',monospace;font-size:.41rem;color:rgba(201,185,154,.38);letter-spacing:.08em;text-transform:uppercase;margin-bottom:7px;">Photo (optional)</div>
+        <div id="feeling-image-preview" style="display:${entry&&entry.myPhoto?'block':'none'};margin-bottom:8px;position:relative;max-width:220px;">
+          <img id="feeling-image-preview-img" src="${entry&&entry.myPhoto||''}" style="max-width:100%;max-height:180px;object-fit:contain;border:1px solid rgba(201,185,154,.2);display:block;">
+          <button type="button" onclick="clearFeelingImage()" style="position:absolute;top:4px;right:4px;background:rgba(17,15,26,.85);border:1px solid rgba(201,185,154,.3);color:rgba(240,235,224,.7);font-size:.65rem;padding:2px 7px;cursor:pointer;">✕</button>
+        </div>
+        <input type="file" accept="image/*" id="feeling-image-input" style="display:none;" onchange="handleFeelingImageUpload(this)">
+        <button type="button" onclick="document.getElementById('feeling-image-input').click()" style="font-family:'Space Mono',monospace;font-size:.5rem;letter-spacing:.07em;text-transform:uppercase;padding:7px 14px;background:transparent;border:1px solid rgba(201,185,154,.2);color:rgba(201,185,154,.55);cursor:pointer;">📷 ${entry&&entry.myPhoto?'Change Photo':'Add Photo'}</button>
+        <span id="feeling-image-status" style="font-family:'Space Mono',monospace;font-size:.42rem;color:rgba(201,185,154,.35);margin-left:8px;"></span>
+      </div>
+
+      ${field('Song (Spotify link, optional)', 'feeling-my-spotify', entry&&entry.mySpotifyUrl||'', 'Paste a Spotify track/album link…')}
+
+      <div>
+        <div style="font-family:'Space Mono',monospace;font-size:.41rem;color:rgba(201,185,154,.38);letter-spacing:.08em;text-transform:uppercase;margin-bottom:5px;">Other / General Notes</div>
+        <textarea id="feeling-main-notes" rows="3" placeholder="Anything else — patterns, life context, how this feeling shows up for you…"
+          style="width:100%;background:rgba(255,255,255,.04);border:1px solid rgba(201,185,154,.12);color:var(--parchment);font-family:'Cormorant Garamond',serif;font-size:.9rem;padding:7px 11px;outline:none;resize:vertical;line-height:1.65;box-sizing:border-box;">${entry ? (entry.myNotes||'') : ''}</textarea>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+      <button onclick="saveFeelingSession('${word}', ${entry ? "'"+entry.id+"'" : 'null'}, ${isFromWidget||false})"
+        style="flex:1;font-family:'Space Mono',monospace;font-size:.52rem;letter-spacing:.09em;text-transform:uppercase;padding:11px 16px;background:rgba(201,107,138,.08);border:1px solid rgba(201,107,138,.4);color:rgba(201,107,138,.85);cursor:pointer;">
+        ✦ Save
+      </button>
+      <button onclick="saveFeelingSessionAndGenerate('${word}', ${entry ? "'"+entry.id+"'" : 'null'}, ${isFromWidget||false})"
+        style="flex:1;font-family:'Space Mono',monospace;font-size:.52rem;letter-spacing:.09em;text-transform:uppercase;padding:11px 16px;background:rgba(107,79,138,.08);border:1px solid rgba(107,79,138,.35);color:rgba(155,107,171,.8);cursor:pointer;">
+        ✦ Save + AI
+      </button>
+    </div>
+    <div id="feeling-modal-status" style="margin-top:12px;font-family:'Space Mono',monospace;font-size:.48rem;color:rgba(201,185,154,.45);min-height:18px;"></div>
+  `;
+
+  overlay.appendChild(modal);
+  document.body.appendChild(overlay);
+}
+
+function saveFeelingSession(word, existingId, isFromWidget, thenGenerate) {
+  const notes = (document.getElementById('feeling-session-notes')?.value || '').trim();
+  const myNotes = (document.getElementById('feeling-main-notes')?.value || '').trim();
+  const valence = document.getElementById('feeling-valence')?.value || '';
+  const intensity = parseInt(document.getElementById('feeling-intensity')?.value || '') || null;
+  const myColor = document.getElementById('feeling-my-color')?.value || '';
+  const myColorLabel = (document.getElementById('feeling-my-color-label')?.value || '').trim();
+  const myElement = (document.getElementById('feeling-my-element')?.value || '').trim();
+  const myTexture = (document.getElementById('feeling-my-texture')?.value || '').trim();
+  const myTemperature = (document.getElementById('feeling-my-temperature')?.value || '').trim();
+  const mySeason = (document.getElementById('feeling-my-season')?.value || '').trim();
+  const mySensation = (document.getElementById('feeling-my-sensation')?.value || '').trim();
+  const myImages = (document.getElementById('feeling-my-images')?.value || '').trim();
+  const mySpotifyUrl = (document.getElementById('feeling-my-spotify')?.value || '').trim();
+  const editedWord = (document.getElementById('feeling-word-input')?.value || word || '').trim();
+  const today = new Date().toLocaleDateString('en-CA');
+
+  const entries = getEmotionEntries();
+  let entry = existingId ? entries.find(e => e.id === existingId) : entries.find(e => e.word === word);
+
+  // Guard against renaming into a word that already belongs to a different entry
+  const wordTaken = editedWord && entries.some(e => e.word.toLowerCase() === editedWord.toLowerCase() && (!entry || e.id !== entry.id));
+  const finalWord = (editedWord && !wordTaken) ? editedWord : (entry ? entry.word : word);
+
+  if (!entry) {
+    entry = {
+      id: 'emotion_' + Date.now(),
+      word: finalWord,
+      dateAdded: today,
+      valence: valence || 'positive',
+      intensity: intensity,
+      myNotes: myNotes,
+      myColor: myColor || '',
+      myColorLabel: myColorLabel || '',
+      myElement: myElement || '',
+      myTexture: myTexture || '',
+      myTemperature: myTemperature || '',
+      mySeason: mySeason || '',
+      mySensation: mySensation || '',
+      myImages: myImages || '',
+      myPhoto: _currentFeelingImage || '',
+      mySpotifyUrl: mySpotifyUrl || '',
+      tags: [],
+      sessions: [],
+      aiColors: [], aiElement: '', aiDirection: '', aiScents: [], aiSound: '',
+      aiBodySensation: '', aiCrystal: '', aiTimeOfDay: '', aiArchetype: '',
+      aiSeason: '', aiAffirmation: '', aiRitual: ''
+    };
+    entries.push(entry);
+  } else {
+    entry.word = finalWord;
+    if (valence) entry.valence = valence;
+    if (intensity) entry.intensity = intensity;
+    if (myNotes) entry.myNotes = myNotes;
+    if (myColor) entry.myColor = myColor;
+    if (myColorLabel !== undefined) entry.myColorLabel = myColorLabel;
+    if (myElement) entry.myElement = myElement;
+    if (myTexture) entry.myTexture = myTexture;
+    if (myTemperature) entry.myTemperature = myTemperature;
+    if (mySeason) entry.mySeason = mySeason;
+    if (mySensation) entry.mySensation = mySensation;
+    if (myImages) entry.myImages = myImages;
+    if (_currentFeelingImage !== null) entry.myPhoto = _currentFeelingImage;
+    if (mySpotifyUrl) entry.mySpotifyUrl = mySpotifyUrl;
+  }
+
+  // Upsert today's session
+  if (notes) {
+    const existingSession = (entry.sessions||[]).find(s => s.date === today);
+    if (existingSession) {
+      existingSession.notes = notes;
+    } else {
+      if (!entry.sessions) entry.sessions = [];
+      entry.sessions.push({ date: today, notes });
+    }
+  }
+
+  saveEmotionEntries(entries);
+
+  const status = document.getElementById('feeling-modal-status');
+  if (status) status.textContent = wordTaken ? `Saved. (Name "${editedWord}" is already in use — kept "${finalWord}".)` : 'Saved.';
+
+  // Always refresh widget — color may have just been set
+  renderFeelingTodayWidget();
+
+  return entry;
+}
+
+async function saveFeelingSessionAndGenerate(word, existingId, isFromWidget) {
+  const entry = saveFeelingSession(word, existingId, isFromWidget, false);
+  if (!entry) return;
+
+  const status = document.getElementById('feeling-modal-status');
+  if (status) status.textContent = '⟳ Generating AI associations…';
+
+  const apiKey = getApiKey();
+  if (!apiKey) {
+    if (status) status.textContent = 'Add your Anthropic API key in Settings first.';
+    return;
+  }
+
+  const allNotes = (entry.sessions||[]).map(s => '['+s.date+']: '+s.notes).filter(s=>s.trim()).join('\n');
+
+  const prompt = `You are a synesthetic spiritual guide helping someone build a personal emotion dictionary through somatic and meditative exploration. The practitioner has been feeling into the emotion "${word}".
+
+Generate ARCHETYPAL/UNIVERSAL associations for this emotion — the symbolic, cross-cultural resonances that exist independently of any individual's experience.
+
+Respond ONLY in valid JSON. No markdown, no backticks, no preamble. Exactly this structure:
+{
+  "colors": ["color1", "color2", "color3"],
+  "element": "Fire | Water | Air | Earth | Spirit | Ether",
+  "direction": "North | South | East | West | Above | Below | Within",
+  "scents": ["scent1", "scent2"],
+  "sound": "a brief description of the sound or tone this emotion carries",
+  "bodySensation": "where and how this emotion lives in the body",
+  "crystal": "one crystal most resonant with this emotion",
+  "timeOfDay": "Dawn | Morning | Noon | Afternoon | Dusk | Evening | Night | Deep Night",
+  "archetype": "the archetypal energy or figure this emotion embodies",
+  "season": "inner season or outer season most resonant",
+  "affirmation": "a single short affirmation or invocation for this emotion (15 words max)",
+  "ritual": "a simple 1–2 sentence micro-ritual or practice to cultivate this emotion"
+}`;
+
+  try {
+    const data = await claudeAPI(apiKey, { model: 'claude-sonnet-4-6', max_tokens: 800, messages: [{ role: 'user', content: prompt }] });
+    const raw = data.content?.find(c => c.type === 'text')?.text || '';
+    const clean = raw.replace(/```json|```/g, '').trim();
+    const parsed = JSON.parse(clean);
+
+    const entries = getEmotionEntries();
+    const e = entries.find(x => x.id === entry.id);
+    if (e) {
+      e.aiColors = parsed.colors || [];
+      e.aiElement = parsed.element || '';
+      e.aiDirection = parsed.direction || '';
+      e.aiScents = parsed.scents || [];
+      e.aiSound = parsed.sound || '';
+      e.aiBodySensation = parsed.bodySensation || '';
+      e.aiCrystal = parsed.crystal || '';
+      e.aiTimeOfDay = parsed.timeOfDay || '';
+      e.aiArchetype = parsed.archetype || '';
+      e.aiSeason = parsed.season || '';
+      e.aiAffirmation = parsed.affirmation || '';
+      e.aiRitual = parsed.ritual || '';
+      e.aiGeneratedDate = new Date().toLocaleDateString('en-CA');
+      saveEmotionEntries(entries);
+    }
+
+    if (status) status.textContent = '✦ AI associations generated and saved.';
+    // Refresh the main dictionary if visible
+    const dest = document.getElementById('gt-content');
+    if (dest && dest.querySelector('.feeling-dict-container')) {
+      renderFeelingsDictionary(dest);
+    }
+  } catch(err) {
+    if (status) status.textContent = 'Error generating associations. Try again.';
+  }
+}
+
+function renderFeelingsDictionary(dest) {
+  const entries = getEmotionEntries().slice().sort((a,b) => a.word.localeCompare(b.word));
+
+  // Build color spectrum section — shows when any entries have user-chosen colors, or 3+ have AI colors
+  const withMyColor = entries.filter(e => e.myColor && e.myColor.startsWith('#'));
+  const withColors = entries.filter(e => e.aiColors && e.aiColors.length);
+  const spectrumHTML = withMyColor.length >= 1 || withColors.length >= 3 ? buildColorSpectrum(entries) : '';
+
+  dest.innerHTML = `
+    <div class="feeling-dict-container" style="max-width:720px;margin:0 auto;padding-bottom:60px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;flex-wrap:wrap;gap:10px;">
+        <div>
+          <div style="font-family:'Space Mono',monospace;font-size:.52rem;color:rgba(201,107,138,.5);letter-spacing:.12em;text-transform:uppercase;margin-bottom:4px;">💫 Feeling Dictionary</div>
+          <div style="font-size:.88rem;color:rgba(201,185,154,.45);font-style:italic;">A growing map of your emotional landscape</div>
+        </div>
+        <button onclick="openFeelingAddModal()" style="font-family:'Space Mono',monospace;font-size:.52rem;letter-spacing:.08em;text-transform:uppercase;padding:9px 18px;background:rgba(201,107,138,.07);border:1px solid rgba(201,107,138,.35);color:rgba(201,107,138,.8);cursor:pointer;">+ Add Feeling</button>
+      </div>
+
+      ${spectrumHTML}
+
+      ${!entries.length ? `
+        <div style="text-align:center;padding:48px 24px;border:1px solid rgba(201,107,138,.1);">
+          <div style="font-family:'Cormorant Garamond',serif;font-size:1.2rem;font-weight:300;font-style:italic;color:rgba(201,185,154,.4);margin-bottom:12px;">Your feeling dictionary is empty.</div>
+          <div style="font-family:'Space Mono',monospace;font-size:.5rem;color:rgba(201,185,154,.25);">Check in from the Sanctum, or tap + Add Feeling to begin.</div>
+        </div>
+      ` : `
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px;">
+          ${entries.map(e => renderFeelingCard(e)).join('')}
+        </div>
+      `}
+    </div>`;
+}
+
+// CSS color name → approximate HSL hue for sorting the spectrum
+// colorNameToCSS — used for AI color text labels → approximate CSS color
+function colorNameToCSS(name) {
+  const map = {
+    // blues / aquas / teals
+    blue:'#3060c0', 'sky blue':'#5ab0d8', 'soft sky blue':'#7ec8e3', 'pale blue':'#a0c8e8',
+    'pale sky blue':'#90c8e0', 'soft blue':'#7090c0', 'midnight blue':'#1a2060',
+    'royal blue':'#2050a0', 'electric blue':'#0070ff', 'deep blue':'#1a3080',
+    'cornflower blue':'#6495ed', 'powder blue':'#b0d0e8', 'steel blue':'#4682b4',
+    'ice blue':'#d0eaf8', 'soft aquamarine':'#5cc8b8', 'aquamarine':'#5cc8b8',
+    'pale aquamarine':'#a0e0d8', 'seafoam':'#6cc8a8', 'sea foam':'#6cc8a8',
+    'robin egg blue':'#4fb3d8', "robin's egg blue":'#4fb3d8', 'robin egg':'#4fb3d8',
+    cyan:'#00b8d4', teal:'#3a8080', 'teal blue':'#3a8898', turquoise:'#40c0b0',
+    'soft teal':'#5a9898', 'cerulean':'#2a8ac0', 'periwinkle':'#7070c0',
+    // greens
+    green:'#3a8040', emerald:'#2e8b57', 'forest green':'#2d5a1b', 'sage green':'#87a878',
+    sage:'#87a878', 'soft green':'#7ab87a', lime:'#6ab830', olive:'#8a8a2a',
+    'moss green':'#6a8a4a', 'mint green':'#98e0c0', mint:'#98e0c0', jade:'#3a8060',
+    'pale green':'#a0d0a0', 'soft sage':'#a0b890',
+    // reds / pinks / roses / corals
+    red:'#cc2020', scarlet:'#cc2020', crimson:'#9b1a1a', 'deep red':'#7a1010',
+    pink:'#d060a0', 'hot pink':'#e040a0', 'soft pink':'#e0b0bc', 'dusty rose':'#c08090',
+    rose:'#c06070', coral:'#e8705a', salmon:'#e89070', 'warm pink':'#e090a0',
+    'blush pink':'#e8b0b8', blush:'#e8b0b8', 'deep rose':'#a03050',
+    'pale rose':'#f0c0c8', 'soft coral':'#f0907a',
+    // purples / violets
+    purple:'#7a3fa0', 'deep purple':'#5a2080', violet:'#6b4f8a', lavender:'#b09dc0',
+    'soft violet':'#9a80c0', indigo:'#4b4080', magenta:'#c040a0', lilac:'#c8a0d8',
+    mauve:'#b090a0', 'dusty purple':'#9070a0', amethyst:'#9b60c0',
+    'pale lavender':'#d0c0e0', 'soft lavender':'#c0b0d8',
+    // yellows / golds / oranges
+    yellow:'#d8c030', 'bright yellow':'#f0e030', 'pale yellow':'#f5e880',
+    gold:'#c9a84c', amber:'#c9852a', 'warm gold':'#c9a84c', orange:'#e08020',
+    'warm orange':'#e08030', peach:'#f0c08a', 'soft gold':'#d4b870',
+    'pale gold':'#e8d090', saffron:'#e8a020',
+    // whites / creams / ivories — these are LIGHT, need special handling
+    white:'#f0ece0', 'pearl white':'#f0ede0', pearl:'#f0ede0', 'warm white':'#f5f0e0',
+    'cool white':'#e8f0f5', cream:'#f5eed8', ivory:'#f5f0e0', 'warm ivory':'#f2eed8',
+    beige:'#e8d8b8', 'soft white':'#f0ece8', alabaster:'#f2efe8', 'off white':'#f0ece0',
+    'pale cream':'#f5f0e0', linen:'#f0e8d8',
+    // greys / silvers
+    grey:'#909090', gray:'#909090', silver:'#c0c0c8', 'warm grey':'#9a9088',
+    'cool grey':'#8890a0', charcoal:'#404850', 'soft grey':'#a8a8a8',
+    // blacks
+    black:'#1a1626', 'deep black':'#0a0a14',
+    // browns / earths
+    brown:'#8a6040', tan:'#c8a870', terracotta:'#c86040', rust:'#b04030',
+    copper:'#b07040', sienna:'#a05030', ochre:'#c89030', umber:'#7a5030',
+  };
+
+  const key = (name||'').toLowerCase().trim();
+  // Exact match
+  if (map[key]) return map[key];
+  // Full substring match — key contains a known color name
+  for (const [k, v] of Object.entries(map)) {
+    if (key.includes(k)) return v;
+  }
+  // Word-by-word match — try each word in the name against map keys
+  const words = key.split(/\s+/);
+  for (const word of words) {
+    if (word.length > 3 && map[word]) return map[word];
+  }
+  // CSS named colors that browsers know but aren't in our map
+  const cssNative = ['aquamarine','chartreuse','chocolate','crimson','cyan','firebrick',
+    'fuchsia','goldenrod','hotpink','khaki','lavender','limegreen','magenta','maroon',
+    'mediumblue','navy','olive','orchid','peru','plum','powderblue','rosybrown',
+    'royalblue','seagreen','sienna','skyblue','slateblue','tan','thistle','tomato',
+    'turquoise','violet','wheat','yellowgreen'];
+  for (const word of words) {
+    if (cssNative.includes(word)) return word;
+  }
+  // Last resort: grey tint so swatch is always visible
+  return '#707080';
+}
+
+// hexToHue — extract HSL hue 0-360 from a hex string like #c9a84c
+function hexToHue(hex) {
+  if (!hex || !hex.startsWith('#') || hex.length < 7) return 180;
+  const r = parseInt(hex.slice(1,3),16)/255;
+  const g = parseInt(hex.slice(3,5),16)/255;
+  const b = parseInt(hex.slice(5,7),16)/255;
+  const max = Math.max(r,g,b), min = Math.min(r,g,b);
+  if (max === min) return 0;
+  const d = max - min;
+  let h;
+  if (max === r) h = ((g - b) / d + (g < b ? 6 : 0)) / 6;
+  else if (max === g) h = ((b - r) / d + 2) / 6;
+  else h = ((r - g) / d + 4) / 6;
+  return Math.round(h * 360);
+}
+
+// hexLuminance — 0-1, used to pick legible text color over a swatch
+function hexLuminance(hex) {
+  if (!hex || hex.length < 7) return 0.5;
+  const r = parseInt(hex.slice(1,3),16);
+  const g = parseInt(hex.slice(3,5),16);
+  const b = parseInt(hex.slice(5,7),16);
+  return (0.299*r + 0.587*g + 0.114*b) / 255;
+}
+
+function buildColorSpectrum(entries) {
+  // Only entries where the user has actually set a myColor
+  const colorEntries = entries.filter(e => e.myColor && e.myColor.startsWith('#'));
+
+  if (!colorEntries.length) {
+    return `
+      <div style="margin-bottom:24px;padding:14px 18px;background:rgba(255,255,255,.015);border:1px solid rgba(201,185,154,.07);">
+        <div style="font-family:'Space Mono',monospace;font-size:.44rem;color:rgba(201,185,154,.3);letter-spacing:.1em;text-transform:uppercase;margin-bottom:6px;">◉ Your Emotional Color Wheel</div>
+        <div style="font-size:.85rem;color:rgba(201,185,154,.22);font-style:italic;font-family:'Cormorant Garamond',serif;">Pick a color for each emotion using the color picker in the log modal — your wheel will appear here.</div>
+      </div>`;
+  }
+
+  // Sort by hue of myColor
+  const sorted = colorEntries.slice().sort((a,b) => hexToHue(a.myColor) - hexToHue(b.myColor));
+
+  return `
+    <div style="margin-bottom:28px;padding:16px 18px;background:rgba(255,255,255,.015);border:1px solid rgba(201,185,154,.08);">
+      <div style="font-family:'Space Mono',monospace;font-size:.44rem;color:rgba(201,185,154,.35);letter-spacing:.1em;text-transform:uppercase;margin-bottom:14px;">◉ Your Emotional Color Wheel</div>
+      <div style="display:flex;flex-wrap:nowrap;overflow-x:auto;gap:2px;padding-bottom:10px;-webkit-overflow-scrolling:touch;">
+        ${sorted.map(e => {
+          const label = e.myColorLabel || '';
+          const lum = hexLuminance(e.myColor);
+          const textOnSwatch = lum > 0.52 ? 'rgba(17,15,26,.65)' : 'rgba(255,255,255,.8)';
+          return `
+          <div onclick="openFeelingDetailModal('${e.id}')" style="cursor:pointer;display:flex;flex-direction:column;align-items:center;min-width:68px;flex-shrink:0;">
+            <div style="width:100%;height:56px;background:${e.myColor};position:relative;display:flex;align-items:flex-end;justify-content:center;padding-bottom:5px;" title="${e.myColor}${label?' — '+label:''}">
+              ${e.aiColors&&e.aiColors.length ? `<div style="position:absolute;top:4px;right:4px;display:flex;gap:2px;" title="AI color suggestions">${e.aiColors.slice(0,3).map(c=>`<span style="display:inline-block;width:7px;height:7px;background:${colorNameToCSS(c)};border:1px solid rgba(255,255,255,.25);border-radius:50%;"></span>`).join('')}</div>` : ''}
+            </div>
+            <div style="font-family:'Cormorant Garamond',serif;font-size:.76rem;font-weight:300;color:rgba(240,235,224,.7);text-align:center;margin-top:6px;line-height:1.2;padding:0 3px;">${e.word}</div>
+            ${label ? `<div style="font-family:'Space Mono',monospace;font-size:.36rem;color:rgba(201,185,154,.3);margin-top:2px;text-align:center;padding:0 2px;">${label}</div>` : ''}
+          </div>`;
+        }).join('')}
+      </div>
+      <div style="font-family:'Space Mono',monospace;font-size:.39rem;color:rgba(201,185,154,.2);margin-top:2px;">sorted by hue · dots = AI reference colors · tap any to open</div>
+    </div>`;
+}
+
+function renderFeelingCard(e) {
+  const valenceColor = {
+    positive: 'rgba(201,107,138,.7)',
+    neutral: 'rgba(201,185,154,.6)',
+    negative: 'rgba(107,79,138,.7)',
+    complex: 'rgba(58,107,107,.7)'
+  }[e.valence||'positive'] || 'rgba(201,107,138,.7)';
+
+  const sessionCount = (e.sessions||[]).length;
+  const hasAI = !!(e.aiColors && e.aiColors.length);
+  const hasMyColor = !!(e.myColor && e.myColor.startsWith('#'));
+
+  // Left border: myColor if set, otherwise valence color
+  const borderColor = hasMyColor ? e.myColor : valenceColor;
+
+  // Build swatch row
+  let swatchRow = '';
+  if (hasMyColor) {
+    const label = e.myColorLabel || e.myColor;
+    swatchRow = `<div style="display:flex;align-items:center;gap:6px;margin-bottom:8px;">
+      <span style="display:inline-block;width:22px;height:22px;background:${e.myColor};border:1px solid rgba(255,255,255,.15);flex-shrink:0;" title="${label}"></span>
+      <span style="font-family:'Space Mono',monospace;font-size:.4rem;color:rgba(201,185,154,.4);">${e.myColorLabel || ''}</span>
+      ${hasAI ? e.aiColors.slice(0,3).map(c=>`<span title="AI: ${c}" style="display:inline-block;width:10px;height:10px;background:${colorNameToCSS(c)};border:1px solid rgba(255,255,255,.12);border-radius:50%;flex-shrink:0;opacity:.65;"></span>`).join('') : ''}
+    </div>`;
+  } else if (hasAI) {
+    swatchRow = `<div style="display:flex;align-items:center;gap:4px;margin-bottom:8px;">
+      ${e.aiColors.slice(0,3).map(c=>`<span title="${c}" style="display:inline-block;width:14px;height:14px;background:${colorNameToCSS(c)};border:1px solid rgba(255,255,255,.12);border-radius:2px;opacity:.75;"></span>`).join('')}
+      <span style="font-family:'Space Mono',monospace;font-size:.38rem;color:rgba(201,185,154,.28);margin-left:2px;">ai</span>
+    </div>`;
+  }
+
+  return `<div onclick="openFeelingDetailModal('${e.id}')" style="cursor:pointer;padding:18px;background:rgba(201,107,138,.02);border:1px solid rgba(201,107,138,.1);border-left:3px solid ${borderColor};transition:all .15s;" onmouseover="this.style.background='rgba(201,107,138,.05)'" onmouseout="this.style.background='rgba(201,107,138,.02)'">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;">
+      <div style="font-family:'Cormorant Garamond',serif;font-size:1.25rem;font-weight:300;font-style:italic;color:var(--parchment);">${e.word}</div>
+      ${hasAI ? '<span style="font-family:\'Space Mono\',monospace;font-size:.42rem;color:rgba(155,107,171,.45);letter-spacing:.05em;">✦ ai</span>' : ''}
+    </div>
+    ${e.valence ? `<div style="font-family:'Space Mono',monospace;font-size:.43rem;color:${valenceColor};letter-spacing:.06em;text-transform:uppercase;margin-bottom:7px;">${e.valence}</div>` : ''}
+    ${swatchRow}
+    ${e.myNotes ? `<div style="font-size:.85rem;color:rgba(240,235,224,.45);font-style:italic;line-height:1.5;">${e.myNotes.slice(0,80)}${e.myNotes.length>80?'…':''}</div>` : ''}
+    <div style="margin-top:8px;display:flex;align-items:center;gap:8px;font-family:'Space Mono',monospace;font-size:.42rem;color:rgba(201,185,154,.25);">
+      <span>${sessionCount} session${sessionCount!==1?'s':''} · ${e.dateAdded||''}</span>
+      ${e.myPhoto ? '<span title="Has photo">📷</span>' : ''}
+      ${e.mySpotifyUrl ? '<span title="Has song">🎵</span>' : ''}
+    </div>
+  </div>`;
+}
+
+function openFeelingDetailModal(entryId) {
+  const entries = getEmotionEntries();
+  const e = entries.find(x => x.id === entryId);
+  if (!e) return;
+
+  const overlay = document.createElement('div');
+  overlay.id = 'feeling-detail-overlay';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(17,15,26,.88);z-index:9000;display:flex;align-items:flex-start;justify-content:center;padding:20px;overflow-y:auto;';
+
+  const valenceColor = {
+    positive: 'rgba(201,107,138,.7)',
+    neutral: 'rgba(201,185,154,.6)',
+    negative: 'rgba(107,79,138,.7)',
+    complex: 'rgba(58,107,107,.7)'
+  }[e.valence||'positive'] || 'rgba(201,107,138,.7)';
+
+  const hasAI = !!(e.aiColors && e.aiColors.length);
+  const hasMyColor = !!(e.myColor && e.myColor.startsWith('#'));
+
+  const modal = document.createElement('div');
+  modal.style.cssText = 'background:#1a1626;border:1px solid rgba(201,107,138,.22);max-width:640px;width:100%;padding:28px;margin:auto;position:relative;';
+
+  modal.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:${hasMyColor?'0':'20px'};">
+      <div>
+        <div style="font-family:'Space Mono',monospace;font-size:.44rem;color:${valenceColor};letter-spacing:.1em;text-transform:uppercase;margin-bottom:4px;">
+          💫 ${e.valence||'feeling'}${e.intensity?' · intensity '+e.intensity+'/5':''}
+        </div>
+        <div style="font-family:'Cormorant Garamond',serif;font-size:2rem;font-weight:300;font-style:italic;color:var(--parchment);">${e.word}</div>
+      </div>
+      <button onclick="document.getElementById('feeling-detail-overlay').remove()" style="background:none;border:none;color:rgba(201,185,154,.4);font-size:1.2rem;cursor:pointer;">✕</button>
+    </div>
+
+    ${hasMyColor ? `
+    <div style="margin-top:14px;margin-bottom:20px;display:flex;align-items:center;gap:14px;padding:12px 16px;background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.06);">
+      <div style="width:48px;height:48px;background:${e.myColor};flex-shrink:0;border:1px solid rgba(255,255,255,.12);" title="${e.myColor}"></div>
+      <div>
+        <div style="font-family:'Space Mono',monospace;font-size:.42rem;color:rgba(201,185,154,.4);letter-spacing:.08em;text-transform:uppercase;margin-bottom:4px;">Your Color</div>
+        <div style="font-family:'Cormorant Garamond',serif;font-size:1rem;color:rgba(240,235,224,.8);">${e.myColorLabel || e.myColor}</div>
+        <div style="font-family:'Space Mono',monospace;font-size:.39rem;color:rgba(201,185,154,.3);margin-top:2px;">${e.myColor}</div>
+      </div>
+    </div>` : ''}
+
+    ${(e.myNotes||e.myElement||e.myTexture||e.myTemperature||e.mySeason||e.mySensation||e.myImages) ? `
+    <div style="margin-bottom:20px;padding:16px 18px;background:rgba(201,107,138,.03);border:1px solid rgba(201,107,138,.12);">
+      <div style="font-family:'Space Mono',monospace;font-size:.43rem;color:rgba(201,107,138,.55);letter-spacing:.1em;text-transform:uppercase;margin-bottom:14px;">◉ Your Associations</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px 16px;">
+        ${e.myElement?`<div><div style="font-family:'Space Mono',monospace;font-size:.41rem;color:rgba(201,185,154,.35);text-transform:uppercase;margin-bottom:4px;">Element</div><div style="font-family:'Cormorant Garamond',serif;font-size:.95rem;color:rgba(240,235,224,.78);">${e.myElement}</div></div>`:''}
+        ${e.myTexture?`<div><div style="font-family:'Space Mono',monospace;font-size:.41rem;color:rgba(201,185,154,.35);text-transform:uppercase;margin-bottom:4px;">Texture</div><div style="font-family:'Cormorant Garamond',serif;font-size:.95rem;color:rgba(240,235,224,.78);">${e.myTexture}</div></div>`:''}
+        ${e.myTemperature?`<div><div style="font-family:'Space Mono',monospace;font-size:.41rem;color:rgba(201,185,154,.35);text-transform:uppercase;margin-bottom:4px;">Temperature</div><div style="font-family:'Cormorant Garamond',serif;font-size:.95rem;color:rgba(240,235,224,.78);">${e.myTemperature}</div></div>`:''}
+        ${e.mySeason?`<div><div style="font-family:'Space Mono',monospace;font-size:.41rem;color:rgba(201,185,154,.35);text-transform:uppercase;margin-bottom:4px;">Season</div><div style="font-family:'Cormorant Garamond',serif;font-size:.95rem;color:rgba(240,235,224,.78);">${e.mySeason}</div></div>`:''}
+        ${e.mySensation?`<div style="grid-column:span 2;"><div style="font-family:'Space Mono',monospace;font-size:.41rem;color:rgba(201,185,154,.35);text-transform:uppercase;margin-bottom:4px;">Sensation / Body</div><div style="font-family:'Cormorant Garamond',serif;font-size:.95rem;color:rgba(240,235,224,.78);">${e.mySensation}</div></div>`:''}
+        ${e.myImages?`<div style="grid-column:span 2;"><div style="font-family:'Space Mono',monospace;font-size:.41rem;color:rgba(201,185,154,.35);text-transform:uppercase;margin-bottom:4px;">Images</div><div style="font-family:'Cormorant Garamond',serif;font-size:.95rem;color:rgba(240,235,224,.78);font-style:italic;line-height:1.65;">${e.myImages}</div></div>`:''}
+        ${e.myNotes?`<div style="grid-column:span 2;"><div style="font-family:'Space Mono',monospace;font-size:.41rem;color:rgba(201,185,154,.35);text-transform:uppercase;margin-bottom:4px;">Other Notes</div><div style="font-family:'Cormorant Garamond',serif;font-size:.95rem;color:rgba(240,235,224,.75);font-style:italic;line-height:1.65;">${e.myNotes}</div></div>`:''}
+      </div>
+    </div>` : ''}
+
+    ${e.myPhoto ? `
+    <div style="margin-bottom:20px;">
+      <div style="font-family:'Space Mono',monospace;font-size:.42rem;color:rgba(201,185,154,.35);letter-spacing:.08em;text-transform:uppercase;margin-bottom:8px;">Photo</div>
+      <img src="${e.myPhoto}" title="Tap to expand" style="max-width:100%;max-height:280px;object-fit:contain;border:1px solid rgba(201,185,154,.15);cursor:pointer;display:block;" onclick="this.style.maxHeight=(this.style.maxHeight==='none'?'280px':'none');">
+    </div>` : ''}
+
+    ${e.mySpotifyUrl ? `
+    <div style="margin-bottom:20px;">
+      <div style="font-family:'Space Mono',monospace;font-size:.42rem;color:rgba(201,185,154,.35);letter-spacing:.08em;text-transform:uppercase;margin-bottom:8px;">Song</div>
+      ${spotifyEmbedUrl(e.mySpotifyUrl) ? `<iframe src="${spotifyEmbedUrl(e.mySpotifyUrl)}" width="100%" height="152" frameborder="0" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" style="border:1px solid rgba(201,185,154,.12);display:block;"></iframe>` : `<a href="${e.mySpotifyUrl}" target="_blank" rel="noopener" style="display:inline-block;font-family:'Space Mono',monospace;font-size:.5rem;letter-spacing:.06em;padding:8px 14px;border:1px solid rgba(201,107,138,.3);color:rgba(201,107,138,.8);text-decoration:none;">🎵 Open in Spotify</a>`}
+    </div>` : ''}
+
+    ${e.sessions && e.sessions.length ? `
+    <div style="margin-bottom:20px;">
+      <div style="font-family:'Space Mono',monospace;font-size:.43rem;color:rgba(201,185,154,.4);letter-spacing:.08em;text-transform:uppercase;margin-bottom:10px;">Sessions (${e.sessions.length})</div>
+      <div style="display:flex;flex-direction:column;gap:8px;max-height:220px;overflow-y:auto;">
+        ${e.sessions.slice().reverse().map(s => `
+          <div style="padding:10px 14px;background:rgba(201,107,138,.03);border-left:2px solid rgba(201,107,138,.2);">
+            <div style="font-family:'Space Mono',monospace;font-size:.43rem;color:rgba(201,185,154,.35);margin-bottom:5px;">${s.date}</div>
+            <div style="font-size:.9rem;color:rgba(240,235,224,.65);font-style:italic;line-height:1.65;">${s.notes||''}</div>
+          </div>`).join('')}
+      </div>
+    </div>` : ''}
+
+    ${hasAI ? `
+    <div style="margin-bottom:20px;padding:16px 18px;background:rgba(107,79,138,.04);border:1px solid rgba(107,79,138,.18);">
+      <div style="font-family:'Space Mono',monospace;font-size:.43rem;color:rgba(155,107,171,.6);letter-spacing:.1em;text-transform:uppercase;margin-bottom:14px;">✦ Archetypal Associations (AI-generated ${e.aiGeneratedDate||''})</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px 16px;">
+        ${e.aiColors&&e.aiColors.length?`<div style="grid-column:span 2;"><div style="font-family:'Space Mono',monospace;font-size:.41rem;color:rgba(201,185,154,.35);text-transform:uppercase;margin-bottom:8px;">AI-Suggested Colors</div><div style="display:flex;flex-direction:column;gap:6px;">${e.aiColors.map(c=>{const css=colorNameToCSS(c);return `<div style="display:flex;align-items:center;gap:10px;"><div style="width:20px;height:20px;flex-shrink:0;background:${css};border:1px solid rgba(255,255,255,.35);border-radius:3px;box-shadow:inset 0 0 0 1px rgba(0,0,0,.2);"></div><span style="font-family:'Cormorant Garamond',serif;font-size:.95rem;color:rgba(240,235,224,.7);">${c}</span></div>`;}).join('')}</div></div>`:''}
+        ${e.aiElement?`<div><div style="font-family:'Space Mono',monospace;font-size:.41rem;color:rgba(201,185,154,.35);text-transform:uppercase;margin-bottom:4px;">Element</div><div style="font-size:.9rem;color:rgba(240,235,224,.7);">${e.aiElement}</div></div>`:''}
+        ${e.aiDirection?`<div><div style="font-family:'Space Mono',monospace;font-size:.41rem;color:rgba(201,185,154,.35);text-transform:uppercase;margin-bottom:4px;">Direction</div><div style="font-size:.9rem;color:rgba(240,235,224,.7);">${e.aiDirection}</div></div>`:''}
+        ${e.aiScents&&e.aiScents.length?`<div><div style="font-family:'Space Mono',monospace;font-size:.41rem;color:rgba(201,185,154,.35);text-transform:uppercase;margin-bottom:4px;">Scents</div><div style="font-size:.9rem;color:rgba(240,235,224,.7);">${e.aiScents.join(', ')}</div></div>`:''}
+        ${e.aiCrystal?`<div><div style="font-family:'Space Mono',monospace;font-size:.41rem;color:rgba(201,185,154,.35);text-transform:uppercase;margin-bottom:4px;">Crystal</div><div style="font-size:.9rem;color:rgba(240,235,224,.7);">${e.aiCrystal}</div></div>`:''}
+        ${e.aiTimeOfDay?`<div><div style="font-family:'Space Mono',monospace;font-size:.41rem;color:rgba(201,185,154,.35);text-transform:uppercase;margin-bottom:4px;">Time of Day</div><div style="font-size:.9rem;color:rgba(240,235,224,.7);">${e.aiTimeOfDay}</div></div>`:''}
+        ${e.aiSeason?`<div><div style="font-family:'Space Mono',monospace;font-size:.41rem;color:rgba(201,185,154,.35);text-transform:uppercase;margin-bottom:4px;">Season</div><div style="font-size:.9rem;color:rgba(240,235,224,.7);">${e.aiSeason}</div></div>`:''}
+        ${e.aiArchetype?`<div style="grid-column:span 2;"><div style="font-family:'Space Mono',monospace;font-size:.41rem;color:rgba(201,185,154,.35);text-transform:uppercase;margin-bottom:4px;">Archetype</div><div style="font-size:.9rem;color:rgba(240,235,224,.7);">${e.aiArchetype}</div></div>`:''}
+        ${e.aiSound?`<div style="grid-column:span 2;"><div style="font-family:'Space Mono',monospace;font-size:.41rem;color:rgba(201,185,154,.35);text-transform:uppercase;margin-bottom:4px;">Sound</div><div style="font-size:.9rem;color:rgba(240,235,224,.7);">${e.aiSound}</div></div>`:''}
+        ${e.aiBodySensation?`<div style="grid-column:span 2;"><div style="font-family:'Space Mono',monospace;font-size:.41rem;color:rgba(201,185,154,.35);text-transform:uppercase;margin-bottom:4px;">Body Sensation</div><div style="font-size:.9rem;color:rgba(240,235,224,.7);">${e.aiBodySensation}</div></div>`:''}
+      </div>
+      ${e.aiAffirmation?`
+      <div style="margin-top:14px;padding:10px 14px;background:rgba(201,107,138,.04);border-left:2px solid rgba(201,107,138,.25);">
+        <div style="font-family:'Space Mono',monospace;font-size:.41rem;color:rgba(201,185,154,.35);text-transform:uppercase;margin-bottom:5px;">Invocation</div>
+        <div style="font-family:'Cormorant Garamond',serif;font-size:1.05rem;font-weight:300;font-style:italic;color:rgba(240,235,224,.8);">${e.aiAffirmation}</div>
+      </div>`:''}
+      ${e.aiRitual?`
+      <div style="margin-top:10px;">
+        <div style="font-family:'Space Mono',monospace;font-size:.41rem;color:rgba(201,185,154,.35);text-transform:uppercase;margin-bottom:5px;">Micro-Ritual</div>
+        <div style="font-size:.9rem;color:rgba(240,235,224,.65);font-style:italic;line-height:1.65;">${e.aiRitual}</div>
+      </div>`:''}
+    </div>` : ''}
+
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px;">
+      <button onclick="document.getElementById('feeling-detail-overlay').remove();openFeelingLogModal('${e.word}','${e.id}',false)"
+        style="flex:1;font-family:'Space Mono',monospace;font-size:.5rem;letter-spacing:.08em;text-transform:uppercase;padding:9px 14px;background:transparent;border:1px solid rgba(201,107,138,.3);color:rgba(201,107,138,.7);cursor:pointer;">
+        ✎ Edit / Log Session
+      </button>
+      ${hasAI ? `
+      <button data-eid="${e.id}" onclick="regenerateFeelingAI(this.dataset.eid)"
+        style="font-family:'Space Mono',monospace;font-size:.5rem;letter-spacing:.08em;text-transform:uppercase;padding:9px 14px;background:transparent;border:1px solid rgba(107,79,138,.25);color:rgba(155,107,171,.6);cursor:pointer;">
+        ↻ Regen AI
+      </button>` : `
+      <button data-eid="${e.id}" onclick="generateFeelingAIForExisting(this.dataset.eid)"
+        style="flex:1;font-family:'Space Mono',monospace;font-size:.5rem;letter-spacing:.08em;text-transform:uppercase;padding:9px 14px;background:transparent;border:1px solid rgba(107,79,138,.3);color:rgba(155,107,171,.7);cursor:pointer;">
+        ✦ Generate AI Associations
+      </button>`}
+      <button data-eid="${e.id}" onclick="deleteFeelingEntry(this.dataset.eid)"
+        style="font-family:'Space Mono',monospace;font-size:.5rem;padding:9px 12px;background:transparent;border:1px solid rgba(201,185,154,.1);color:rgba(201,185,154,.2);cursor:pointer;">
+        🗑
+      </button>
+    </div>
+    <div id="feeling-detail-status" style="margin-top:10px;font-family:'Space Mono',monospace;font-size:.46rem;color:rgba(201,185,154,.4);min-height:16px;"></div>
+  `;
+
+  overlay.appendChild(modal);
+  document.body.appendChild(overlay);
+}
+
+async function generateFeelingAIForExisting(entryId) {
+  const status = document.getElementById('feeling-detail-status');
+  if (status) status.textContent = '⟳ Generating…';
+  const apiKey = getApiKey();
+  if (!apiKey) { if (status) status.textContent = 'No API key set.'; return; }
+
+  const entries = getEmotionEntries();
+  const e = entries.find(x => x.id === entryId);
+  if (!e) return;
+
+  const allNotes = (e.sessions||[]).map(s => '['+s.date+']: '+s.notes).filter(s=>s.trim()).join('\n');
+
+  const prompt = `You are a synesthetic spiritual guide helping someone build a personal emotion dictionary. Generate ARCHETYPAL/UNIVERSAL associations for the emotion "${e.word}" — the symbolic, cross-cultural resonances that exist independently of any individual's experience.
+
+Respond ONLY in valid JSON. No markdown, no backticks:
+{
+  "colors": ["color1", "color2", "color3"],
+  "element": "Fire | Water | Air | Earth | Spirit | Ether",
+  "direction": "North | South | East | West | Above | Below | Within",
+  "scents": ["scent1", "scent2"],
+  "sound": "brief description of sound or tone",
+  "bodySensation": "where and how this emotion lives in the body",
+  "crystal": "one crystal",
+  "timeOfDay": "Dawn | Morning | Noon | Afternoon | Dusk | Evening | Night | Deep Night",
+  "archetype": "the archetypal energy or figure",
+  "season": "season most resonant",
+  "affirmation": "a single short invocation (15 words max)",
+  "ritual": "a 1–2 sentence micro-ritual"
+}`;
+
+  try {
+    const data = await claudeAPI(apiKey, { model: 'claude-sonnet-4-6', max_tokens: 800, messages: [{ role: 'user', content: prompt }] });
+    const raw = data.content?.find(c => c.type === 'text')?.text || '';
+    const parsed = JSON.parse(raw.replace(/```json|```/g, '').trim());
+    e.aiColors = parsed.colors || [];
+    e.aiElement = parsed.element || '';
+    e.aiDirection = parsed.direction || '';
+    e.aiScents = parsed.scents || [];
+    e.aiSound = parsed.sound || '';
+    e.aiBodySensation = parsed.bodySensation || '';
+    e.aiCrystal = parsed.crystal || '';
+    e.aiTimeOfDay = parsed.timeOfDay || '';
+    e.aiArchetype = parsed.archetype || '';
+    e.aiSeason = parsed.season || '';
+    e.aiAffirmation = parsed.affirmation || '';
+    e.aiRitual = parsed.ritual || '';
+    e.aiGeneratedDate = new Date().toLocaleDateString('en-CA');
+    saveEmotionEntries(entries);
+    if (status) status.textContent = '✦ Done.';
+    // Refresh dictionary if open
+    const dest = document.getElementById('gt-content');
+    if (dest && dest.querySelector('.feeling-dict-container')) renderFeelingsDictionary(dest);
+    // Re-open the detail modal to show updated AI associations
+    const overlay = document.getElementById('feeling-detail-overlay');
+    if (overlay) { overlay.remove(); openFeelingDetailModal(entryId); }
+  } catch(err) {
+    if (status) status.textContent = 'Error. Try again.';
+  }
+}
+
+async function regenerateFeelingAI(entryId) {
+  await generateFeelingAIForExisting(entryId);
+}
+
+function deleteFeelingEntry(entryId) {
+  if (!confirm('Delete this feeling entry? This cannot be undone.')) return;
+  let entries = getEmotionEntries();
+  entries = entries.filter(e => e.id !== entryId);
+  saveEmotionEntries(entries);
+  const overlay = document.getElementById('feeling-detail-overlay');
+  if (overlay) overlay.remove();
+  const dest = document.getElementById('gt-content');
+  if (dest && dest.querySelector('.feeling-dict-container')) renderFeelingsDictionary(dest);
+}
+
+function openFeelingAddModal() {
+  const overlay = document.createElement('div');
+  overlay.id = 'feeling-add-overlay';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(17,15,26,.85);z-index:9000;display:flex;align-items:center;justify-content:center;padding:20px;';
+
+  const modal = document.createElement('div');
+  modal.style.cssText = 'background:#1a1626;border:1px solid rgba(201,107,138,.25);max-width:440px;width:100%;padding:28px;';
+  modal.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;">
+      <div style="font-family:'Space Mono',monospace;font-size:.5rem;color:rgba(201,107,138,.6);letter-spacing:.1em;text-transform:uppercase;">Add a Feeling</div>
+      <button onclick="document.getElementById('feeling-add-overlay').remove()" style="background:none;border:none;color:rgba(201,185,154,.4);font-size:1.1rem;cursor:pointer;">✕</button>
+    </div>
+    <input id="new-feeling-word" type="text" placeholder="Emotion word (e.g. Awe, Grief, Longing…)"
+      style="width:100%;background:rgba(255,255,255,.04);border:1px solid rgba(201,107,138,.25);color:var(--parchment);font-family:'Cormorant Garamond',serif;font-size:1.1rem;padding:10px 13px;outline:none;margin-bottom:14px;box-sizing:border-box;">
+    <button onclick="addFeelingFromModal()" style="width:100%;font-family:'Space Mono',monospace;font-size:.52rem;letter-spacing:.09em;text-transform:uppercase;padding:11px;background:rgba(201,107,138,.07);border:1px solid rgba(201,107,138,.35);color:rgba(201,107,138,.8);cursor:pointer;">
+      ✦ Add & Open
+    </button>`;
+
+  overlay.appendChild(modal);
+  document.body.appendChild(overlay);
+  setTimeout(() => document.getElementById('new-feeling-word')?.focus(), 100);
+}
+
+function addFeelingFromModal() {
+  const word = (document.getElementById('new-feeling-word')?.value || '').trim();
+  if (!word) return;
+  document.getElementById('feeling-add-overlay')?.remove();
+  openFeelingLogModal(word, null, false);
+}
+
+function renderFeelingTodayWidget() {
+  const el = document.querySelector('#gt-content #feeling-today-widget') || document.getElementById('feeling-today-widget');
+  if (!el) return;
+  const word = getDailyFeelingWord();
+  const today = new Date().toLocaleDateString('en-CA');
+  const entries = getEmotionEntries();
+  const entry = entries.find(e => e.word === word);
+  const loggedToday = entry && (entry.sessions||[]).some(s => s.date === today);
+
+  // Use the user's chosen color if set, otherwise default rose
+  const hasColor = entry && entry.myColor && entry.myColor.startsWith('#');
+  const hex = hasColor ? entry.myColor : null;
+
+  // Derive rgba versions from hex for border, glow, text
+  function hexToRgba(h, a) {
+    if (!h || !h.startsWith('#')) return null;
+    const r = parseInt(h.slice(1,3),16);
+    const g = parseInt(h.slice(3,5),16);
+    const b = parseInt(h.slice(5,7),16);
+    return `rgba(${r},${g},${b},${a})`;
+  }
+
+  const borderStrong  = hex ? hexToRgba(hex, .55) : 'rgba(201,107,138,.4)';
+  const borderSoft    = hex ? hexToRgba(hex, .18) : 'rgba(201,107,138,.15)';
+  const bgTint        = hex ? hexToRgba(hex, .05) : 'rgba(201,107,138,.03)';
+  const labelColor    = hex ? hexToRgba(hex, .7)  : 'rgba(201,107,138,.55)';
+  const wordColor     = 'rgba(240,235,224,.92)'; // always readable — color lives in border/accents
+  const swatchColor   = hex ? hex : null;
+  const btnBorder     = hex ? hexToRgba(hex, .45) : 'rgba(201,107,138,.4)';
+  const btnText       = hex ? hexToRgba(hex, .85) : 'rgba(201,107,138,.75)';
+  const loggedColor   = hex ? hexToRgba(hex, .55)  : 'rgba(201,107,138,.45)';
+
+  el.innerHTML = `
+    <div style="padding:16px 20px;background:${bgTint};border:1px solid ${borderSoft};border-left:2px solid ${borderStrong};">
+      <div style="font-family:'Space Mono',monospace;font-size:.48rem;letter-spacing:.1em;text-transform:uppercase;color:${labelColor};margin-bottom:10px;">💫 Today's Feeling to Feel Into</div>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+        ${swatchColor ? `<div style="width:28px;height:28px;flex-shrink:0;background:${swatchColor};border:1px solid rgba(255,255,255,.15);" title="${entry.myColorLabel||swatchColor}"></div>` : ''}
+        <div style="font-family:'Cormorant Garamond',serif;font-size:1.6rem;font-weight:300;font-style:italic;color:${wordColor};">${word}</div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button onclick="openTodayFeelingLog()" style="font-family:'Space Mono',monospace;font-size:.5rem;letter-spacing:.08em;text-transform:uppercase;padding:6px 14px;background:transparent;border:1px solid ${btnBorder};color:${btnText};cursor:pointer;">
+          ${loggedToday ? '+ Add More' : '+ Log Associations'}
+        </button>
+        <button onclick="switchTab('grimoire',document.getElementById('tab-btn-grimoire'));setTimeout(()=>switchGrimoire('feelings'),100);" style="font-family:'Space Mono',monospace;font-size:.5rem;letter-spacing:.08em;text-transform:uppercase;padding:6px 14px;background:transparent;border:1px solid rgba(201,185,154,.15);color:rgba(201,185,154,.4);cursor:pointer;">
+          View Dictionary
+        </button>
+      </div>
+      ${loggedToday ? `<div style="font-family:'Space Mono',monospace;font-size:.46rem;color:${loggedColor};margin-top:8px;">✓ logged today</div>` : ''}
+    </div>`;
+}
+
+
 
 // ═══════════════════════════════════════════════════════════
 // NUMEROLOGY
