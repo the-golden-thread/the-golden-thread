@@ -1434,6 +1434,7 @@ async function generateClaudeReading(dreamId, btnEl) {
       + '- Do not infer what characters did, said, felt, or intended beyond what is written.\n'
       + '- Do not add physical actions, dialogue, or motivations not in the dream text.\n'
       + '- If a character appeared and left \u2014 say only that, nothing more.\n'
+      + '- A being listed under LINKED ENTITIES is not automatically a character in the dream \u2014 only treat them as an active figure in the dream if the dream text itself says so. If Tiff\u2019s note says a being was NOT the actor, or clarifies who/what actually appeared, defer to her note completely and do not contradict it.\n'
       + '- Use "appears," "seems," "may represent" rather than stating interpretations as facts.\n\n'
       + 'Write your reading as two paragraphs, no more than 10 sentences total. First paragraph: key symbols and what they may represent, drawing on her natal chart where genuinely relevant. Second paragraph: the emotional or psychological theme and what the dream may be communicating. Address Tiff directly. No markdown headers or bullet points \u2014 pure prose only.';
     var data = await claudeAPI(apiKey, {model:'claude-sonnet-4-6', max_tokens:700, messages:[{role:'user',content:prompt}]});
@@ -5915,15 +5916,13 @@ function openSpiritEntry(entry) {
   if (['journal','workings','shadow','readings','gateway'].includes(entry.type)) {
     var genWrap = document.createElement('div');
     genWrap.style.marginTop = '16px';
-    if (!entry.astroReading) {
-      var genBtn = document.createElement('button');
-      genBtn.className = 'astro-gen-btn';
-      genBtn.style.cssText = 'width:100%;justify-content:center;';
-      genBtn.textContent = '✶ Generate Astrological Reading';
-      var _eid = entry.id;
-      genBtn.onclick = function() { generateSpiritReading(_eid); };
-      genWrap.appendChild(genBtn);
-    }
+    var genBtn = document.createElement('button');
+    genBtn.className = 'astro-gen-btn';
+    genBtn.style.cssText = 'width:100%;justify-content:center;';
+    genBtn.textContent = (entry.claude || entry.astroReading) ? '✶ Regenerate Reading' : '✶ Generate Reading';
+    var _eid = entry.id;
+    genBtn.onclick = function() { generateSpiritReading(_eid, genBtn); };
+    genWrap.appendChild(genBtn);
     viewInner.appendChild(genWrap);
   }
 
@@ -15244,33 +15243,28 @@ function renderDailyReading(text, chartComputed) {
 // ══════════════════════════════════════════════
 // SPIRIT ENTRY — GENERATE READING
 // ══════════════════════════════════════════════
-async function generateSpiritReading(entryId) {
+async function generateSpiritReading(entryId, btnEl) {
   var entry = SPIRIT_ENTRIES.find(function(e){ return e && e.id == entryId; });
   if (!entry) return;
   var apiKey = getApiKey();
   if (!apiKey) { gtAlert('Add your Anthropic API key in \u2699 Settings first.'); return; }
-  var btnDiv = document.getElementById('spirit-reading-' + entryId);
-  var resultDiv = document.getElementById('spirit-reading-result-' + entryId);
-  var textDiv = document.getElementById('spirit-reading-text-' + entryId);
-  if (!resultDiv || !textDiv) return;
-  if (btnDiv) btnDiv.style.display = 'none';
-  resultDiv.style.display = 'block';
-  textDiv.innerHTML = '<div style="display:flex;align-items:center;gap:8px;color:rgba(201,185,154,.4);font-family:Space Mono;font-size:.6rem;"><div class="astro-spinner"></div> ' + 'Reading\u2026' + '</div>';
+  if (btnEl) { btnEl.disabled = true; btnEl.textContent = '\u29bf Generating\u2026'; }
 
   var chartContext = getNatalContext() ? getNatalContext().summary : 'Sun in Libra 17\u00b0, born October 10 1992, 2:37pm Taunton MA';
   var typeLabels = {journal:'journal entry',workings:'spiritual working',shadow:'shadow work session',readings:'received reading',gateway:'Gateway session'};
   var typeLabel = typeLabels[entry.type] || 'waking entry';
-  var prompt, maxTokens;
+  var linkedCtx = getLinkedContext('spirit:'+String(entryId)) || '';
 
+  var astroPrompt, astroMaxTokens;
   if (entry.type === 'gateway') {
-    maxTokens = 2500;
+    astroMaxTokens = 2500;
     var preloadedSummary = GATEWAY_ENTRIES.map(function(e){
       return 'Wave '+e.wave+' Track '+e.track+' - '+e.title+' ('+e.date+'): '+(e.body||'').slice(0,180)+'... Interp: '+(e.claude||'').slice(0,120)+'...';
     }).join('\n');
     var userSummary = SPIRIT_ENTRIES.filter(function(e){ return e.type==='gateway' && String(e.id)!==String(entryId); }).map(function(e){
       return 'Wave '+(e.wave||'?')+' Track '+(e.track||'?')+' - '+e.title+' ('+(e.date||'')+'): '+(e.body||'').slice(0,180)+'...';
     }).join('\n');
-    prompt = [
+    astroPrompt = [
       'You are a deeply knowledgeable guide to the Gateway Experience. You have studied Monroe books (Journeys Out of the Body, Far Journeys, Ultimate Journey), the CIA Gateway Process report, Buhlman, and Thomas Campbell.',
       '',
       'TIFF PROFILE:',
@@ -15283,11 +15277,13 @@ async function generateSpiritReading(entryId) {
       'CURRENT SESSION - Wave '+(entry.wave||'?')+' Track '+(entry.track||'?')+': "'+entry.title+'" ('+entry.date+')',
       entry.body||'',
       '',
+      linkedCtx,
+      '',
       'Analyze with full Monroe framework. Cover: (1) what Focus state this corresponds to and what Monroe documented about it, (2) how her experience compares to typical practitioner reports at this stage, (3) how her claircognizance and Sacral authority shape her specific access quality, (4) trajectory and what is opening next. Write 4-6 paragraphs of flowing prose. Use Monroe terminology (Focus states, ROTE, loosh, resonance) where genuinely applicable. Address her as Tiff.'
     ].join('\n');
   } else {
-    maxTokens = 1200;
-    prompt = [
+    astroMaxTokens = 1200;
+    astroPrompt = [
       'You are a personal astrologer and spiritual reader for Tiff (born October 10, 1992 at 2:37 PM EDT in Taunton, Massachusetts - Sun in Libra 17\u00b0, Moon in 6\u00b0 Aries, Capricorn Rising 28\u00b0, Scorpio stellium).',
       '',
       'Her natal context: ' + chartContext,
@@ -15299,22 +15295,43 @@ async function generateSpiritReading(entryId) {
       '',
       entry.body||'',
       '',
-      (getLinkedContext('spirit:'+String(entryId)) || ''),
+      linkedCtx,
       '',
       'Write a personal astrological reading (3-5 sentences). Connect the sky conditions on ' + entry.date + ' to the content and to her natal chart. Be specific. Write as flowing prose addressed to Tiff.'
     ].join('\n');
   }
 
+  var claudePrompt = [
+    'You are a spiritual companion and depth reader. Respond to this ' + typeLabel + ' with insight, care, and honesty. Reflect on what is being expressed, what patterns or themes you notice, what questions the entry opens up, and what may want to be integrated or explored further. Draw on your knowledge of the person: Libra Sun, Aries Moon, Capricorn Rising, Scorpio stellium, Pure Generator HD type, Gene Key 57 (Intuition/Clarity) as Life\u2019s Work.',
+    '',
+    'TITLE: ' + entry.title,
+    entry.moon ? 'MOON: ' + entry.moon : '',
+    '',
+    entry.body||'',
+    '',
+    linkedCtx,
+    '',
+    (linkedCtx ? '- A being listed under LINKED ENTITIES is not automatically a literal actor in this entry \u2014 if Tiff\u2019s note clarifies their role or says they were NOT the actor, defer to her note completely.\n' : ''),
+    'Write 3-5 sentences as flowing prose, addressed to Tiff. Be specific to this entry, not generic.'
+  ].join('\n');
+
   try {
-    const data = await claudeAPI(apiKey, {model:'claude-sonnet-4-6', max_tokens:maxTokens, messages:[{role:'user',content:prompt}]});
-    var text = '';
-    if (data.content) { for (var ci=0;ci<data.content.length;ci++) { if (data.content[ci].type==='text') { text=data.content[ci].text; break; } } }
-    textDiv.innerHTML = text.split('\n\n').map(function(p){ return '<p style="margin-bottom:.7em;">'+p+'</p>'; }).join('');
-    entry.astroReading = text;
+    var results = await Promise.all([
+      claudeAPI(apiKey, {model:'claude-sonnet-4-6', max_tokens:astroMaxTokens, messages:[{role:'user',content:astroPrompt}]}),
+      claudeAPI(apiKey, {model:'claude-sonnet-4-6', max_tokens:1200, messages:[{role:'user',content:claudePrompt}]})
+    ]);
+    var astroText = '';
+    if (results[0].content) { for (var ci=0;ci<results[0].content.length;ci++) { if (results[0].content[ci].type==='text') { astroText=results[0].content[ci].text; break; } } }
+    var claudeText = '';
+    if (results[1].content) { for (var cj=0;cj<results[1].content.length;cj++) { if (results[1].content[cj].type==='text') { claudeText=results[1].content[cj].text; break; } } }
+    entry.astroReading = astroText;
+    entry.claude = claudeText;
     saveSpiritEntries();
+    if (btnEl) { btnEl.disabled = false; btnEl.textContent = '\u2736 Regenerate Reading'; }
+    openSpiritEntry(entry); // refresh the modal so both reading boxes render
   } catch(e2) {
-    textDiv.innerHTML = '<p style="color:rgba(201,185,154,.4);font-size:.8rem;">Error: '+e2.message+'</p>';
-    if (btnDiv) btnDiv.style.display = 'block';
+    gtAlert('Reading error: ' + (e2 && e2.message ? e2.message : String(e2)));
+    if (btnEl) { btnEl.disabled = false; btnEl.textContent = '\u2736 Generate Reading'; }
   }
 }
 
@@ -20719,9 +20736,9 @@ function getLinkedContext(ref, maxItems) {
       else if (info.type==='being') { var p=PEOPLE.find(function(x){return String(x.id)===info.id;}); if(p) detail=': '+(p.desc||'').slice(0,80); }
       else if (info.type==='ancestor') { var a=getAncestors().find(function(x){return x.id===info.id;}); if(a) detail=': '+(a.medicine||a.relationship||'').slice(0,80); }
     } catch(e){}
-    return '\u2022 '+relLabel+': ['+info.label+'] '+info.name+detail+(l.note?' (note: '+l.note+')':'');
+    return '\u2022 '+relLabel+': ['+info.label+'] '+info.name+detail+(l.note?' \u2014 TIFF\u2019S NOTE (authoritative, overrides any assumption): '+l.note:'');
   });
-  return 'LINKED ENTITIES:\n'+lines.join('\n');
+  return 'LINKED ENTITIES (Tiff has connected these to this entry in her archive \u2014 this does NOT mean they are necessarily depicted as literal characters/actors in the entry itself; if a note clarifies their role or says they were NOT the actor/did not literally appear, you MUST follow that note exactly and not describe them as an active character):\n'+lines.join('\n');
 }
 
 // ── Render links section ──────────────────────────────────────────
