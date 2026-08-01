@@ -6314,6 +6314,26 @@ const _userDreams = loadUserDreams();
   });
 })();
 let dreams = DREAMS.slice().concat(_userDreams).filter(function(d){ return d && d.id != null && d.title; });
+// One-time cleanup: remove exact-duplicate user-added dreams (same title+date+body),
+// which could be created by rapid double-taps on "Add to Archive". Keeps the earliest (lowest id).
+(function dedupeUserDreams() {
+  var seen = {};
+  var keepIds = {};
+  var removedAny = false;
+  dreams.slice().sort(function(a,b){ return (a.id||0)-(b.id||0); }).forEach(function(d) {
+    var sig = (d.title||'') + '||' + (d.date||'') + '||' + (d.body||'');
+    if (d.userAdded && seen[sig]) {
+      removedAny = true;
+      return;
+    }
+    if (d.userAdded) seen[sig] = true;
+    keepIds[d.id] = true;
+  });
+  if (removedAny) {
+    dreams = dreams.filter(function(d){ return keepIds[d.id]; });
+    saveUserDreams();
+  }
+})();
 let nextId = (function() {
   var ids = dreams.map(function(d){ return (typeof d.id === 'number' && !isNaN(d.id)) ? d.id : 0; });
   return Math.max(130, ids.length ? Math.max.apply(null, ids) : 0) + 1;
@@ -13061,7 +13081,11 @@ function renderFeelingChipsFor(inputId, chipsId) {
   });
 }
 
+let _addDreamLock = false;
 function addDream(){
+  if (_addDreamLock) return; // guard against rapid double-tap/double-click creating duplicate entries
+  _addDreamLock = true;
+  setTimeout(function(){ _addDreamLock = false; }, 1000);
   const title=document.getElementById('f-title').value.trim()||'Untitled Dream';
   const date=document.getElementById('f-date').value||localDateStr();
   const ctx=document.getElementById('f-ctx').value.trim();
@@ -13076,6 +13100,9 @@ function addDream(){
   const _cAstro=(()=>{try{const s=(document.getElementById('add-ov')||{}).dataset?.computedAstro;return s?JSON.parse(s):null;}catch(e){return null;}})();
   const _people = [...document.querySelectorAll('#f-people-chips .pchip-check.selected')].map(el=>el.dataset.pid);
   const _feelingWord = (document.getElementById('f-feeling-word')?.value || '').trim();
+  // Extra safety net: skip if an identical entry (title+date+body) already exists
+  const _isDuplicate = dreams.some(function(d){ return d.userAdded && d.title===title && d.date===date && d.body===body; });
+  if (_isDuplicate) { document.getElementById('add-ov').classList.remove('open'); return; }
   const _newId = nextId++;
   var _moonStr = (_cAstro && _cAstro.moon) ? _cAstro.moon : '';
   dreams.push({id:_newId,date,title,moon:_moonStr,ctx,body,interp,claude:claudeReading,astroReading:_astroReadingText||undefined,cats,people:_people,viv,feelingWord:_feelingWord||undefined,userAdded:true,astro:_cAstro||undefined});
