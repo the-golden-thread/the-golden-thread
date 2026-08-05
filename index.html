@@ -5257,7 +5257,7 @@ Write as 3-4 flowing sentences of warm, direct prose. No headers, no bullet poin
       }));
     } catch(e) {}
 
-    if (textEl) textEl.innerHTML = text.split('\n\n').map(p=>`<p style="margin-bottom:10px;">${p}</p>`).join('');
+    if (textEl) textEl.innerHTML = sanitizeAIReadingText(text).split('\n\n').map(p=>`<p style="margin-bottom:10px;">${p}</p>`).join('');
     if (btn) { btn.disabled = false; btn.textContent = '↻ Regenerate'; }
 
     // Update the footer date
@@ -5615,7 +5615,7 @@ function renderHerbFocusCard() {
         <button onclick="generateHerbFocus()" id="herb-focus-btn" style="font-family:'Space Mono',monospace;font-size:.52rem;letter-spacing:.08em;padding:6px 14px;border:1px solid rgba(80,139,100,.3);background:transparent;color:rgba(100,160,120,.7);cursor:pointer;white-space:nowrap;transition:all .2s;" onmouseover="this.style.color='rgba(120,180,140,.9)'" onmouseout="this.style.color='rgba(100,160,120,.7)'">${cached ? '↻ Refresh' : '🌿 Generate Focus'}</button>
       </div>
       <div id="herb-focus-text" style="font-size:.9rem;font-weight:300;line-height:1.85;color:rgba(240,235,224,.8);">
-        ${cached ? cached.text.split('\n\n').map(p=>'<p style="margin-bottom:8px;">'+p+'</p>').join('') : '<span style="font-family:Space Mono;font-size:.6rem;color:rgba(201,185,154,.3);">Hit Generate to get personalized herb recommendations based on your cycle phase, the current moon, and your practice.</span>'}
+        ${cached ? sanitizeAIReadingText(cached.text).split('\n\n').map(p=>'<p style="margin-bottom:8px;">'+p+'</p>').join('') : '<span style="font-family:Space Mono;font-size:.6rem;color:rgba(201,185,154,.3);">Hit Generate to get personalized herb recommendations based on your cycle phase, the current moon, and your practice.</span>'}
       </div>
     </div>`;
 }
@@ -5641,7 +5641,7 @@ async function generateHerbFocus() {
     const firstLine = text.split('\n')[0].replace(/[*#]/g,'').trim();
     const today2 = new Date();
     try { localStorage.setItem(HERB_FOCUS_CACHE_KEY, JSON.stringify({key:today2.getFullYear()+'-'+today2.getMonth()+'-'+today2.getDate(),herb:firstLine,text,generated:today2.toISOString()})); } catch(e) {}
-    if (textEl) textEl.innerHTML = text.split('\n\n').map(p=>'<p style="margin-bottom:10px;">'+p.replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>')+'</p>').join('');
+    if (textEl) textEl.innerHTML = sanitizeAIReadingText(text).split('\n\n').map(p=>'<p style="margin-bottom:10px;">'+p.replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>')+'</p>').join('');
     const titleEl = document.querySelector('#herb-focus-card [style*="font-style:italic"]');
     if (titleEl) titleEl.textContent = firstLine;
     if (btn) { btn.disabled = false; btn.textContent = '↻ Refresh'; }
@@ -5667,7 +5667,7 @@ async function askHerbs() {
   try {
     const data = await claudeAPI(apiKey, {model:'claude-sonnet-4-6',max_tokens:900,messages:[{role:'user',content:prompt}]});
     const text = data.content?.find(c=>c.type==='text')?.text||'';
-    if (result) result.innerHTML = '<div style="border-top:1px solid rgba(80,139,100,.2);padding-top:12px;"><div style="font-family:\'Space Mono\',monospace;font-size:.48rem;color:rgba(100,160,120,.5);letter-spacing:.1em;text-transform:uppercase;margin-bottom:8px;">🌿 The Plants Respond</div>'+text.split('\n\n').map(p=>'<p style="font-size:.88rem;font-weight:300;line-height:1.8;color:rgba(240,235,224,.78);margin-bottom:10px;">'+p+'</p>').join('')+'</div>';
+    if (result) result.innerHTML = '<div style="border-top:1px solid rgba(80,139,100,.2);padding-top:12px;"><div style="font-family:\'Space Mono\',monospace;font-size:.48rem;color:rgba(100,160,120,.5);letter-spacing:.1em;text-transform:uppercase;margin-bottom:8px;">🌿 The Plants Respond</div>'+sanitizeAIReadingText(text).split('\n\n').map(p=>'<p style="font-size:.88rem;font-weight:300;line-height:1.8;color:rgba(240,235,224,.78);margin-bottom:10px;">'+p+'</p>').join('')+'</div>';
   } catch(e) {
     if (result) result.innerHTML = '<div style="font-family:Space Mono;font-size:.6rem;color:rgba(200,100,100,.5);">Error: '+e.message+'</div>';
   } finally {
@@ -6173,7 +6173,7 @@ Natal context: ${natalCtx}`;
       try {
         const data = await claudeAPI(apiKey, {model:'claude-sonnet-4-6',max_tokens:1200,messages:[{role:'user',content:claudePrompt}]});
         const text = data.content?.find(c=>c.type==='text')?.text||'';
-        txt.innerHTML = text.split('\n\n').map(p=>`<p>${p}</p>`).join('');
+        txt.innerHTML = sanitizeAIReadingText(text).split('\n\n').map(p=>`<p>${p}</p>`).join('');
         // Store for saving with entry
         if (txt) txt.dataset.generatedText = text;
       } catch(e) { txt.innerHTML = `<p style="color:rgba(201,185,154,.4);font-size:.75rem;">Error: ${e.message}</p>`; }
@@ -7073,7 +7073,7 @@ Answer the question thoroughly and specifically, drawing on the FULL archive —
       result.innerHTML = `
         <div style="border-top:1px solid rgba(107,79,138,.2);padding-top:14px;">
           <div style="font-family:'Space Mono',monospace;font-size:.48rem;color:rgba(155,107,171,.5);letter-spacing:.1em;text-transform:uppercase;margin-bottom:10px;">✦ The Archive Responds</div>
-          ${text.split('\n\n').map(p=>`<p style="font-size:.9rem;font-weight:300;line-height:1.8;color:rgba(240,235,224,.8);margin-bottom:12px;">${p}</p>`).join('')}
+          ${sanitizeAIReadingText(text).split('\n\n').map(p=>`<p style="font-size:.9rem;font-weight:300;line-height:1.8;color:rgba(240,235,224,.8);margin-bottom:12px;">${p}</p>`).join('')}
           <div style="margin-top:14px;padding-top:12px;border-top:1px solid rgba(107,79,138,.1);">
             <button onclick="saveArchiveInsight(this)" class="astro-gen-btn" style="font-size:.55rem;">✦ Save as Pattern</button>
           </div>
@@ -8005,7 +8005,7 @@ function renderDreamMagicList() {
       </div>
       ${e.magicReading ? `<div style="margin-top:10px;padding:14px;background:rgba(107,79,138,.04);border:1px solid rgba(107,79,138,.12);border-left:2px solid rgba(107,79,138,.3);">
         <div style="font-family:'Space Mono',monospace;font-size:.44rem;letter-spacing:.08em;text-transform:uppercase;color:rgba(155,107,171,.5);margin-bottom:8px;">✦ Reading</div>
-        <div style="font-family:'Cormorant Garamond',serif;font-size:.9rem;color:rgba(240,235,224,.75);line-height:1.8;">${e.magicReading.split('\n\n').map(p=>`<p style="margin-bottom:10px;">${p}</p>`).join('')}</div>
+        <div style="font-family:'Cormorant Garamond',serif;font-size:.9rem;color:rgba(240,235,224,.75);line-height:1.8;">${sanitizeAIReadingText(e.magicReading).split('\n\n').map(p=>`<p style="margin-bottom:10px;">${p}</p>`).join('')}</div>
       </div>` : ''}
     </div>`).join('');
 }
@@ -8181,7 +8181,7 @@ function toggleWithinReading(entryId, btnEl) {
     const text = decodeURIComponent(div.dataset.reading || '');
     div.innerHTML = `<div style="margin-top:10px;padding:14px;background:rgba(107,79,138,.04);border:1px solid rgba(107,79,138,.12);border-left:2px solid rgba(107,79,138,.3);">
       <div style="font-family:'Space Mono',monospace;font-size:.44rem;letter-spacing:.08em;text-transform:uppercase;color:rgba(155,107,171,.5);margin-bottom:8px;">✦ Reading</div>
-      <div style="font-family:'Cormorant Garamond',serif;font-size:.9rem;color:rgba(240,235,224,.75);line-height:1.8;">${text.split('\n\n').map(p=>`<p style="margin-bottom:10px;">${p}</p>`).join('')}</div>
+      <div style="font-family:'Cormorant Garamond',serif;font-size:.9rem;color:rgba(240,235,224,.75);line-height:1.8;">${sanitizeAIReadingText(text).split('\n\n').map(p=>`<p style="margin-bottom:10px;">${p}</p>`).join('')}</div>
     </div>`;
     div.dataset.open = '1';
     if (btnEl) btnEl.textContent = '▾ Hide Reading';
@@ -8247,7 +8247,7 @@ Write a reading that: honors what was worked in this session, connects the guida
       readingDiv.dataset.open = '1';
       readingDiv.innerHTML = `<div style="margin-top:10px;padding:14px;background:rgba(107,79,138,.04);border:1px solid rgba(107,79,138,.12);border-left:2px solid rgba(107,79,138,.3);">
         <div style="font-family:'Space Mono',monospace;font-size:.44rem;letter-spacing:.08em;text-transform:uppercase;color:rgba(155,107,171,.5);margin-bottom:8px;">✦ Reading</div>
-        ${text.split('\n\n').map(p=>`<p style="font-family:'Cormorant Garamond',serif;font-size:.9rem;color:rgba(240,235,224,.75);line-height:1.8;margin-bottom:10px;">${p}</p>`).join('')}
+        ${sanitizeAIReadingText(text).split('\n\n').map(p=>`<p style="font-family:'Cormorant Garamond',serif;font-size:.9rem;color:rgba(240,235,224,.75);line-height:1.8;margin-bottom:10px;">${p}</p>`).join('')}
       </div>`;
     }
     if (btnEl) {
@@ -8300,7 +8300,7 @@ Write a reading that: traces the arc of Tiff's growth across these sessions, nam
       arcDiv.style.display = 'block';
       arcDiv.innerHTML = `
         <div style="font-family:'Space Mono',monospace;font-size:.5rem;letter-spacing:.1em;text-transform:uppercase;color:rgba(155,107,171,.6);margin-bottom:12px;">✦ Arc Reading — Your Within Journey</div>
-        ${text.split('\n\n').map(p=>`<p style="font-family:'Cormorant Garamond',serif;font-size:.95rem;color:rgba(240,235,224,.8);line-height:1.85;margin-bottom:12px;">${p}</p>`).join('')}`;
+        ${sanitizeAIReadingText(text).split('\n\n').map(p=>`<p style="font-family:'Cormorant Garamond',serif;font-size:.95rem;color:rgba(240,235,224,.8);line-height:1.85;margin-bottom:12px;">${p}</p>`).join('')}`;
     }
   } catch(err) {
     gtAlert('Error generating arc reading: ' + err.message);
@@ -9489,7 +9489,7 @@ Grounded and specific where the data is rich — use real dream titles, real eve
     container.innerHTML = `
       <div style="padding:28px;background:rgba(107,79,138,.04);border:1px solid rgba(107,79,138,.12);border-left:2px solid rgba(107,79,138,.25);">
         <div style="font-family:'Space Mono',monospace;font-size:.45rem;letter-spacing:.1em;text-transform:uppercase;color:rgba(155,107,171,.4);margin-bottom:16px;">${today}</div>
-        ${text.split('\n\n').filter(p=>p.trim()).map(p=>`<p style="font-family:'Cormorant Garamond',serif;font-size:1.05rem;line-height:1.9;color:rgba(240,235,224,.85);margin-bottom:1.2em;">${p}</p>`).join('')}
+        ${sanitizeAIReadingText(text).split('\n\n').filter(p=>p.trim()).map(p=>`<p style="font-family:'Cormorant Garamond',serif;font-size:1.05rem;line-height:1.9;color:rgba(240,235,224,.85);margin-bottom:1.2em;">${p}</p>`).join('')}
       </div>`;
     if (btn) { btn.disabled = false; btn.textContent = '∞ Generate a New Arc'; }
   } catch(e) {
@@ -11279,7 +11279,7 @@ function renderNumerologySection() {
       <div id="numerology-reading-wrap">
         ${savedReading ? `
           <div style="font-family:'Space Mono',monospace;font-size:.46rem;letter-spacing:.08em;text-transform:uppercase;color:rgba(201,185,154,.35);margin-bottom:10px;">✦ Combined Numerology Reading</div>
-          <div id="numerology-reading-text" style="font-family:'Cormorant Garamond',serif;font-size:1rem;line-height:1.9;color:rgba(240,235,224,.85);">${savedReading.split('\n\n').filter(p=>p.trim()).map(p=>`<p style="margin-bottom:12px;">${p}</p>`).join('')}</div>
+          <div id="numerology-reading-text" style="font-family:'Cormorant Garamond',serif;font-size:1rem;line-height:1.9;color:rgba(240,235,224,.85);">${sanitizeAIReadingText(savedReading).split('\n\n').filter(p=>p.trim()).map(p=>`<p style="margin-bottom:12px;">${p}</p>`).join('')}</div>
           <button onclick="generateNumerologyReading(true)" style="margin-top:12px;font-family:'Space Mono',monospace;font-size:.5rem;letter-spacing:.08em;text-transform:uppercase;background:transparent;border:1px solid rgba(201,185,154,.2);color:rgba(201,185,154,.35);cursor:pointer;padding:6px 14px;">↻ Regenerate</button>
         ` : `
           <button onclick="generateNumerologyReading(false)" id="numerology-gen-btn" class="astro-gen-btn" style="width:100%;justify-content:center;">✦ Generate Combined Reading</button>
@@ -11339,7 +11339,7 @@ function renderSavedNumerologyReading(text) {
   if (!wrap) return;
   wrap.innerHTML = `
     <div style="font-family:'Space Mono',monospace;font-size:.46rem;letter-spacing:.08em;text-transform:uppercase;color:rgba(201,185,154,.35);margin-bottom:10px;">✦ Combined Numerology Reading</div>
-    <div id="numerology-reading-text" style="font-family:'Cormorant Garamond',serif;font-size:1rem;line-height:1.9;color:rgba(240,235,224,.85);">${text.split('\n\n').filter(p=>p.trim()).map(p=>`<p style="margin-bottom:12px;">${p}</p>`).join('')}</div>
+    <div id="numerology-reading-text" style="font-family:'Cormorant Garamond',serif;font-size:1rem;line-height:1.9;color:rgba(240,235,224,.85);">${sanitizeAIReadingText(text).split('\n\n').filter(p=>p.trim()).map(p=>`<p style="margin-bottom:12px;">${p}</p>`).join('')}</div>
     <button onclick="generateNumerologyReading(true)" style="margin-top:12px;font-family:'Space Mono',monospace;font-size:.5rem;letter-spacing:.08em;text-transform:uppercase;background:transparent;border:1px solid rgba(201,185,154,.2);color:rgba(201,185,154,.35);cursor:pointer;padding:6px 14px;">↻ Regenerate</button>`;
 }
 
@@ -14771,7 +14771,7 @@ function renderDailyReading(text, chartComputed) {
   const el = document.getElementById('sanctum-reading-text');
   if (!el) return;
   el.style.display = 'block';
-  el.innerHTML = text.split('\n\n').filter(p=>p.trim()).map(p=>`<p style="margin-bottom:1em;">${p}</p>`).join('');
+  el.innerHTML = sanitizeAIReadingText(text).split('\n\n').filter(p=>p.trim()).map(p=>`<p style="margin-bottom:1em;">${p}</p>`).join('');
   if (chartComputed) {
     el.innerHTML += '<div style="font-family:Space Mono;font-size:.52rem;color:rgba(155,107,171,.4);margin-top:12px;letter-spacing:.06em;">✦ Natal chart computed and saved</div>';
   }
@@ -15596,7 +15596,7 @@ Answer by drawing on whichever systems are most relevant. Reference her actual p
   try {
     const data = await claudeAPI(apiKey, {model:'claude-sonnet-4-6', max_tokens:1200, messages:[{role:'user',content:prompt}]});
     const text = data.content?.find(c=>c.type==='text')?.text || '';
-    answerEl.innerHTML = text.split('\n\n').map(p=>`<p style="margin-bottom:.6em;">${p}</p>`).join('');
+    answerEl.innerHTML = sanitizeAIReadingText(text).split('\n\n').map(p=>`<p style="margin-bottom:.6em;">${p}</p>`).join('');
     input.value = '';
   } catch(e) {
     answerEl.innerHTML = `<p style="color:rgba(201,185,154,.4);font-size:.8rem;">Error: ${e.message}</p>`;
@@ -15759,7 +15759,7 @@ async function generateFormClaudeReading(dreamContext, apiKey) {
     const data = await claudeAPI(apiKey, {model:'claude-sonnet-4-6',max_tokens:600,messages:[{role:'user',content:prompt}]});
     const text = (data.content?.find(c=>c.type==='text')?.text||'').trim();
     _fFormClaudeReading = text;
-    txt.innerHTML = text.split('\n\n').map(p=>`<p>${p}</p>`).join('');
+    txt.innerHTML = sanitizeAIReadingText(text).split('\n\n').map(p=>`<p>${p}</p>`).join('');
   } catch(e) {
     txt.innerHTML = `<p style="color:rgba(201,185,154,.4);font-size:.75rem;">Error: ${e.message}</p>`;
   }
@@ -16240,7 +16240,7 @@ function openElixir(elixir) {
     ${elixir.infusion?`<div class="m-sec"><div class="m-lbl">How It Was Infused</div><div class="m-body"><p>${elixir.infusion}</p></div></div>`:''}
     ${elixir.magic ? `<div class="m-sec">
       <div class="m-lbl">✦ The Magic</div>
-      <div class="m-claude">${elixir.magic.split('\n\n').map(p=>'<p>'+p+'</p>').join('')}</div>
+      <div class="m-claude">${formatElixirMagicText(elixir.magic)}</div>
     </div>` : `<div class="m-sec" id="elixir-magic-area-${elixir.id}">
       <button class="astro-gen-btn" onclick="generateElixirMagic(${elixir.id})" style="width:100%;justify-content:center;">✦ Reveal the Magic</button>
       <div id="elixir-magic-text-${elixir.id}" style="display:none;margin-top:12px;"></div>
@@ -16270,6 +16270,39 @@ function saveElixirNotes(id, text) {
   if (idx>-1) { ELIXIRS[idx].notes = text; saveElixirs(); }
 }
 
+// Strips stray markdown headers/dividers/bylines the model might add despite instructions,
+// and converts **bold** to <strong>, so in-app "Reveal the Magic" text never shows raw markdown.
+function formatElixirMagicText(raw) {
+  return (raw||'')
+    .split('\n\n')
+    .map(p=>p.trim())
+    .filter(Boolean)
+    .filter(p => {
+      if (/^#{1,6}\s/.test(p)) return false; // heading lines
+      if (/^[-*_]{3,}$/.test(p)) return false; // divider lines like --- or ***
+      if (/^\*[^*\n]{1,120}\*$/.test(p)) return false; // short single italic line = byline/credit
+      return true;
+    })
+    .map(p => '<p style="font-size:.87rem;font-weight:300;line-height:1.8;color:rgba(240,235,224,.75);margin-bottom:12px;">' + p.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>') + '</p>')
+    .join('');
+}
+
+// Builds an explicit amount hierarchy string so the AI can't misidentify which
+// essence/crystal is dominant in the formula (highest amount = dominant voice).
+// formatFn(item) should return e.g. "3 drops Rose" or "2× Clear Quartz".
+function elixirAmountHierarchy(items, amountKey, formatFn) {
+  if (!items || !items.length) return '';
+  const sorted = [...items].sort((a,b)=>(b[amountKey]||0)-(a[amountKey]||0));
+  const maxAmt = sorted[0][amountKey];
+  const minAmt = sorted[sorted.length-1][amountKey];
+  return sorted.map(it => {
+    let tag = '';
+    if (items.length > 1 && it[amountKey] === maxAmt) tag = ' \u2014 HIGHEST amount: this is the DOMINANT, lead note in the formula';
+    else if (items.length > 1 && it[amountKey] === minAmt && minAmt !== maxAmt) tag = ' \u2014 lowest amount: a supporting accent only';
+    return formatFn(it) + tag;
+  }).join('; ');
+}
+
 async function generateElixirMagic(elixirId) {
   const elixir = ELIXIRS.find(e => e.id == elixirId);
   if (!elixir) return;
@@ -16282,8 +16315,8 @@ async function generateElixirMagic(elixirId) {
   if (textEl) textEl.style.display = 'block';
   if (textEl) textEl.innerHTML = '<div style="font-family:Space Mono;font-size:.6rem;color:rgba(201,185,154,.4);">Consulting the elements…</div>';
 
-  const crystalList = (elixir.crystals||[]).map(c=>`${c.count}× ${c.name}`).join(', ');
-  const essenceList = (elixir.essences||[]).map(e=>`${e.drops} drops ${e.name}`).join(', ');
+  const crystalList = elixirAmountHierarchy(elixir.crystals||[], 'count', c=>`${c.count}× ${c.name}`);
+  const essenceList = elixirAmountHierarchy(elixir.essences||[], 'drops', e=>`${e.drops} drop${e.drops!==1?'s':''} ${e.name}`);
   const isBachFlower = elixir.type === 'bachFlower';
 
   const _1010elixir = isBirthday() ? '\n\u2736 TODAY IS OCTOBER 10 \u2014 HER BIRTHDAY. If appropriate, acknowledge this in the blend reading.' : '';
@@ -16299,7 +16332,11 @@ ${_1010elixir}
 
 Write a rich, evocative description (3-4 paragraphs) that explains the TRUE, accurate emotional and psychological healing property of each named flower essence according to the traditional Bach flower system (e.g. what emotional state or pattern each remedy addresses), and how they combine as a unified formula for the person who takes it. Draw on the real, established Bach flower correspondences \u2014 do not invent properties that contradict the actual remedy. Write as flowing prose \u2014 no bullet points.
 
-CRITICAL \u2014 usage accuracy: Bach Flower Essences are NEVER applied to the skin, pulse points, or pressure points like essential oils. They are taken internally or used in gentle topical soaks \u2014 as drops added to a glass of water and sipped throughout the day, as drops taken directly under the tongue, added to bathwater, or blended into unscented lotion/skincare for topical, skin-nourishing (not pulse-point) use. When describing how to use this blend, reflect ONLY these accurate methods. Make it feel like something worth reading, not just a reference list.` : `You are a practicing witch and aromatherapist with deep knowledge of crystal lore, essential oil magic, and energetic alchemy. You are creating this reading for Tiff \u2014 a Libra Sun, Aries Moon, Capricorn Rising witch and channel. Describe the magic of this oil blend.
+CRITICAL \u2014 dominance accuracy: the drop counts above are labeled with which essence has the HIGHEST amount (the true dominant, lead note of the formula) and which has the lowest (a minor supporting accent). Only ever describe the essence explicitly marked HIGHEST as dominant/primary/the leading voice. Never describe a lower-drop essence as dominant, and never contradict yourself about which essence leads the formula anywhere else in the reading \u2014 check this before writing each paragraph.
+
+CRITICAL \u2014 usage accuracy: Bach Flower Essences are NEVER applied to the skin, pulse points, or pressure points like essential oils. They are taken internally or used in gentle topical soaks \u2014 as drops added to a glass of water and sipped throughout the day, as drops taken directly under the tongue, added to bathwater, or blended into unscented lotion/skincare for topical, skin-nourishing (not pulse-point) use. When describing how to use this blend, reflect ONLY these accurate methods.
+
+Do not include a title, heading, or byline of any kind (no lines starting with #, ##, ###, or similar), and no divider lines (no ---, ***, or ___). Begin directly with the first paragraph of prose. Make it feel like something worth reading, not just a reference list.` : `You are a practicing witch and aromatherapist with deep knowledge of crystal lore, essential oil magic, and energetic alchemy. You are creating this reading for Tiff \u2014 a Libra Sun, Aries Moon, Capricorn Rising witch and channel. Describe the magic of this oil blend.
 
 Name: ${elixir.name}
 Intention: ${elixir.intention || 'Not specified'}
@@ -16309,7 +16346,11 @@ ${elixir.cleansing ? 'Cleansing: ' + elixir.cleansing : ''}
 ${elixir.infusion ? 'Infusion method: ' + elixir.infusion : ''}
 ${_1010elixir}
 
-Write a rich, evocative description (3-4 paragraphs) that explains what each ingredient contributes energetically and magically, how they work together as a unified formula, and what this blend does for the person who carries it. Draw on traditional correspondences, folk magic, and energetic principles. Write as flowing prose — no bullet points. Make it feel like something worth reading, not just a reference list.`;
+Write a rich, evocative description (3-4 paragraphs) that explains what each ingredient contributes energetically and magically, how they work together as a unified formula, and what this blend does for the person who carries it. Draw on traditional correspondences, folk magic, and energetic principles. Write as flowing prose — no bullet points.
+
+CRITICAL — dominance accuracy: the crystal and essence counts above are labeled with which item has the HIGHEST amount (the true dominant, lead note of the formula) and which has the lowest (a minor supporting accent). Only ever describe the item explicitly marked HIGHEST as dominant/primary/the leading voice — crystals and essences are tracked separately, so there may be one dominant crystal and one dominant essence. Never describe a lower-count item as dominant, and never contradict yourself about which item leads anywhere else in the reading — check this before writing each paragraph.
+
+Do not include a title, heading, or byline of any kind (no lines starting with #, ##, ###, or similar), and no divider lines (no ---, ***, or ___). Begin directly with the first paragraph of prose. Make it feel like something worth reading, not just a reference list.`;
 
   try {
     const data = await claudeAPI(apiKey, {model:'claude-sonnet-4-6',max_tokens:2200,messages:[{role:'user',content:prompt}]});
@@ -16322,7 +16363,7 @@ Write a rich, evocative description (3-4 paragraphs) that explains what each ing
       if (!ELIXIRS[idx].preloaded) saveElixirs();
     }
 
-    if (textEl) textEl.innerHTML = text.split('\n\n').map(p=>'<p style="font-size:.87rem;font-weight:300;line-height:1.8;color:rgba(240,235,224,.75);margin-bottom:12px;">'+p+'</p>').join('');
+    if (textEl) textEl.innerHTML = formatElixirMagicText(text);
     if (btn) btn.style.display = 'none';
   } catch(e) {
     if (textEl) textEl.innerHTML = `<p style="color:rgba(201,185,154,.4);font-size:.75rem;">Error: ${e.message}</p>`;
@@ -16354,12 +16395,12 @@ async function printElixirCard(elixirId) {
   if (!elixir.cardMagic) {
     if (!apiKey) { gtAlert('Add your Anthropic API key in Settings to generate the card reading.'); return; }
     gtAlert('Generating the card reading — the card will open when ready.');
-    const crystalList = (elixir.crystals||[]).map(c=>c.count+'x '+c.name).join(', ');
-    const essenceList = (elixir.essences||[]).map(e=>e.drops+' drops '+e.name).join(', ');
+    const crystalList = elixirAmountHierarchy(elixir.crystals||[], 'count', c=>`${c.count}x ${c.name}`);
+    const essenceList = elixirAmountHierarchy(elixir.essences||[], 'drops', e=>`${e.drops} drops ${e.name}`);
     const isBachFlowerCard = elixir.type === 'bachFlower';
     const prompt = isBachFlowerCard
-      ? 'You are a practicing herbalist with deep, accurate knowledge of the Bach Flower Remedies system originated by Dr. Edward Bach. Write a beautiful third-person card reading for this custom Bach Flower Essence blend made by Tiff.\n\nThis is a Bach Flower Essence blend, NOT an essential oil or crystal blend \u2014 do not describe it in terms of aromatherapy, essential oil magic, or crystal lore.\n\nName: '+elixir.name+'\nMade by: Tiff\nRecipient: '+recipient+'\nIntention: '+(elixir.intention||'Not specified')+'\nFlower Essences: '+(essenceList||'None')+'\n\nWrite 4-5 paragraphs of flowing prose describing the TRUE, accurate emotional and psychological healing property of each named flower essence according to the traditional Bach flower system, and how they combine as a formula. Do not invent properties that contradict the actual remedy. Refer to the maker as "Tiff" and the recipient as "'+recipient+'". Never use "you" or "your" — this is a card the recipient will read about themselves, not spoken to them directly. Use **bold** only for the names of the specific flower essences (e.g. **Clematis**, **Oak**, **Hornbeam**). Do NOT bold person names, blend names, group names, or any other words. Do not reference pulse points, anointing, or topical oil application anywhere in the reading — these essences are taken internally or used gently in the bath or skincare, never applied like an essential oil. No bullet points. No heading lines starting with #. No credit lines or bylines.'
-      : 'You are a practicing witch and aromatherapist with deep knowledge of crystal lore, essential oil magic, and energetic alchemy. Write a beautiful third-person card reading for this custom intuitive blend made by Tiff.\n\nName: '+elixir.name+'\nMade by: Tiff\nRecipient: '+recipient+'\nIntention: '+(elixir.intention||'Not specified')+'\nCrystals: '+(crystalList||'None')+'\nEssential oils: '+(essenceList||'None')+(elixir.cleansing?'\nCleansing: '+elixir.cleansing:'')+(elixir.infusion?'\nInfusion method: '+elixir.infusion:'')+'\n\nWrite 4-5 paragraphs of flowing prose. Refer to the maker as "Tiff" and the recipient as "'+recipient+'". Never use "you" or "your" — this is a card the recipient will read about themselves, not spoken to them directly. Use **bold** only for the names of specific ingredients — individual oils, crystals, and cleansing materials (e.g. **jasmine**, **rose quartz**, **frankincense smoke**). Do NOT bold person names, blend names, group names, or any other words. No bullet points. No heading lines starting with #. No credit lines or bylines.';
+      ? 'You are a practicing herbalist with deep, accurate knowledge of the Bach Flower Remedies system originated by Dr. Edward Bach. Write a beautiful third-person card reading for this custom Bach Flower Essence blend made by Tiff.\n\nThis is a Bach Flower Essence blend, NOT an essential oil or crystal blend \u2014 do not describe it in terms of aromatherapy, essential oil magic, or crystal lore.\n\nName: '+elixir.name+'\nMade by: Tiff\nRecipient: '+recipient+'\nIntention: '+(elixir.intention||'Not specified')+'\nFlower Essences: '+(essenceList||'None')+'\n\nWrite 4-5 paragraphs of flowing prose describing the TRUE, accurate emotional and psychological healing property of each named flower essence according to the traditional Bach flower system, and how they combine as a formula. Do not invent properties that contradict the actual remedy. Refer to the maker as "Tiff" and the recipient as "'+recipient+'". Never use "you" or "your" — this is a card the recipient will read about themselves, not spoken to them directly. Use **bold** only for the names of the specific flower essences (e.g. **Clematis**, **Oak**, **Hornbeam**). Do NOT bold person names, blend names, group names, or any other words. Do not reference pulse points, anointing, or topical oil application anywhere in the reading — these essences are taken internally or used gently in the bath or skincare, never applied like an essential oil. CRITICAL — dominance accuracy: the flower essence list above is labeled with which essence has the HIGHEST drop count (the true dominant, lead note) and which has the lowest (a minor supporting accent). Only ever describe the essence explicitly marked HIGHEST as dominant/primary/the leading voice, and never contradict yourself about which essence leads anywhere else in the reading. No bullet points. No heading lines starting with #. No credit lines or bylines.'
+      : 'You are a practicing witch and aromatherapist with deep knowledge of crystal lore, essential oil magic, and energetic alchemy. Write a beautiful third-person card reading for this custom intuitive blend made by Tiff.\n\nName: '+elixir.name+'\nMade by: Tiff\nRecipient: '+recipient+'\nIntention: '+(elixir.intention||'Not specified')+'\nCrystals: '+(crystalList||'None')+'\nEssential oils: '+(essenceList||'None')+(elixir.cleansing?'\nCleansing: '+elixir.cleansing:'')+(elixir.infusion?'\nInfusion method: '+elixir.infusion:'')+'\n\nWrite 4-5 paragraphs of flowing prose. Refer to the maker as "Tiff" and the recipient as "'+recipient+'". Never use "you" or "your" — this is a card the recipient will read about themselves, not spoken to them directly. Use **bold** only for the names of specific ingredients — individual oils, crystals, and cleansing materials (e.g. **jasmine**, **rose quartz**, **frankincense smoke**). Do NOT bold person names, blend names, group names, or any other words. CRITICAL — dominance accuracy: the crystal and essence lists above are labeled with which item has the HIGHEST amount (the true dominant, lead note) and which has the lowest (a minor supporting accent) — crystals and essences are tracked separately, so there may be one dominant crystal and one dominant essence. Only ever describe the item explicitly marked HIGHEST as dominant/primary/the leading voice, and never contradict yourself about which item leads anywhere else in the reading. No bullet points. No heading lines starting with #. No credit lines or bylines.';
     try {
       const data = await claudeAPI(apiKey, {model:'claude-sonnet-4-6',max_tokens:2200,messages:[{role:'user',content:prompt}]});
       const text = data.content?.find(c=>c.type==='text')?.text||'';
@@ -17846,6 +17887,23 @@ function saveNewSacredDate() {
 // ══════════════════════════════════════════════
 // CLAUDE API HELPER — retry on overload
 // ══════════════════════════════════════════════
+// Global sanitizer for ALL AI-generated reading text rendered anywhere in the app.
+// Strips stray markdown heading lines (#, ##, ###...) and divider lines (---, ***, ___)
+// that models sometimes add despite prompt instructions, so raw markdown never leaks
+// into the UI. Returns a cleaned string safe to .split('\n\n') and wrap in <p> tags.
+function sanitizeAIReadingText(raw) {
+  return (raw||'')
+    .split('\n\n')
+    .map(p=>p.trim())
+    .filter(Boolean)
+    .filter(p => {
+      if (/^#{1,6}\s/.test(p)) return false; // markdown heading lines
+      if (/^[-*_]{3,}$/.test(p)) return false; // divider lines like --- *** ___
+      return true;
+    })
+    .join('\n\n');
+}
+
 async function claudeAPI(apiKey, body, maxRetries) {
   maxRetries = maxRetries || 3;
   var delays = [3000, 7000, 15000];
@@ -19347,7 +19405,7 @@ async function timelineSurprise(btn) {
     var text = data.content&&data.content.find(function(c){return c.type==='text';})?data.content.find(function(c){return c.type==='text';}).text:'';
     panel.innerHTML = '<div style="padding:16px 18px;background:rgba(201,168,76,.04);border:1px solid rgba(201,168,76,.15);border-left:3px solid rgba(201,168,76,.4);">'
       + '<div style="font-family:Space Mono;font-size:.48rem;color:rgba(201,168,76,.5);letter-spacing:.1em;text-transform:uppercase;margin-bottom:10px;">&#10022; Pattern Insight</div>'
-      + '<div style="font-size:.9rem;font-weight:300;line-height:1.8;color:rgba(240,235,224,.8);">' + text.split('\n\n').map(function(p){return '<p style="margin-bottom:.6em;">'+p+'</p>';}).join('') + '</div>'
+      + '<div style="font-size:.9rem;font-weight:300;line-height:1.8;color:rgba(240,235,224,.8);">' + sanitizeAIReadingText(text).split('\n\n').map(function(p){return '<p style="margin-bottom:.6em;">'+p+'</p>';}).join('') + '</div>'
       + '</div>';
   } catch(e) {
     panel.innerHTML = '<div style="padding:12px;font-family:Space Mono;font-size:.55rem;color:rgba(201,185,154,.4);">Error: '+e.message+'</div>';
@@ -19555,7 +19613,7 @@ function renderCollectiveReading(symbol, text, matchingDreams, matchViv, overall
     + '<div style="font-family:\'Space Mono\',monospace;font-size:.5rem;color:rgba(201,168,76,.6);letter-spacing:.1em;text-transform:uppercase;">Collective Meaning</div>'
     + '<button onclick="refreshSymbolReading()" style="font-family:Space Mono;font-size:.46rem;padding:3px 10px;border:1px solid rgba(201,168,76,.2);background:transparent;color:rgba(201,168,76,.5);cursor:pointer;">\u21bb Refresh</button>'
     + '</div>'
-    + text.split('\n\n').map(function(p){ return '<p style="font-size:.9rem;font-weight:300;line-height:1.85;color:rgba(240,235,224,.78);margin-bottom:.8em;">' + p + '</p>'; }).join('');
+    + sanitizeAIReadingText(text).split('\n\n').map(function(p){ return '<p style="font-size:.9rem;font-weight:300;line-height:1.85;color:rgba(240,235,224,.78);margin-bottom:.8em;">' + p + '</p>'; }).join('');
 }
 
 function refreshSymbolReading() {
@@ -22098,7 +22156,7 @@ function openHBlendDetail(id) {
 
 function renderBlendSections(text) {
   if (!text) return '';
-  var paras = function(t) { return t.split('\n\n').filter(function(p){return p.trim();}).map(function(p){return '<p style="margin-bottom:.9em;">'+p.trim()+'</p>';}).join(''); };
+  var paras = function(t) { return sanitizeAIReadingText(t).split('\n\n').filter(function(p){return p.trim();}).map(function(p){return '<p style="margin-bottom:.9em;">'+p.trim()+'</p>';}).join(''); };
   var brewStyle = 'padding:14px 18px;background:rgba(58,107,107,.05);border-left:2px solid rgba(58,107,107,.3);font-size:.93rem;line-height:1.9;';
   var magicStyle = 'padding:14px 18px;background:rgba(107,79,138,.04);border-left:2px solid rgba(107,79,138,.25);font-size:.93rem;line-height:1.9;';
   var brewLbl = '<div style="font-family:\'Space Mono\',monospace;font-size:.52rem;color:rgba(90,155,155,.7);letter-spacing:.1em;text-transform:uppercase;margin-bottom:10px;">\uD83E\uDED6 Brewing & Use</div>';
@@ -22127,7 +22185,7 @@ function renderBlendSections(text) {
 
   // Fallback: split roughly in half on a paragraph boundary
   if (!brewText && !magicText) {
-    var parts = text.split('\n\n').filter(function(p){return p.trim();});
+    var parts = sanitizeAIReadingText(text).split('\n\n').filter(function(p){return p.trim();});
     if (parts.length >= 4) {
       var mid = Math.ceil(parts.length / 2);
       brewText = parts.slice(0, mid).join('\n\n');
