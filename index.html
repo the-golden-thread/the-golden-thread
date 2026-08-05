@@ -468,12 +468,12 @@ h1 em { display:block; font-style:italic; font-weight:300; font-size:.42em; lett
   <!-- Grimoire sub-bar -->
   <div id="sub-bar-grimoire" style="display:none;white-space:nowrap;">
     <button class="sub-tab-btn active" id="sub-btn-channel-g" onclick="switchGrimoire('channel',this)">◈ The Channel</button>
+    <button class="sub-tab-btn" id="sub-btn-elixirs-g" onclick="switchGrimoire('elixirs',this)">⬡ Elixirs</button>
     <button class="sub-tab-btn" id="sub-btn-charts" onclick="switchGrimoire('charts',this)">◉ Charts</button>
     <button class="sub-tab-btn" id="sub-btn-comms-g" onclick="switchGrimoire('comms',this)">📡 Signals</button>
     <button class="sub-tab-btn" id="sub-btn-feelings-g" onclick="switchGrimoire('feelings',this)">💫 Feelings</button>
     <button class="sub-tab-btn" id="sub-btn-beings" onclick="switchGrimoire('beings',this)">✦ Beings</button>
     <button class="sub-tab-btn" id="sub-btn-visitations-g" onclick="switchGrimoire('visitations',this)">✦ Presences</button>
-    <button class="sub-tab-btn" id="sub-btn-elixirs-g" onclick="switchGrimoire('elixirs',this)">⬡ Elixirs</button>
     <button class="sub-tab-btn" id="sub-btn-songs-g" onclick="switchGrimoire('songs',this)">♪ Songs</button>
     <button class="sub-tab-btn" id="sub-btn-ancestors-g" onclick="switchGrimoire('ancestors',this)">≥ Ancestors</button>
     <button class="sub-tab-btn" id="sub-btn-places-g" onclick="switchGrimoire('places',this)">&#9672; Places</button>
@@ -16284,9 +16284,22 @@ async function generateElixirMagic(elixirId) {
 
   const crystalList = (elixir.crystals||[]).map(c=>`${c.count}× ${c.name}`).join(', ');
   const essenceList = (elixir.essences||[]).map(e=>`${e.drops} drops ${e.name}`).join(', ');
+  const isBachFlower = elixir.type === 'bachFlower';
 
   const _1010elixir = isBirthday() ? '\n\u2736 TODAY IS OCTOBER 10 \u2014 HER BIRTHDAY. If appropriate, acknowledge this in the blend reading.' : '';
-  const prompt = `You are a practicing witch and aromatherapist with deep knowledge of crystal lore, essential oil magic, and energetic alchemy. You are creating this reading for Tiff \u2014 a Libra Sun, Aries Moon, Capricorn Rising witch and channel. Describe the magic of this oil blend.
+
+  const prompt = isBachFlower ? `You are a practicing herbalist with deep, accurate knowledge of the Bach Flower Remedies system originated by Dr. Edward Bach, along with an understanding of Tiff's channeled spiritual practice. You are creating this reading for Tiff \u2014 a Libra Sun, Aries Moon, Capricorn Rising witch and channel. Describe the magic of this Bach Flower Essence blend.
+
+This is a Bach Flower Essence blend, NOT an essential oil or crystal blend \u2014 do not describe it in terms of aromatherapy, essential oil magic, or crystal lore.
+
+Name: ${elixir.name}
+Intention: ${elixir.intention || 'Not specified'}
+Flower Essences: ${essenceList || 'None'}
+${_1010elixir}
+
+Write a rich, evocative description (3-4 paragraphs) that explains the TRUE, accurate emotional and psychological healing property of each named flower essence according to the traditional Bach flower system (e.g. what emotional state or pattern each remedy addresses), and how they combine as a unified formula for the person who takes it. Draw on the real, established Bach flower correspondences \u2014 do not invent properties that contradict the actual remedy. Write as flowing prose \u2014 no bullet points.
+
+CRITICAL \u2014 usage accuracy: Bach Flower Essences are NEVER applied to the skin, pulse points, or pressure points like essential oils. They are taken internally or used in gentle topical soaks \u2014 as drops added to a glass of water and sipped throughout the day, as drops taken directly under the tongue, added to bathwater, or blended into unscented lotion/skincare for topical, skin-nourishing (not pulse-point) use. When describing how to use this blend, reflect ONLY these accurate methods. Make it feel like something worth reading, not just a reference list.` : `You are a practicing witch and aromatherapist with deep knowledge of crystal lore, essential oil magic, and energetic alchemy. You are creating this reading for Tiff \u2014 a Libra Sun, Aries Moon, Capricorn Rising witch and channel. Describe the magic of this oil blend.
 
 Name: ${elixir.name}
 Intention: ${elixir.intention || 'Not specified'}
@@ -16343,7 +16356,10 @@ async function printElixirCard(elixirId) {
     gtAlert('Generating the card reading — the card will open when ready.');
     const crystalList = (elixir.crystals||[]).map(c=>c.count+'x '+c.name).join(', ');
     const essenceList = (elixir.essences||[]).map(e=>e.drops+' drops '+e.name).join(', ');
-    const prompt = 'You are a practicing witch and aromatherapist with deep knowledge of crystal lore, essential oil magic, and energetic alchemy. Write a beautiful third-person card reading for this custom intuitive blend made by Tiff.\n\nName: '+elixir.name+'\nMade by: Tiff\nRecipient: '+recipient+'\nIntention: '+(elixir.intention||'Not specified')+'\nCrystals: '+(crystalList||'None')+'\nEssential oils: '+(essenceList||'None')+(elixir.cleansing?'\nCleansing: '+elixir.cleansing:'')+(elixir.infusion?'\nInfusion method: '+elixir.infusion:'')+'\n\nWrite 4-5 paragraphs of flowing prose. Refer to the maker as "Tiff" and the recipient as "'+recipient+'". Never use "you" or "your" — this is a card the recipient will read about themselves, not spoken to them directly. Use **bold** only for the names of specific ingredients — individual oils, crystals, and cleansing materials (e.g. **jasmine**, **rose quartz**, **frankincense smoke**). Do NOT bold person names, blend names, group names, or any other words. No bullet points. No heading lines starting with #. No credit lines or bylines.';
+    const isBachFlowerCard = elixir.type === 'bachFlower';
+    const prompt = isBachFlowerCard
+      ? 'You are a practicing herbalist with deep, accurate knowledge of the Bach Flower Remedies system originated by Dr. Edward Bach. Write a beautiful third-person card reading for this custom Bach Flower Essence blend made by Tiff.\n\nThis is a Bach Flower Essence blend, NOT an essential oil or crystal blend \u2014 do not describe it in terms of aromatherapy, essential oil magic, or crystal lore.\n\nName: '+elixir.name+'\nMade by: Tiff\nRecipient: '+recipient+'\nIntention: '+(elixir.intention||'Not specified')+'\nFlower Essences: '+(essenceList||'None')+'\n\nWrite 4-5 paragraphs of flowing prose describing the TRUE, accurate emotional and psychological healing property of each named flower essence according to the traditional Bach flower system, and how they combine as a formula. Do not invent properties that contradict the actual remedy. Refer to the maker as "Tiff" and the recipient as "'+recipient+'". Never use "you" or "your" — this is a card the recipient will read about themselves, not spoken to them directly. Use **bold** only for the names of the specific flower essences (e.g. **Clematis**, **Oak**, **Hornbeam**). Do NOT bold person names, blend names, group names, or any other words. Do not reference pulse points, anointing, or topical oil application anywhere in the reading — these essences are taken internally or used gently in the bath or skincare, never applied like an essential oil. No bullet points. No heading lines starting with #. No credit lines or bylines.'
+      : 'You are a practicing witch and aromatherapist with deep knowledge of crystal lore, essential oil magic, and energetic alchemy. Write a beautiful third-person card reading for this custom intuitive blend made by Tiff.\n\nName: '+elixir.name+'\nMade by: Tiff\nRecipient: '+recipient+'\nIntention: '+(elixir.intention||'Not specified')+'\nCrystals: '+(crystalList||'None')+'\nEssential oils: '+(essenceList||'None')+(elixir.cleansing?'\nCleansing: '+elixir.cleansing:'')+(elixir.infusion?'\nInfusion method: '+elixir.infusion:'')+'\n\nWrite 4-5 paragraphs of flowing prose. Refer to the maker as "Tiff" and the recipient as "'+recipient+'". Never use "you" or "your" — this is a card the recipient will read about themselves, not spoken to them directly. Use **bold** only for the names of specific ingredients — individual oils, crystals, and cleansing materials (e.g. **jasmine**, **rose quartz**, **frankincense smoke**). Do NOT bold person names, blend names, group names, or any other words. No bullet points. No heading lines starting with #. No credit lines or bylines.';
     try {
       const data = await claudeAPI(apiKey, {model:'claude-sonnet-4-6',max_tokens:2200,messages:[{role:'user',content:prompt}]});
       const text = data.content?.find(c=>c.type==='text')?.text||'';
@@ -16473,6 +16489,7 @@ function buildElixirCardHTML(elixir, infusionText, magicHtml, crystalRows, essen
 
   const foldGuide = '<div class="fold-guide"><\/div>';
 
+  const isBachFlower = elixir.type === 'bachFlower';
   const frontPanel = '<div class="print-panel panel-border" style="display:flex;flex-direction:column;">'
     + '<div style="text-align:center;padding-bottom:8px;border-bottom:0.5px solid var(--accent-light);margin-bottom:8px;">'
     + '<span class="bn">Essence in Bloom<\/span><span class="bs">intuitive blends for the body &amp; spirit<\/span>'
@@ -16482,7 +16499,7 @@ function buildElixirCardHTML(elixir, infusionText, magicHtml, crystalRows, essen
     + (elixir.intention ? '<div class="intent">' + elixir.intention + '<\/div>' : '')
     + '<hr class="rule" style="margin-bottom:10px;">'
     + (crystalRows ? '<div class="fc"><span class="slbl">Crystal Companions<\/span><ul class="fl">' + crystalRows + '<\/ul><\/div>' : '')
-    + (essenceRows ? '<div class="fc"><span class="slbl">Essences<\/span><ul class="fl">' + essenceRows + '<\/ul><\/div>' : '')
+    + (essenceRows ? '<div class="fc"><span class="slbl">' + (isBachFlower ? 'Flower Essences' : 'Essences') + '<\/span><ul class="fl">' + essenceRows + '<\/ul><\/div>' : '')
     + (elixir.cleansing ? '<div class="fc"><span class="slbl">Cleansing<\/span><div class="ft">' + elixir.cleansing + '<\/div><\/div>' : '')
     + (infusionText ? '<div class="fc"><span class="slbl">Infusion<\/span><div class="ft">' + infusionText + '<\/div><\/div>' : '')
     + '<\/div>';
@@ -16495,7 +16512,10 @@ function buildElixirCardHTML(elixir, infusionText, magicHtml, crystalRows, essen
     + elixir.name + (recipient ? ' \u00b7 For ' + recipient : '') + '<\/div>'
     + '<hr class="rule-a"><\/div>'
     + '<span class="slbl">How to Use<\/span>'
-    + '<div class="usage">Roll at the pressure points \u2014 behind the ears, along the neck, on the wrists, and at the third eye. The oil is welcome anywhere on the body that feels right to receive it. Even simply opening the bottle and breathing it in is medicine. As you apply it, set an intention. Speaking or feeling your intention in the moment of anointing imbibes the oil with even more of your own power.<\/div>'
+    + '<div class="usage">' + (isBachFlower
+        ? 'Add a few drops to a glass of water and sip throughout the day, or take a few drops directly under the tongue. This blend may also be added to bathwater or blended into an unscented lotion for gentle, topical skin use. As you take it, set an intention \u2014 speaking or feeling it in the moment imbibes the remedy with even more of your own power.'
+        : 'Roll at the pressure points \u2014 behind the ears, along the neck, on the wrists, and at the third eye. The oil is welcome anywhere on the body that feels right to receive it. Even simply opening the bottle and breathing it in is medicine. As you apply it, set an intention. Speaking or feeling your intention in the moment of anointing imbibes the oil with even more of your own power.')
+      + '<\/div>'
     + '<hr class="rule-a" style="margin-top:14px;margin-bottom:9px;">'
     + '<span class="bn" style="font-size:7pt;letter-spacing:.18em;color:var(--ink-faint);display:block;text-align:center;">Made with intention. Carried with love.<\/span>'
     + '<\/div>';
