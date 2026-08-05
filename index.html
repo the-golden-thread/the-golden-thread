@@ -16173,6 +16173,12 @@ function saveGeneratedBlend(blend) {
   }
 }
 
+function elixirTypeMeta(type) {
+  if (type === 'bachFlower') return { color: 'var(--purple)', label: 'Bach Flower Essences', shortLabel: 'bachFlower' };
+  if (type === 'spray') return { color: 'var(--teal)', label: 'Spray', shortLabel: 'spray' };
+  return { color: 'var(--gold)', label: 'Essential Oil Roller', shortLabel: 'roller' };
+}
+
 function renderElixirs() {
   const grid = document.getElementById('elixirs-grid');
   if (!grid) return;
@@ -16189,16 +16195,17 @@ function renderElixirs() {
     const card = document.createElement('div');
     card.className = 'spirit-card';
     card.style.animationDelay = (i*0.04)+'s';
-    const typeColor = elixir.type==='roller' ? 'var(--gold)' : 'var(--teal)';
+    const meta = elixirTypeMeta(elixir.type);
+    const isBachFlower = elixir.type === 'bachFlower';
     card.innerHTML = `
       <div class="spirit-card-date" style="display:flex;align-items:center;gap:8px;">
-        <span style="font-family:'Space Mono',monospace;font-size:.5rem;padding:2px 8px;background:rgba(255,255,255,.04);border:1px solid ${typeColor};color:${typeColor};letter-spacing:.08em;text-transform:uppercase;">${elixir.type||'roller'}</span>
+        <span style="font-family:'Space Mono',monospace;font-size:.5rem;padding:2px 8px;background:rgba(255,255,255,.04);border:1px solid ${meta.color};color:${meta.color};letter-spacing:.08em;text-transform:uppercase;">${meta.shortLabel}</span>
         <span>${elixir.dateCreated||''}</span>
       </div>
       <div class="spirit-card-title">⬡ ${elixir.name}</div>
       <div style="font-size:.85rem;font-weight:300;color:rgba(240,235,224,.6);margin-bottom:6px;font-style:italic;">${elixir.intention||''}</div>
       <div style="font-family:'Space Mono',monospace;font-size:.52rem;color:rgba(201,185,154,.4);">
-        ${(elixir.crystals||[]).length} crystal${(elixir.crystals||[]).length!==1?'s':''} · ${(elixir.essences||[]).length} essence${(elixir.essences||[]).length!==1?'s':''}
+        ${isBachFlower ? '' : `${(elixir.crystals||[]).length} crystal${(elixir.crystals||[]).length!==1?'s':''} · `}${(elixir.essences||[]).length} ${isBachFlower?'flower essence':'essence'}${(elixir.essences||[]).length!==1?'s':''}
       </div>
     `;
     card.onclick = () => openElixir(elixir);
@@ -16207,9 +16214,11 @@ function renderElixirs() {
 }
 
 function openElixir(elixir) {
-  const typeColor = elixir.type==='roller' ? 'var(--gold)' : 'var(--teal)';
+  const meta = elixirTypeMeta(elixir.type);
+  const typeColor = meta.color;
+  const isBachFlower = elixir.type === 'bachFlower';
   document.getElementById('view-inner').innerHTML = `
-    <div class="m-date">⬡ ${elixir.type==='roller'?'Roller':'Spray'} Elixir · ${elixir.dateCreated||''}</div>
+    <div class="m-date">⬡ ${meta.label} · ${elixir.dateCreated||''}</div>
     <div class="m-title" style="font-style:normal;">${elixir.name}</div>
     ${elixir.intention?`<div class="m-interp" style="margin-bottom:20px;">${elixir.intention}</div>`:''}
 
@@ -16221,7 +16230,7 @@ function openElixir(elixir) {
     </div>`:''}
 
     ${(elixir.essences||[]).length?`<div class="m-sec">
-      <div class="m-lbl">Essences</div>
+      <div class="m-lbl">${isBachFlower?'Flower Essences':'Essences'}</div>
       <div style="display:flex;flex-wrap:wrap;gap:8px;">
         ${elixir.essences.map(e=>`<span style="font-family:'Space Mono',monospace;font-size:.58rem;padding:4px 12px;background:rgba(201,185,154,.05);border:1px solid rgba(201,185,154,.2);color:var(--moon);">${e.drops} drop${e.drops!==1?'s':''} ${e.name}</span>`).join('')}
       </div>
@@ -16570,25 +16579,28 @@ function openElixirAdd(elixir) {
     <div class="m-date">⬡ ${elixir?'Edit':'New'} Elixir</div>
     <div class="form-field"><label>Name</label><input type="text" id="elixir-name" value="${elixir?elixir.name:''}" placeholder="e.g. Grief Release Roller" style="width:100%;background:rgba(255,255,255,.04);border:1px solid rgba(201,185,154,.22);color:var(--parchment);font-family:'Cormorant Garamond',serif;font-size:1rem;padding:9px 13px;outline:none;"></div>
     <div class="form-field"><label>Type</label>
-      <select id="elixir-type" style="width:100%;background:rgba(255,255,255,.04);border:1px solid rgba(201,185,154,.22);color:var(--parchment);font-family:'Cormorant Garamond',serif;font-size:1rem;padding:9px 13px;outline:none;cursor:pointer;">
+      <select id="elixir-type" onchange="toggleElixirTypeFields()" style="width:100%;background:rgba(255,255,255,.04);border:1px solid rgba(201,185,154,.22);color:var(--parchment);font-family:'Cormorant Garamond',serif;font-size:1rem;padding:9px 13px;outline:none;cursor:pointer;">
         <option value="roller"${!elixir||elixir.type==='roller'?' selected':''}>Essential Oil Roller</option>
         <option value="spray"${elixir&&elixir.type==='spray'?' selected':''}>Spray</option>
+        <option value="bachFlower"${elixir&&elixir.type==='bachFlower'?' selected':''}>Bach Flower Essences</option>
       </select>
     </div>
     <div class="form-field"><label>Date Created</label><input type="date" id="elixir-date" value="${elixir?elixir.dateCreated||'':new Date().toISOString().slice(0,10)}" style="width:100%;background:rgba(255,255,255,.04);border:1px solid rgba(201,185,154,.22);color:var(--parchment);font-family:'Space Mono',monospace;font-size:.8rem;padding:9px 13px;outline:none;"></div>
     <div class="form-field"><label>Intention</label><textarea id="elixir-intention" rows="2" placeholder="What is this elixir for?" style="width:100%;background:rgba(255,255,255,.04);border:1px solid rgba(201,185,154,.22);color:var(--parchment);font-family:'Cormorant Garamond',serif;font-size:1rem;padding:9px 13px;outline:none;resize:vertical;">${elixir?elixir.intention||'':''}</textarea></div>
 
-    <div class="m-lbl" style="margin-bottom:8px;">Crystals</div>
-    <div id="elixir-crystals-container">
-      ${crystals.map((c,i)=>`<div class="elixir-crystal-row" style="display:flex;gap:8px;margin-bottom:8px;">
-        <input type="number" class="elixir-crystal-count" value="${c.count}" min="1" placeholder="#" style="width:60px;background:rgba(255,255,255,.04);border:1px solid rgba(201,185,154,.22);color:var(--parchment);font-family:'Space Mono',monospace;font-size:.8rem;padding:8px;outline:none;">
-        <input type="text" class="elixir-crystal-name" value="${c.name}" placeholder="Crystal name" style="flex:1;background:rgba(255,255,255,.04);border:1px solid rgba(201,185,154,.22);color:var(--parchment);font-family:'Cormorant Garamond',serif;font-size:1rem;padding:8px 12px;outline:none;">
-        <button onclick="this.parentElement.remove()" style="background:transparent;border:1px solid rgba(201,185,154,.15);color:rgba(201,185,154,.35);padding:4px 8px;cursor:pointer;">✕</button>
-      </div>`).join('')}
+    <div id="elixir-crystals-section">
+      <div class="m-lbl" style="margin-bottom:8px;">Crystals</div>
+      <div id="elixir-crystals-container">
+        ${crystals.map((c,i)=>`<div class="elixir-crystal-row" style="display:flex;gap:8px;margin-bottom:8px;">
+          <input type="number" class="elixir-crystal-count" value="${c.count}" min="1" placeholder="#" style="width:60px;background:rgba(255,255,255,.04);border:1px solid rgba(201,185,154,.22);color:var(--parchment);font-family:'Space Mono',monospace;font-size:.8rem;padding:8px;outline:none;">
+          <input type="text" class="elixir-crystal-name" value="${c.name}" placeholder="Crystal name" style="flex:1;background:rgba(255,255,255,.04);border:1px solid rgba(201,185,154,.22);color:var(--parchment);font-family:'Cormorant Garamond',serif;font-size:1rem;padding:8px 12px;outline:none;">
+          <button onclick="this.parentElement.remove()" style="background:transparent;border:1px solid rgba(201,185,154,.15);color:rgba(201,185,154,.35);padding:4px 8px;cursor:pointer;">✕</button>
+        </div>`).join('')}
+      </div>
+      <button onclick="addElixirCrystal()" style="background:transparent;border:1px solid rgba(201,185,154,.2);color:rgba(201,185,154,.5);font-family:'Space Mono',monospace;font-size:.58rem;padding:6px 14px;cursor:pointer;margin-bottom:14px;">+ Crystal</button>
     </div>
-    <button onclick="addElixirCrystal()" style="background:transparent;border:1px solid rgba(201,185,154,.2);color:rgba(201,185,154,.5);font-family:'Space Mono',monospace;font-size:.58rem;padding:6px 14px;cursor:pointer;margin-bottom:14px;">+ Crystal</button>
 
-    <div class="m-lbl" style="margin-bottom:8px;">Essences (drops)</div>
+    <div class="m-lbl" style="margin-bottom:8px;" id="elixir-essences-label">Essences (drops)</div>
     <div id="elixir-essences-container">
       ${essences.map((e,i)=>`<div class="elixir-essence-row" style="display:flex;gap:8px;margin-bottom:8px;">
         <input type="number" class="elixir-essence-drops" value="${e.drops}" min="1" placeholder="#" style="width:60px;background:rgba(255,255,255,.04);border:1px solid rgba(201,185,154,.22);color:var(--parchment);font-family:'Space Mono',monospace;font-size:.8rem;padding:8px;outline:none;">
@@ -16598,13 +16610,27 @@ function openElixirAdd(elixir) {
     </div>
     <button onclick="addElixirEssence()" style="background:transparent;border:1px solid rgba(201,185,154,.2);color:rgba(201,185,154,.5);font-family:'Space Mono',monospace;font-size:.58rem;padding:6px 14px;cursor:pointer;margin-bottom:14px;">+ Essence</button>
 
-    <div class="form-field"><label>Cleansing Method</label><input type="text" id="elixir-cleansing" value="${elixir?elixir.cleansing||'':''}" placeholder="e.g. Moonlight overnight, smoke cleansing with palo santo" style="width:100%;background:rgba(255,255,255,.04);border:1px solid rgba(201,185,154,.22);color:var(--parchment);font-family:'Cormorant Garamond',serif;font-size:1rem;padding:9px 13px;outline:none;"></div>
-    <div class="form-field"><label>How It Was Infused</label><textarea id="elixir-infusion" rows="3" placeholder="Describe how you infused the intention…" style="width:100%;background:rgba(255,255,255,.04);border:1px solid rgba(201,185,154,.22);color:var(--parchment);font-family:'Cormorant Garamond',serif;font-size:1rem;padding:9px 13px;outline:none;resize:vertical;">${elixir?elixir.infusion||'':''}</textarea></div>
+    <div id="elixir-cleansing-infusion-section">
+      <div class="form-field"><label>Cleansing Method</label><input type="text" id="elixir-cleansing" value="${elixir?elixir.cleansing||'':''}" placeholder="e.g. Moonlight overnight, smoke cleansing with palo santo" style="width:100%;background:rgba(255,255,255,.04);border:1px solid rgba(201,185,154,.22);color:var(--parchment);font-family:'Cormorant Garamond',serif;font-size:1rem;padding:9px 13px;outline:none;"></div>
+      <div class="form-field"><label>How It Was Infused</label><textarea id="elixir-infusion" rows="3" placeholder="Describe how you infused the intention…" style="width:100%;background:rgba(255,255,255,.04);border:1px solid rgba(201,185,154,.22);color:var(--parchment);font-family:'Cormorant Garamond',serif;font-size:1rem;padding:9px 13px;outline:none;resize:vertical;">${elixir?elixir.infusion||'':''}</textarea></div>
+    </div>
 
     <input type="hidden" id="elixir-edit-id" value="${elixir?elixir.id:''}">
     <button class="sub-btn" onclick="saveElixir()">Save Elixir</button>
   `;
   document.getElementById('view-ov').classList.add('open');
+  toggleElixirTypeFields();
+}
+
+function toggleElixirTypeFields() {
+  const type = document.getElementById('elixir-type')?.value;
+  const isBachFlower = type === 'bachFlower';
+  const crystalsSection = document.getElementById('elixir-crystals-section');
+  const cleansingInfusionSection = document.getElementById('elixir-cleansing-infusion-section');
+  const essencesLabel = document.getElementById('elixir-essences-label');
+  if (crystalsSection) crystalsSection.style.display = isBachFlower ? 'none' : '';
+  if (cleansingInfusionSection) cleansingInfusionSection.style.display = isBachFlower ? 'none' : '';
+  if (essencesLabel) essencesLabel.textContent = isBachFlower ? 'Flower Essences (drops)' : 'Essences (drops)';
 }
 
 function addElixirCrystal() {
@@ -16629,7 +16655,9 @@ function saveElixir() {
   const name = document.getElementById('elixir-name').value.trim();
   if (!name) { gtAlert('Name is required.'); return; }
   const editId = document.getElementById('elixir-edit-id').value;
-  const crystals = [...document.querySelectorAll('.elixir-crystal-row')].map(r=>({
+  const type = document.getElementById('elixir-type').value;
+  const isBachFlower = type === 'bachFlower';
+  const crystals = isBachFlower ? [] : [...document.querySelectorAll('.elixir-crystal-row')].map(r=>({
     count: parseInt(r.querySelector('.elixir-crystal-count')?.value)||1,
     name: r.querySelector('.elixir-crystal-name')?.value.trim()||''
   })).filter(c=>c.name);
@@ -16644,12 +16672,12 @@ function saveElixir() {
   const entry = {
     id: editId ? parseInt(editId) : elixirNextId++,
     name,
-    type: document.getElementById('elixir-type').value,
+    type,
     dateCreated: document.getElementById('elixir-date').value,
     intention: document.getElementById('elixir-intention').value.trim(),
     crystals, essences,
-    cleansing: document.getElementById('elixir-cleansing').value.trim(),
-    infusion: document.getElementById('elixir-infusion').value.trim(),
+    cleansing: isBachFlower ? '' : document.getElementById('elixir-cleansing').value.trim(),
+    infusion: isBachFlower ? '' : document.getElementById('elixir-infusion').value.trim(),
     notes: existing ? (existing.notes||'') : ''
   };
 
