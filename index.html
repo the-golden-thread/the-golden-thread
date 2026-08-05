@@ -16415,9 +16415,9 @@ async function printElixirCard(elixirId) {
     const rawInfusion = elixir.infusion || '';
     if (rawInfusion && apiKey) {
       try {
-        const rewritePrompt = 'Rewrite the following oil blend infusion notes as 1-3 sentences of polished, evocative third-person prose for a printed product card. The maker is Tiff. The recipient is '+recipient+'. Use their names where appropriate. No first-person language. Keep it warm, spiritual, and intentional — matching the elevated tone of a handcrafted elixir card. Do not add anything that is not implied by the original notes.\n\n'+rawInfusion;
+        const rewritePrompt = 'Rewrite the following oil blend infusion notes as 1-3 sentences of polished, evocative third-person prose for a printed product card. The maker is Tiff. The recipient is '+recipient+'. Use their names where appropriate. No first-person language. Keep it warm, spiritual, and intentional — matching the elevated tone of a handcrafted elixir card. Do not add anything that is not implied by the original notes.\n\nOUTPUT RULES — these are absolute. Return ONLY the finished sentences, exactly one version. Do not offer alternatives, options, drafts, or variations. Do not write any preamble, commentary, or closing remark. No markdown formatting of any kind: no asterisks, no bold, no headings, no bullet points, no divider lines.\n\n'+rawInfusion;
         const rd = await claudeAPI(apiKey, {model:'claude-sonnet-4-6',max_tokens:350,messages:[{role:'user',content:rewritePrompt}]});
-        const cleaned = rd.content?.find(c=>c.type==='text')?.text || rawInfusion;
+        const cleaned = gtCleanInfusion(rd.content?.find(c=>c.type==='text')?.text) || rawInfusion;
         const idx = ELIXIRS.findIndex(e => e.id == elixirId);
         if (idx > -1) { ELIXIRS[idx].cardInfusion = cleaned; if (!ELIXIRS[idx].preloaded) saveElixirs(); }
         elixir.cardInfusion = cleaned;
@@ -16464,6 +16464,28 @@ async function printElixirCard(elixirId) {
   setTimeout(() => URL.revokeObjectURL(blobUrl), 120000);
 }
 
+// Salvage infusion text that came back from the model as multiple labelled
+// options, or with a conversational preamble / markdown noise. Runs both when
+// storing a fresh rewrite AND at render time, so blends that already have bad
+// text saved against them print cleanly without needing to be regenerated.
+function gtCleanInfusion(raw) {
+  var t = String(raw == null ? '' : raw).trim();
+  if (!t) return '';
+  // "Here are a few options:" / "Here's another version:" etc.
+  t = t.replace(/^[^\n]{0,120}?\b(?:here (?:are|is)|here's)\b[^\n]{0,80}?:\s*/i, '');
+  // If labelled alternatives came back, keep only the first one.
+  var parts = t.split(/(?:\*\*)?\s*(?:option|version|draft)\s*\d+\s*(?:\*\*)?\s*[:.\u2014-]?/i);
+  if (parts.length > 1) {
+    for (var i = 1; i < parts.length; i++) {
+      if (parts[i] && parts[i].trim().length > 20) { t = parts[i]; break; }
+    }
+  }
+  t = t.replace(/\*\*(.+?)\*\*/g, '$1');       // unwrap bold
+  t = t.replace(/[*_`#]/g, '');                 // stray markdown chars
+  t = t.replace(/(^|\s)[-\u2014]{3,}(\s|$)/g, ' '); // divider rules
+  return t.replace(/\s+/g, ' ').trim();
+}
+
 function buildElixirCardHTML(elixir, infusionText, magicHtml, crystalRows, essenceRows) {
   // Scroll format: one 8.5x11in sheet, two 2.9in strips side by side, content
   // flows from strip one into strip two. Cut down the centre, roll together.
@@ -16486,9 +16508,13 @@ function buildElixirCardHTML(elixir, infusionText, magicHtml, crystalRows, essen
     intention = intention.charAt(0).toUpperCase() + intention.slice(1);
   }
 
+  // Older blends were logged before drop/count tracking existed. Print the
+  // name alone rather than an untrue "(0)".
   function inlineList(items, qtyKey) {
     return (items || []).map(function(it) {
-      return esc(it.name) + ' <span class="qty">(' + (it[qtyKey] || 0) + ')</span>';
+      var n = parseFloat(it[qtyKey]);
+      var qty = (isFinite(n) && n > 0) ? ' <span class="qty">(' + n + ')</span>' : '';
+      return esc(it.name) + qty;
     }).join('<span class="sep">&middot;</span>');
   }
   const essenceLine = inlineList(elixir.essences, 'drops');
@@ -16633,7 +16659,7 @@ function buildElixirCardHTML(elixir, infusionText, magicHtml, crystalRows, essen
     + line(isBachFlower ? 'Flower Essences' : 'Essences', essenceLine)
     + line('Crystals', crystalLine)
     + line('Cleansing', esc(elixir.cleansing))
-    + line('Infusion', esc(infusionText), 'infusion')
+    + line('Infusion', esc(gtCleanInfusion(infusionText)), 'infusion')
     + '<\/dl>'
     + '<hr class="rule"><div class="magic-head">The Magic<\/div>'
     + '<div class="magic">' + (magicHtml || '') + '<\/div>'
