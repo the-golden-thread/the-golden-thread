@@ -16619,10 +16619,20 @@ function buildElixirCardHTML(elixir, infusionText, magicHtml, crystalRows, essen
       var size=11,lead=1.5,guard=0;
       root.style.setProperty('--body-size',size+'px');
       root.style.setProperty('--body-lead',lead);
-      while(overflowing()&&size>8.2&&guard<25){
+      // Stage 1: shrink toward a comfortable reading size (9.6px floor).
+      while(overflowing()&&size>9.6&&guard<25){
         size-=0.2; lead-=0.01;
         root.style.setProperty('--body-size',size.toFixed(1)+'px');
         root.style.setProperty('--body-lead',lead.toFixed(2));
+        guard++;
+      }
+      // Stage 2: rare long-reading fallback \u2014 keep shrinking in finer
+      // steps past the comfortable floor so the card always fits the two
+      // strips instead of overflowing. Hard floor of 6.5px stays legible.
+      while(overflowing()&&size>6.5&&guard<90){
+        size-=0.1; lead-=0.004;
+        root.style.setProperty('--body-size',size.toFixed(1)+'px');
+        root.style.setProperty('--body-lead',lead.toFixed(3));
         guard++;
       }
       warn.hidden=!overflowing();
