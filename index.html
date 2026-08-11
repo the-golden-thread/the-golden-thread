@@ -16538,7 +16538,7 @@ function buildElixirCardHTML(elixir, infusionText, magicHtml, crystalRows, essen
     --font-serif:'EB Garamond',Georgia,serif;
     --font-sans:'Nunito Sans',system-ui,sans-serif;
     --strip-w:2.9in; --gap:1.36in;
-    --body-size:11px; --body-lead:1.5;
+    --body-size:13px; --body-lead:1.45;
   }
   *{box-sizing:border-box;}
   body{margin:0;background:#EFE9D7;font-family:var(--font-sans);color:var(--ink);padding:0 12px 60px;}
@@ -16607,32 +16607,74 @@ function buildElixirCardHTML(elixir, infusionText, magicHtml, crystalRows, essen
   (function(){
     var flow=document.getElementById('flow'),warn=document.getElementById('warn'),
         sentinel=document.getElementById('sentinel'),root=document.documentElement;
+    // Direct measurement instead of guessing where "column 2" starts (that
+    // approach depended on this browser reporting column-width correctly,
+    // which it wasn't \u2014 it was always reporting the layout as overflowing,
+    // so the font could only ever shrink and never grow).
+    //
+    // Instead: temporarily render the whole card as ONE column at the same
+    // width as a single strip (2.9in) and measure how tall that makes it.
+    // Since both strips share that same width, the total height needed for
+    // the content split across two strips is essentially the same as the
+    // height needed for one long strip of the same width \u2014 so this gives
+    // a reliable, non-guessing way to calculate the right font size for
+    // exactly two strips' worth of space (2 \u00d7 10in).
+    function measureNaturalHeight(size,lead){
+      root.style.setProperty('--body-size',size+'px');
+      root.style.setProperty('--body-lead',lead);
+      var prevWidth=flow.style.width, prevColCount=flow.style.columnCount,
+          prevColWidth=flow.style.columnWidth, prevHeight=flow.style.height;
+      flow.style.columnCount='1';
+      flow.style.columnWidth='auto';
+      flow.style.width='var(--strip-w)';
+      flow.style.height='auto';
+      var h=flow.scrollHeight;
+      flow.style.width=prevWidth;
+      flow.style.columnCount=prevColCount;
+      flow.style.columnWidth=prevColWidth;
+      flow.style.height=prevHeight;
+      return h;
+    }
     function overflowing(){
       var box=flow.getBoundingClientRect();
-      var stripW=parseFloat(getComputedStyle(flow).columnWidth);
-      if(!stripW||isNaN(stripW)) stripW=box.width/2;
+      var cs=getComputedStyle(flow);
+      var gap=parseFloat(cs.columnGap);
+      if(!gap||isNaN(gap)) gap=0;
+      var stripW=parseFloat(cs.columnWidth);
+      if(!stripW||isNaN(stripW)) stripW=(box.width-gap)/2;
       var lastColLeft=box.width-stripW;
       var sLeft=sentinel.getBoundingClientRect().left-box.left;
       return sLeft>lastColLeft+2;
     }
     function fit(){
-      var size=11,lead=1.5,guard=0;
-      root.style.setProperty('--body-size',size+'px');
-      root.style.setProperty('--body-lead',lead);
-      // Stage 1: shrink toward a comfortable reading size (9.6px floor).
-      while(overflowing()&&size>9.6&&guard<25){
-        size-=0.2; lead-=0.01;
+      var refSize=11, refLead=1.5;
+      var naturalH=measureNaturalHeight(refSize,refLead);
+      var capacityPx=flow.getBoundingClientRect().height*2; // two strips worth
+      // 6% safety margin so the estimate lands just under capacity rather
+      // than right at the edge (paragraph break-avoidance can shift things
+      // slightly from this linear estimate).
+      var size=refSize*(capacityPx*0.94/naturalH);
+      size=Math.max(6.5,Math.min(28,size));
+      var lead=refLead;
+      root.style.setProperty('--body-size',size.toFixed(1)+'px');
+      root.style.setProperty('--body-lead',lead.toFixed(2));
+      // Fine-tune pass: small nudges using the actual two-strip layout as a
+      // safety net, correcting for anything the estimate got slightly wrong.
+      var guard=0;
+      while(overflowing()&&size>6.5&&guard<40){
+        size-=0.15;
         root.style.setProperty('--body-size',size.toFixed(1)+'px');
-        root.style.setProperty('--body-lead',lead.toFixed(2));
         guard++;
       }
-      // Stage 2: rare long-reading fallback \u2014 keep shrinking in finer
-      // steps past the comfortable floor so the card always fits the two
-      // strips instead of overflowing. Hard floor of 6.5px stays legible.
-      while(overflowing()&&size>6.5&&guard<90){
-        size-=0.1; lead-=0.004;
+      guard=0;
+      while(!overflowing()&&size<28&&guard<40){
+        size+=0.15;
         root.style.setProperty('--body-size',size.toFixed(1)+'px');
-        root.style.setProperty('--body-lead',lead.toFixed(3));
+        if(overflowing()){
+          size-=0.15;
+          root.style.setProperty('--body-size',size.toFixed(1)+'px');
+          break;
+        }
         guard++;
       }
       warn.hidden=!overflowing();
