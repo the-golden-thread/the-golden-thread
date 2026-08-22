@@ -15952,12 +15952,12 @@ function deleteSong(id) {
 
 // ── ELIXIRS ──────────────────────────────────
 const ELIXIRS_PRELOADED = [
-  {id:-1,name:"Firey Self Indulgence",type:'roller',dateCreated:'2024-11-15',intention:"Sensual self-care, fire element, unapologetic pleasure. A blend for coming home to the body and claiming its delight.",crystals:[{"name": "Red Jasper", "count": 1}, {"name": "Red Agate", "count": 1}, {"name": "Yellow Agate", "count": 1}],essences:[{"name": "Rose Oil (carrier blend)", "drops": 0}, {"name": "Sweet Tobacco fragrance", "drops": 0}, {"name": "Eternal Eve / Dark Amethyst fragrance", "drops": 0}, {"name": "Vanilla", "drops": 0}],cleansing:"Sweet Almond Oil base",infusion:"Guided blend \u2014 drop counts intuited. Adjust to strength preference.",notes:"Made Nov 2024 in roller + spray formats. The black candle and altar context speaks to fire magic and embodied shadow integration.",preloaded:true},
-  {id:-2,name:"Nourish Me to the Root",type:'roller',dateCreated:'2024-11-15',intention:"Root chakra nourishment, deep grounding, earth connection. For when the body needs to remember it is held.",crystals:[{"name": "Green Aventurine", "count": 1}, {"name": "Obsidian", "count": 1}],essences:[{"name": "Vetiver", "drops": 0}, {"name": "Spruce", "drops": 0}],cleansing:"Sweet Almond Oil base",infusion:"Guided blend \u2014 drop counts intuited. Adjust to strength preference.",notes:"Made Nov 2024 in roller + spray formats. Vetiver is one of the deepest grounding oils available \u2014 earthy, smoky, ancient. Spruce adds height and breath to the base. Obsidian for psychic protection and shadow integration; Green Aventurine for heart-to-root connection and growth.",preloaded:true},
-  {id:-3,name:"You Are the Sun",type:'roller',dateCreated:'2024-11-15',intention:"Solar confidence, radiance, self-recognition. For remembering the light you carry.",crystals:[{"name": "Citrine", "count": 1}, {"name": "Tiger's Eye", "count": 1}],essences:[{"name": "Jasmine", "drops": 0}, {"name": "Tangerine", "drops": 0}],cleansing:"Sweet Almond Oil base",infusion:"Guided blend \u2014 drop counts intuited. Adjust to strength preference.",notes:"Made Nov 2024. Two versions made \u2014 one labeled 'You Are the Sun' and one with a companion affirmation. Citrine and Tiger's Eye are both solar stones. Jasmine lifts and opens; Tangerine brings the brightness of the sun sign. A Gene Key 46 blend \u2014 Delight as medicine.",preloaded:true},
-  {id:-4,name:"Dreamy Sleep",type:'roller',dateCreated:'2025-05-29',intention:"Deep restful sleep, dream enhancement, crossing the threshold consciously. For the archive keeper before she closes her eyes.",crystals:[{"name": "Prehnite", "count": 2}, {"name": "Clear Quartz", "count": 2}, {"name": "Amethyst", "count": 1}],essences:[{"name": "Lavender (doTERRA)", "drops": 15}, {"name": "Cedar (Laguna Moon)", "drops": 5}],cleansing:"Sweet Almond Oil base",infusion:"Apply to pulse points \u2014 wrists, temples, behind ears \u2014 before sleep. Set intention to remember.",notes:"Prehnite is called the stone of prophetic dreaming and is associated with Unconditional Love \u2014 ideal for this archive. Amethyst deepens the third eye channel. Clear Quartz amplifies the whole blend and adds clarity to what is received. Lavender at 15 drops provides deep nervous system relaxation. Cedar at 5 drops is grounding and protective, holding the space open without collapsing it.",preloaded:true},
-  {id:-5,name:"Focus & Clarity",type:'roller',dateCreated:'2025-05-29',intention:"Mental clarity, sustained concentration, cutting through distraction. Gene Key 57 in action \u2014 Intuition made available.",crystals:[{"name": "Smoky Quartz", "count": 3}, {"name": "Sodalite", "count": 2}],essences:[{"name": "Grapefruit (Pure by Rachelle Parker)", "drops": 12}, {"name": "Rosemary (Laguna Moon)", "drops": 6}],cleansing:"Sweet Almond Oil base",infusion:"Apply to temples, back of neck, and wrists. Inhale from the roller before beginning focused work.",notes:"Made in a batch of 4. Grapefruit at 12 drops brings mental brightness and clarity of perception \u2014 the citrus lifts the fog. Rosemary at 6 drops has been used for centuries for memory and mental clarity; it also stimulates the Ajna (third eye) center. Smoky Quartz neutralizes mental static and grounds excess thought. Sodalite is specifically associated with rational thought, clear communication, and calming the overactive mind.",preloaded:true},
-  {id:-7,name:"Five Guardians",type:"roller",dateCreated:"2024-11-15",
+  {id:-1,category:"personal",name:"Firey Self Indulgence",type:'roller',dateCreated:'2024-11-15',intention:"Sensual self-care, fire element, unapologetic pleasure. A blend for coming home to the body and claiming its delight.",crystals:[{"name": "Red Jasper", "count": 1}, {"name": "Red Agate", "count": 1}, {"name": "Yellow Agate", "count": 1}],essences:[{"name": "Rose Oil (carrier blend)", "drops": 0}, {"name": "Sweet Tobacco fragrance", "drops": 0}, {"name": "Eternal Eve / Dark Amethyst fragrance", "drops": 0}, {"name": "Vanilla", "drops": 0}],cleansing:"Sweet Almond Oil base",infusion:"Guided blend \u2014 drop counts intuited. Adjust to strength preference.",notes:"Made Nov 2024 in roller + spray formats. The black candle and altar context speaks to fire magic and embodied shadow integration.",preloaded:true},
+  {id:-2,category:"personal",name:"Nourish Me to the Root",type:'roller',dateCreated:'2024-11-15',intention:"Root chakra nourishment, deep grounding, earth connection. For when the body needs to remember it is held.",crystals:[{"name": "Green Aventurine", "count": 1}, {"name": "Obsidian", "count": 1}],essences:[{"name": "Vetiver", "drops": 0}, {"name": "Spruce", "drops": 0}],cleansing:"Sweet Almond Oil base",infusion:"Guided blend \u2014 drop counts intuited. Adjust to strength preference.",notes:"Made Nov 2024 in roller + spray formats. Vetiver is one of the deepest grounding oils available \u2014 earthy, smoky, ancient. Spruce adds height and breath to the base. Obsidian for psychic protection and shadow integration; Green Aventurine for heart-to-root connection and growth.",preloaded:true},
+  {id:-3,category:"personal",name:"You Are the Sun",type:'roller',dateCreated:'2024-11-15',intention:"Solar confidence, radiance, self-recognition. For remembering the light you carry.",crystals:[{"name": "Citrine", "count": 1}, {"name": "Tiger's Eye", "count": 1}],essences:[{"name": "Jasmine", "drops": 0}, {"name": "Tangerine", "drops": 0}],cleansing:"Sweet Almond Oil base",infusion:"Guided blend \u2014 drop counts intuited. Adjust to strength preference.",notes:"Made Nov 2024. Two versions made \u2014 one labeled 'You Are the Sun' and one with a companion affirmation. Citrine and Tiger's Eye are both solar stones. Jasmine lifts and opens; Tangerine brings the brightness of the sun sign. A Gene Key 46 blend \u2014 Delight as medicine.",preloaded:true},
+  {id:-4,category:"signature",name:"Dreamy Sleep",type:'roller',dateCreated:'2025-05-29',intention:"For you, the dreamer. For deep restful sleep, dream enhancement, crossing the threshold consciously. To ask for assistance from high vibrational beings and the universe to receive information in your dreams and to consciously remember them when you wake.",crystals:[{"name": "Prehnite", "count": 2}, {"name": "Clear Quartz", "count": 2}, {"name": "Amethyst", "count": 1}],essences:[{"name": "Lavender", "drops": 15}, {"name": "Cedarwood", "drops": 5}],cleansing:"Rose incense",infusion:"With guidance from Tiff's spirit team and with Reiki at the heart, throat, third eye and crown chakras.",notes:"Prehnite is called the stone of prophetic dreaming and is associated with Unconditional Love \u2014 ideal for this archive. Amethyst deepens the third eye channel. Clear Quartz amplifies the whole blend and adds clarity to what is received. Lavender at 15 drops provides deep nervous system relaxation. Cedar at 5 drops is grounding and protective, holding the space open without collapsing it.",preloaded:true},
+  {id:-5,category:"signature",name:"Focus & Clarity",type:'roller',dateCreated:'2025-05-29',intention:"Mental clarity, sustained concentration, cutting through distraction. Gene Key 57 in action \u2014 Intuition made available.",crystals:[{"name": "Smoky Quartz", "count": 3}, {"name": "Sodalite", "count": 2}],essences:[{"name": "Grapefruit (Pure by Rachelle Parker)", "drops": 12}, {"name": "Rosemary (Laguna Moon)", "drops": 6}],cleansing:"Sweet Almond Oil base",infusion:"Apply to temples, back of neck, and wrists. Inhale from the roller before beginning focused work.",notes:"Made in a batch of 4. Grapefruit at 12 drops brings mental brightness and clarity of perception \u2014 the citrus lifts the fog. Rosemary at 6 drops has been used for centuries for memory and mental clarity; it also stimulates the Ajna (third eye) center. Smoky Quartz neutralizes mental static and grounds excess thought. Sodalite is specifically associated with rational thought, clear communication, and calming the overactive mind.",preloaded:true},
+  {id:-7,category:"personal",name:"Five Guardians",type:"roller",dateCreated:"2024-11-15",
    intention:"Protection, immune support, spiritual warding, and energetic cleansing. A traditional formula adapted with crystal allies for full-spectrum defense on the physical and spiritual planes.",
    crystals:[
      {"name":"Amethyst","count":1},
@@ -15978,7 +15978,7 @@ const ELIXIRS_PRELOADED = [
    notes:"The Five Guardians formula originates from a Medieval plague-era blend said to protect herbalists and spice traders. Each oil is a guardian archetype. The crystals extend the protection into the energetic body — Amethyst for psychic protection and clarity, Rose Quartz for heart-centered shielding, Moonstone for intuitive protection and feminine energy, Labradorite for sealing the aura against energy leaks, and Pink Tourmaline for deflecting negative energy back to its source.",
    magic:"Each of the five oils holds its own protective intelligence. Clove is the warrior — antimicrobial, fierce, associated with banishing and boundary-setting in magical traditions. It leads the blend with its heat and certainty. Cinnamon brings fiery solar energy — it amplifies the power of everything it touches and is classically used for protection, success, and drawing strength. Together Clove and Cinnamon form the active force of the blend.\n\nLemon brings clarity and purification — it cuts through stagnant energy, negative thought forms, and psychic debris. Where Clove and Cinnamon defend, Lemon cleanses. Eucalyptus carries the energy of healing and breath — it opens airways physically and energetically, clearing blockages and bringing in fresh life force. It works with the respiratory system and with the aura simultaneously.\n\nRosemary is the elder of the group — associated with memory, the ancestors, and ancient protection. It seals the work, brings in lineage protection, and connects the blend to the long tradition of herbal warding it comes from.\n\nThe crystals form the second layer. Labradorite seals the aura so the protective blend has a container to work within. Amethyst raises the vibrational frequency of the whole, making it inhospitable to lower energies. Moonstone adds intuitive knowing — the wearer will sense when the protection is needed most. Rose Quartz ensures the protection comes from love rather than fear, making it sustainable. Pink Tourmaline is the active deflector, returning any negative energy to its sender.\n\nTogether these ten allies create a full-spectrum guardian — physical immunity and spiritual protection working as one.",
    preloaded:true},
-  {id:-6,name:"Lucky Girl",type:'roller',dateCreated:'2025-06-04',intention:"Attraction, manifestation, feminine luck, the sense that life is conspiring in your favor.",crystals:[{"name": "Ocean Jasper", "count": 1}, {"name": "Moonstone", "count": 1}, {"name": "Pink Tourmaline", "count": 1}],essences:[{"name": "Teakwood", "drops": 5}, {"name": "Jasmine (Laguna Moon)", "drops": 5}, {"name": "Vanilla (MayJam)", "drops": 1}],cleansing:"Sweet Almond Oil base",infusion:"Apply to heart center and wrists when setting intentions or before entering situations where you want to call in luck and alignment.",notes:"Made in a batch of 4 \u2014 made to share. Teakwood adds depth and magnetic grounding \u2014 wood energy draws things in. Jasmine opens the heart and lifts frequency. Vanilla at just 1 drop softens and sweetens the whole blend, the Delight note. Ocean Jasper for joy and optimism; Moonstone for feminine intuition and the turning of fortune; Pink Tourmaline for heart opening and self-love as the foundation of luck.",preloaded:true}
+  {id:-6,category:"signature",name:"Lucky Girl",type:'roller',dateCreated:'2025-06-04',intention:"Attraction, manifestation, feminine luck, the sense that life is conspiring in your favor.",crystals:[{"name": "Ocean Jasper", "count": 1}, {"name": "Moonstone", "count": 1}, {"name": "Pink Tourmaline", "count": 1}],essences:[{"name": "Teakwood", "drops": 5}, {"name": "Jasmine (Laguna Moon)", "drops": 5}, {"name": "Vanilla (MayJam)", "drops": 1}],cleansing:"Sweet Almond Oil base",infusion:"Apply to heart center and wrists when setting intentions or before entering situations where you want to call in luck and alignment.",notes:"Made in a batch of 4 \u2014 made to share. Teakwood adds depth and magnetic grounding \u2014 wood energy draws things in. Jasmine opens the heart and lifts frequency. Vanilla at just 1 drop softens and sweetens the whole blend, the Delight note. Ocean Jasper for joy and optimism; Moonstone for feminine intuition and the turning of fortune; Pink Tourmaline for heart opening and self-love as the foundation of luck.",preloaded:true}
 ];
 
 const ELIXIRS_LS = 'gt_elixirs';
@@ -15992,10 +15992,16 @@ function loadElixirs() {
     const stored = localStorage.getItem(ELIXIRS_LS);
     if (stored) {
       const parsed = JSON.parse(stored);
-      const user = Array.isArray(parsed) ? parsed.filter(e=>e&&e.name&&!e.preloaded) : [];
-      user.forEach(e => { if (!ELIXIRS.find(x=>x.id===e.id)) ELIXIRS.push(e); });
-      const ids = user.map(e=>e.id||0).filter(n=>n>0);
-      elixirNextId = ids.length ? Math.max(...ids)+1 : 1;
+      const saved = Array.isArray(parsed) ? parsed.filter(e=>e&&e.name) : [];
+      // Stored entries (edits included) take priority over the hardcoded preloaded
+      // defaults when they share an id — otherwise an edit to a preloaded elixir
+      // gets silently reverted on next load.
+      saved.forEach(e => {
+        const idx = ELIXIRS.findIndex(x=>x.id===e.id);
+        if (idx > -1) ELIXIRS[idx] = e; else ELIXIRS.push(e);
+      });
+      const userIds = saved.filter(e=>!e.preloaded).map(e=>e.id||0).filter(n=>n>0);
+      elixirNextId = userIds.length ? Math.max(...userIds)+1 : 1;
     }
   } catch(e) {}
 }
@@ -16319,7 +16325,7 @@ async function generateElixirMagic(elixirId) {
   const essenceList = elixirAmountHierarchy(elixir.essences||[], 'drops', e=>`${e.drops} drop${e.drops!==1?'s':''} ${e.name}`);
   const isBachFlower = elixir.type === 'bachFlower';
 
-  const _1010elixir = isBirthday() ? '\n\u2736 TODAY IS OCTOBER 10 \u2014 HER BIRTHDAY. If appropriate, acknowledge this in the blend reading.' : '';
+  const _1010elixir = (isBirthday() && elixir.category !== 'signature' && elixir.category !== 'custom') ? '\n\u2736 TODAY IS OCTOBER 10 \u2014 HER BIRTHDAY. If appropriate, acknowledge this in the blend reading.' : '';
 
   const prompt = isBachFlower ? `You are a practicing herbalist with deep, accurate knowledge of the Bach Flower Remedies system originated by Dr. Edward Bach, along with an understanding of Tiff's channeled spiritual practice. You are creating this reading for Tiff \u2014 a Libra Sun, Aries Moon, Capricorn Rising witch and channel. Describe the magic of this Bach Flower Essence blend.
 
@@ -16383,13 +16389,25 @@ async function printElixirCard(elixirId) {
   if (!win) { gtAlert('Please allow popups for this app to generate print cards.'); return; }
   win.document.write('<html><body style="background:#faf7f2;display:flex;justify-content:center;align-items:center;height:100vh;font-family:\'Cormorant Garamond\',Georgia,serif;font-size:1.1rem;color:#7a6f68;font-style:italic;">Preparing your card\u2026</body></html>');
 
-  // Extract recipient name from intention (e.g. "For Mia — ..." → "Mia"), default to "Tiff"
+  // Resolve who the card speaks about, based on elixir category.
+  // - personal: always Tiff, the maker herself
+  // - custom: the named recipient set on the elixir
+  // - signature: no specific person — mass-produced, so the card must speak
+  //   generically about whoever ends up carrying it, never naming Tiff or a client
+  // - legacy entries with no category set: fall back to the old regex guess
+  //   against the intention text, defaulting to Tiff, so nothing already
+  //   printed or cached breaks.
   function extractRecipient(intention) {
     if (!intention) return 'Tiff';
     const m = (intention||'').match(/^[Ff]or\s+([A-Z][a-z]+)\b/);
     return m ? m[1] : 'Tiff';
   }
-  const recipient = extractRecipient(elixir.intention);
+  const category = elixir.category || null;
+  let recipient, isGenericRecipient;
+  if (category === 'personal') { recipient = 'Tiff'; isGenericRecipient = false; }
+  else if (category === 'custom') { recipient = (elixir.recipientName||'').trim() || 'the recipient'; isGenericRecipient = false; }
+  else if (category === 'signature') { recipient = null; isGenericRecipient = true; }
+  else { recipient = extractRecipient(elixir.intention); isGenericRecipient = false; }
 
   // Card reading is stored separately from in-app magic so both can coexist
   if (!elixir.cardMagic) {
@@ -16399,8 +16417,8 @@ async function printElixirCard(elixirId) {
     const essenceList = elixirAmountHierarchy(elixir.essences||[], 'drops', e=>`${e.drops} drops ${e.name}`);
     const isBachFlowerCard = elixir.type === 'bachFlower';
     const prompt = isBachFlowerCard
-      ? 'You are a practicing herbalist with deep, accurate knowledge of the Bach Flower Remedies system originated by Dr. Edward Bach. Write a beautiful third-person card reading for this custom Bach Flower Essence blend made by Tiff.\n\nThis is a Bach Flower Essence blend, NOT an essential oil or crystal blend \u2014 do not describe it in terms of aromatherapy, essential oil magic, or crystal lore.\n\nName: '+elixir.name+'\nMade by: Tiff\nRecipient: '+recipient+'\nIntention: '+(elixir.intention||'Not specified')+'\nFlower Essences: '+(essenceList||'None')+'\n\nWrite 4-5 paragraphs of flowing prose describing the TRUE, accurate emotional and psychological healing property of each named flower essence according to the traditional Bach flower system, and how they combine as a formula. Do not invent properties that contradict the actual remedy. Refer to the maker as "Tiff" and the recipient as "'+recipient+'". Never use "you" or "your" — this is a card the recipient will read about themselves, not spoken to them directly. Use **bold** only for the names of the specific flower essences (e.g. **Clematis**, **Oak**, **Hornbeam**). Do NOT bold person names, blend names, group names, or any other words. Do not reference pulse points, anointing, or topical oil application anywhere in the reading — these essences are taken internally or used gently in the bath or skincare, never applied like an essential oil. CRITICAL — dominance accuracy: the flower essence list above is labeled with which essence has the HIGHEST drop count (the true dominant, lead note) and which has the lowest (a minor supporting accent). Only ever describe the essence explicitly marked HIGHEST as dominant/primary/the leading voice, and never contradict yourself about which essence leads anywhere else in the reading. No bullet points. No heading lines starting with #. No credit lines or bylines.'
-      : 'You are a practicing witch and aromatherapist with deep knowledge of crystal lore, essential oil magic, and energetic alchemy. Write a beautiful third-person card reading for this custom intuitive blend made by Tiff.\n\nName: '+elixir.name+'\nMade by: Tiff\nRecipient: '+recipient+'\nIntention: '+(elixir.intention||'Not specified')+'\nCrystals: '+(crystalList||'None')+'\nEssential oils: '+(essenceList||'None')+(elixir.cleansing?'\nCleansing: '+elixir.cleansing:'')+(elixir.infusion?'\nInfusion method: '+elixir.infusion:'')+'\n\nWrite 4-5 paragraphs of flowing prose. Refer to the maker as "Tiff" and the recipient as "'+recipient+'". Never use "you" or "your" — this is a card the recipient will read about themselves, not spoken to them directly. Use **bold** only for the names of specific ingredients — individual oils, crystals, and cleansing materials (e.g. **jasmine**, **rose quartz**, **frankincense smoke**). Do NOT bold person names, blend names, group names, or any other words. CRITICAL — dominance accuracy: the crystal and essence lists above are labeled with which item has the HIGHEST amount (the true dominant, lead note) and which has the lowest (a minor supporting accent) — crystals and essences are tracked separately, so there may be one dominant crystal and one dominant essence. Only ever describe the item explicitly marked HIGHEST as dominant/primary/the leading voice, and never contradict yourself about which item leads anywhere else in the reading. No bullet points. No heading lines starting with #. No credit lines or bylines.';
+      ? 'You are a practicing herbalist with deep, accurate knowledge of the Bach Flower Remedies system originated by Dr. Edward Bach. Write a beautiful third-person card reading for this Bach Flower Essence blend made by Tiff.\n\nThis is a Bach Flower Essence blend, NOT an essential oil or crystal blend \u2014 do not describe it in terms of aromatherapy, essential oil magic, or crystal lore.\n\nName: '+elixir.name+'\nMade by: Tiff\n'+(isGenericRecipient?'This is a Signature blend, produced identically for every customer who orders it — there is no single named recipient.':'Recipient: '+recipient)+'\nIntention: '+(elixir.intention||'Not specified')+'\nFlower Essences: '+(essenceList||'None')+'\n\nWrite 4-5 paragraphs of flowing prose describing the TRUE, accurate emotional and psychological healing property of each named flower essence according to the traditional Bach flower system, and how they combine as a formula. Do not invent properties that contradict the actual remedy. Refer to the maker as "Tiff". '+(isGenericRecipient?'Do not name or invent any recipient — this card will be printed identically for whoever purchases this blend. Refer to them only in a general way, such as "the one who carries this blend" or "its bearer". Never use "you" or "your", and never assign them a name or gender.':'Refer to the recipient as "'+recipient+'". Never use "you" or "your" — this is a card the recipient will read about themselves, not spoken to them directly.')+' Use **bold** only for the names of the specific flower essences (e.g. **Clematis**, **Oak**, **Hornbeam**). Do NOT bold person names, blend names, group names, or any other words. Do not reference pulse points, anointing, or topical oil application anywhere in the reading — these essences are taken internally or used gently in the bath or skincare, never applied like an essential oil. CRITICAL — dominance accuracy: the flower essence list above is labeled with which essence has the HIGHEST drop count (the true dominant, lead note) and which has the lowest (a minor supporting accent). Only ever describe the essence explicitly marked HIGHEST as dominant/primary/the leading voice, and never contradict yourself about which essence leads anywhere else in the reading. No bullet points. No heading lines starting with #. No credit lines or bylines.'
+      : 'You are a practicing witch and aromatherapist with deep knowledge of crystal lore, essential oil magic, and energetic alchemy. Write a beautiful third-person card reading for this intuitive blend made by Tiff.\n\nName: '+elixir.name+'\nMade by: Tiff\n'+(isGenericRecipient?'This is a Signature blend, produced identically for every customer who orders it — there is no single named recipient.':'Recipient: '+recipient)+'\nIntention: '+(elixir.intention||'Not specified')+'\nCrystals: '+(crystalList||'None')+'\nEssential oils: '+(essenceList||'None')+(elixir.cleansing?'\nCleansing: '+elixir.cleansing:'')+(elixir.infusion?'\nInfusion method: '+elixir.infusion:'')+'\n\nWrite 4-5 paragraphs of flowing prose. Refer to the maker as "Tiff". '+(isGenericRecipient?'Do not name or invent any recipient — this card will be printed identically for whoever purchases this blend. Refer to them only in a general way, such as "the one who carries this blend" or "its bearer". Never use "you" or "your", and never assign them a name or gender.':'Refer to the recipient as "'+recipient+'". Never use "you" or "your" — this is a card the recipient will read about themselves, not spoken to them directly.')+' Use **bold** only for the names of specific ingredients — individual oils, crystals, and cleansing materials (e.g. **jasmine**, **rose quartz**, **frankincense smoke**). Do NOT bold person names, blend names, group names, or any other words. CRITICAL — dominance accuracy: the crystal and essence lists above are labeled with which item has the HIGHEST amount (the true dominant, lead note) and which has the lowest (a minor supporting accent) — crystals and essences are tracked separately, so there may be one dominant crystal and one dominant essence. Only ever describe the item explicitly marked HIGHEST as dominant/primary/the leading voice, and never contradict yourself about which item leads anywhere else in the reading. No bullet points. No heading lines starting with #. No credit lines or bylines.';
     try {
       const data = await claudeAPI(apiKey, {model:'claude-sonnet-4-6',max_tokens:2200,messages:[{role:'user',content:prompt}]});
       const text = data.content?.find(c=>c.type==='text')?.text||'';
@@ -16415,7 +16433,7 @@ async function printElixirCard(elixirId) {
     const rawInfusion = elixir.infusion || '';
     if (rawInfusion && apiKey) {
       try {
-        const rewritePrompt = 'Rewrite the following oil blend infusion notes as 1-3 sentences of polished, evocative third-person prose for a printed product card. The maker is Tiff. The recipient is '+recipient+'. Use their names where appropriate. No first-person language. Keep it warm, spiritual, and intentional — matching the elevated tone of a handcrafted elixir card. Do not add anything that is not implied by the original notes.\n\nOUTPUT RULES — these are absolute. Return ONLY the finished sentences, exactly one version. Do not offer alternatives, options, drafts, or variations. Do not write any preamble, commentary, or closing remark. No markdown formatting of any kind: no asterisks, no bold, no headings, no bullet points, no divider lines.\n\n'+rawInfusion;
+        const rewritePrompt = 'Rewrite the following oil blend infusion notes as 1-3 sentences of polished, evocative third-person prose for a printed product card. The maker is Tiff. '+(isGenericRecipient?'This is a Signature blend printed identically for every customer \u2014 do not name or invent any recipient; refer to them only generally, such as "the one who carries this blend", and never use "you" or "your".':'The recipient is '+recipient+'. Use their names where appropriate.')+' No first-person language. Keep it warm, spiritual, and intentional \u2014 matching the elevated tone of a handcrafted elixir card. Do not add anything that is not implied by the original notes.\n\nOUTPUT RULES \u2014 these are absolute. Return ONLY the finished sentences, exactly one version. Do not offer alternatives, options, drafts, or variations. Do not write any preamble, commentary, or closing remark. No markdown formatting of any kind: no asterisks, no bold, no headings, no bullet points, no divider lines.\n\n'+rawInfusion;
         const rd = await claudeAPI(apiKey, {model:'claude-sonnet-4-6',max_tokens:350,messages:[{role:'user',content:rewritePrompt}]});
         const cleaned = gtCleanInfusion(rd.content?.find(c=>c.type==='text')?.text) || rawInfusion;
         const idx = ELIXIRS.findIndex(e => e.id == elixirId);
@@ -16777,9 +16795,18 @@ async function regenerateElixirCard(elixirId) {
 function openElixirAdd(elixir) {
   const crystals = elixir ? (elixir.crystals||[]) : [];
   const essences = elixir ? (elixir.essences||[]) : [];
+  const category = elixir ? (elixir.category||'custom') : 'custom';
 
   document.getElementById('view-inner').innerHTML = `
     <div class="m-date">⬡ ${elixir?'Edit':'New'} Elixir</div>
+    <div class="form-field"><label>Elixir Category</label>
+      <select id="elixir-category" onchange="toggleElixirCategoryFields()" style="width:100%;background:rgba(255,255,255,.04);border:1px solid rgba(201,185,154,.22);color:var(--parchment);font-family:'Cormorant Garamond',serif;font-size:1rem;padding:9px 13px;outline:none;cursor:pointer;">
+        <option value="signature"${category==='signature'?' selected':''}>Signature Elixir</option>
+        <option value="custom"${category==='custom'?' selected':''}>Custom Elixir</option>
+        <option value="personal"${category==='personal'?' selected':''}>Personal Elixir (for me)</option>
+      </select>
+    </div>
+    <div class="form-field" id="elixir-recipient-section" style="display:none;"><label>Made For</label><input type="text" id="elixir-recipient" value="${elixir?elixir.recipientName||'':''}" placeholder="Recipient's name" style="width:100%;background:rgba(255,255,255,.04);border:1px solid rgba(201,185,154,.22);color:var(--parchment);font-family:'Cormorant Garamond',serif;font-size:1rem;padding:9px 13px;outline:none;"></div>
     <div class="form-field"><label>Name</label><input type="text" id="elixir-name" value="${elixir?elixir.name:''}" placeholder="e.g. Grief Release Roller" style="width:100%;background:rgba(255,255,255,.04);border:1px solid rgba(201,185,154,.22);color:var(--parchment);font-family:'Cormorant Garamond',serif;font-size:1rem;padding:9px 13px;outline:none;"></div>
     <div class="form-field"><label>Type</label>
       <select id="elixir-type" onchange="toggleElixirTypeFields()" style="width:100%;background:rgba(255,255,255,.04);border:1px solid rgba(201,185,154,.22);color:var(--parchment);font-family:'Cormorant Garamond',serif;font-size:1rem;padding:9px 13px;outline:none;cursor:pointer;">
@@ -16823,6 +16850,13 @@ function openElixirAdd(elixir) {
   `;
   document.getElementById('view-ov').classList.add('open');
   toggleElixirTypeFields();
+  toggleElixirCategoryFields();
+}
+
+function toggleElixirCategoryFields() {
+  const category = document.getElementById('elixir-category')?.value;
+  const recipientSection = document.getElementById('elixir-recipient-section');
+  if (recipientSection) recipientSection.style.display = category === 'custom' ? '' : 'none';
 }
 
 function toggleElixirTypeFields() {
@@ -16871,11 +16905,15 @@ function saveElixir() {
 
   // Preserve existing notes if editing
   const existing = editId ? ELIXIRS.find(e=>e.id==editId) : null;
+  const category = document.getElementById('elixir-category').value;
+  const recipientName = category === 'custom' ? document.getElementById('elixir-recipient').value.trim() : '';
 
   const entry = {
     id: editId ? parseInt(editId) : elixirNextId++,
     name,
     type,
+    category,
+    recipientName,
     dateCreated: document.getElementById('elixir-date').value,
     intention: document.getElementById('elixir-intention').value.trim(),
     crystals, essences,
@@ -16883,6 +16921,9 @@ function saveElixir() {
     infusion: isBachFlower ? '' : document.getElementById('elixir-infusion').value.trim(),
     notes: existing ? (existing.notes||'') : ''
   };
+  if (existing && existing.preloaded) entry.preloaded = true;
+  if (existing && existing.cardMagic && existing.category === category) entry.cardMagic = existing.cardMagic;
+  if (existing && existing.cardInfusion && existing.category === category) entry.cardInfusion = existing.cardInfusion;
 
   if (editId) {
     const idx = ELIXIRS.findIndex(e=>e.id==editId);
